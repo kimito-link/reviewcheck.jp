@@ -34,8 +34,9 @@ Set-Location $root
 
 $manifest = Get-Content "manifest.json" -Raw -Encoding UTF8 | ConvertFrom-Json
 $version = $manifest.version
-$name = ($manifest.name -replace '[^\w\-]', '') -replace '^_+', ''
-if (-not $name) { $name = "extension" }
+# Use an ASCII slug for the zip filename (manifest name is Japanese; an ASCII
+# filename is easier to pick in the dashboard and avoids encoding issues).
+$name = "reviewcheck-extension"
 
 # Files (top level) and folders (recursed) to include. Source/scripts excluded.
 $files = @('manifest.json', 'popup.html', 'popup.css', 'popup.js', 'config.js', 'background.js')

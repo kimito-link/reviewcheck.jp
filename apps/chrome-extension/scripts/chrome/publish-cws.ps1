@@ -57,8 +57,7 @@ foreach ($k in 'CWS_CLIENT_ID', 'CWS_CLIENT_SECRET', 'CWS_REFRESH_TOKEN', 'CWS_I
 # --- locate zip (manifest version) ---
 $manifest = Get-Content "manifest.json" -Raw -Encoding UTF8 | ConvertFrom-Json
 $version = $manifest.version
-$name = ($manifest.name -replace '[^\w\-]', '') -replace '^_+', ''
-if (-not $name) { $name = "extension" }
+$name = "reviewcheck-extension"
 $zipPath = "dist\$name-v$version.zip"
 if (-not (Test-Path $zipPath)) {
     $alt = Get-ChildItem "dist\*-v$version.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
