@@ -1,2 +1,4 @@
 *.zip
+dist/
+_pkg/
 scripts/chrome/.env.cws

@@ -4,6 +4,7 @@
   "private": true,
   "description": "口コミチェック.jp Chrome拡張 (Manifest V3)",
   "scripts": {
-    "zip": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/chrome/build-zip.ps1"
+    "zip": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/chrome/build-zip.ps1",
+    "publish": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/chrome/publish-cws.ps1"
   }
 }
