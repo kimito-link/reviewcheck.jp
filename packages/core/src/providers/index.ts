@@ -21,19 +21,35 @@ export interface FetchStoreResult {
   isMock: boolean;
 }
 
+export interface FetchStoreOptions {
+  /**
+   * 実データが取得できなかったとき、mock（架空のデモ値）で埋めてよいか。
+   * 既定 false。実在店舗の診断で勝手にそれっぽい数値を作らないための安全弁。
+   * 「デモで試す」など、デモと明示した場合のみ true にする。
+   */
+  allowMock?: boolean;
+}
+
 /**
  * 店舗データを取得する。
  * 1) 有効な実プロバイダ（Google Places 等）があれば順に試す。
- * 2) どれも取得できなければ mock にフォールバック（初期版のデモ体験）。
+ * 2) 取得できず allowMock=true のときのみ mock にフォールバック（明示的なデモ体験）。
+ * 3) それ以外は null を返す（呼び出し側で実数値の手入力を促す）。
  */
-export async function fetchStore(query: StoreQuery): Promise<FetchStoreResult> {
+export async function fetchStore(
+  query: StoreQuery,
+  options: FetchStoreOptions = {},
+): Promise<FetchStoreResult> {
   for (const provider of getEnabledProviders()) {
     const store = await provider.fetchStore(query);
     if (store) {
       return { store, providers: [provider.name], isMock: false };
     }
   }
-  const mock = new MockStoreProvider();
-  const store = await mock.fetchStore(query);
-  return { store, providers: [], isMock: true };
+  if (options.allowMock) {
+    const mock = new MockStoreProvider();
+    const store = await mock.fetchStore(query);
+    return { store, providers: [], isMock: true };
+  }
+  return { store: null, providers: [], isMock: false };
 }

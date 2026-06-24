@@ -28,9 +28,12 @@ interface DiagnoseBody {
   store?: Partial<StoreInput>;
   competitors?: Competitor[];
   targetRating?: number;
+  /** デモ体験（明示）。true のときだけ架空のサンプル値で診断する。 */
+  demo?: boolean;
 }
 
 async function handle(body: DiagnoseBody) {
+  const demo = body.demo === true;
   const query = body.query ?? {};
   const hasQuery = Boolean(
     query.text?.trim() || query.mapsUrl?.trim() || query.placeId?.trim(),
@@ -41,31 +44,45 @@ async function handle(body: DiagnoseBody) {
   let base: StoreInput | null = null;
   let providers: string[] = [];
 
-  // 1) クエリがあれば実プロバイダ or モックで店舗データを取得
+  // 1) クエリがあれば実プロバイダで店舗データを取得。
+  //    実データが取れず手入力もない場合、デモ指定のときだけ mock を許可する。
   if (hasQuery) {
-    const fetched = await fetchStore({
-      text: query.text,
-      mapsUrl: query.mapsUrl,
-      placeId: query.placeId,
-    });
+    const fetched = await fetchStore(
+      {
+        text: query.text,
+        mapsUrl: query.mapsUrl,
+        placeId: query.placeId,
+      },
+      { allowMock: demo },
+    );
     base = fetched.store;
     providers = fetched.providers;
   }
 
-  // 2) 取得できず、手入力の星評価もない → エラー
+  // 2) 実データが取得できず、手入力の星評価もない
+  //    → 架空の数値は出さず、実数値の入力を促す（正直な診断）。
   if (!base && !hasManualRating) {
     return NextResponse.json(
       {
-        error:
-          "店舗を特定できませんでした。GoogleマップURLか、実際の星評価・口コミ数を入力してください。",
+        needsManualInput: true,
+        message:
+          "自動取得は現在準備中です。正確に診断するため、Googleマップに表示されている星評価と口コミ数を入力してください。",
+        storeNameGuess: query.text?.trim() || null,
+        mapsUrl: query.mapsUrl?.trim() || null,
       },
-      { status: 400, headers: CORS_HEADERS },
+      { status: 200, headers: CORS_HEADERS },
     );
   }
 
   // 3) ベース（取得 or 空）に手入力を上書き
   const store: StoreInput = {
-    ...(base ?? { source: "manual" as const, rating: 0, reviewCount: 0 }),
+    ...(base ?? {
+      source: "manual" as const,
+      rating: 0,
+      reviewCount: 0,
+      name: query.text?.trim() || undefined,
+      mapsUrl: query.mapsUrl?.trim() || undefined,
+    }),
     ...stripUndefined(override),
   };
 

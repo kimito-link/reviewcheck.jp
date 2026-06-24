@@ -27,7 +27,8 @@ export function ReportView({
 }) {
   const { input, comparison, simulation } = result;
   const store = input.store;
-  const isMock = result.providers.length === 0 || store.source === "mock";
+  // デモ（架空のサンプル値）のときだけ注記。手入力の実数値には出さない。
+  const isMock = store.source === "mock";
 
   return (
     <div className="space-y-8">

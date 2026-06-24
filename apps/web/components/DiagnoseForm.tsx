@@ -26,6 +26,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [result, setResult] = useState<DiagnosisResult | null>(null);
 
   // /check/#competitors で来たら詳細を開く
@@ -66,6 +67,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
     if (ownerReplies === "no") storeOverride.hasOwnerReplies = false;
 
     return {
+      demo,
       query: demo
         ? { text: "サンプル整体院（デモ）" }
         : { text: query.trim(), mapsUrl: /^https?:\/\//i.test(query.trim()) ? query.trim() : undefined },
@@ -77,6 +79,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
 
   async function run(demo = false) {
     setError(null);
+    setNotice(null);
     setResult(null);
     if (!demo && !query.trim() && rating.trim() === "") {
       setError("店舗名またはGoogleマップURLを入力してください（または「デモで試す」）。");
@@ -90,6 +93,15 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
         body: JSON.stringify(buildPayload(demo)),
       });
       const data = await res.json();
+      // 実データが取得できない場合：架空の数値は出さず、実数値の入力を促す
+      if (data?.needsManualInput) {
+        setAdvancedOpen(true);
+        setNotice(
+          data.message ??
+            "正確に診断するため、Googleマップに表示されている星評価と口コミ数を入力してください。",
+        );
+        return;
+      }
       if (!res.ok) {
         setError(data.error ?? "診断に失敗しました。");
       } else {
@@ -157,6 +169,25 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
 
         {error ? (
           <p className="mt-3 text-sm font-medium text-red-600">{error}</p>
+        ) : null}
+
+        {notice ? (
+          <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+            <p>{notice}</p>
+            {/^https?:\/\//i.test(query.trim()) ? (
+              <a
+                href={query.trim()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-block font-bold text-blue-700 hover:underline"
+              >
+                Googleマップで数値を確認する →
+              </a>
+            ) : null}
+            <p className="mt-1 text-xs text-blue-700">
+              下の「星評価」「口コミ数」に入力して「この条件で再診断する」を押してください。
+            </p>
+          </div>
         ) : null}
 
         {advancedOpen ? (
