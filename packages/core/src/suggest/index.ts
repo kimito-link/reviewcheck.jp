@@ -111,7 +111,9 @@ export async function fetchGoogleSuggest(
 ): Promise<string[]> {
   const q = query.trim();
   if (!q || q.length > 200) return [];
-  const url = `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(
+  // 注: client=firefox は ie/oe を指定しないと charset=Shift_JIS で返るため、
+  // res.json()（UTF-8前提）で文字化けする。ie=UTF-8&oe=UTF-8 を必ず付ける。
+  const url = `https://suggestqueries.google.com/complete/search?client=firefox&ie=UTF-8&oe=UTF-8&q=${encodeURIComponent(
     q,
   )}&hl=${encodeURIComponent(lang)}`;
   try {
