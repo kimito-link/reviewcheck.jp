@@ -65,6 +65,18 @@ export const CTAS: Record<string, Cta> = {
     href: "/contact/?topic=monthly",
     emphasis: "default",
   },
+  freeConsult: {
+    key: "freeConsult",
+    label: "15分の無料相談で改善策を聞く",
+    href: "/contact/?topic=consult",
+    emphasis: "cta",
+  },
+  monitoring: {
+    key: "monitoring",
+    label: "月次モニタリングを始める",
+    href: "/contact/?topic=monitoring",
+    emphasis: "cta",
+  },
   shareReport: {
     key: "shareReport",
     label: "診断結果を共有する",

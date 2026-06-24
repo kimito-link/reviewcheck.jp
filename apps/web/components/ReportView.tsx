@@ -1,8 +1,12 @@
 import type { DiagnosisResult } from "@reviewcheck/core";
+import Link from "next/link";
+import { CTAS } from "@reviewcheck/config";
 import { ScoreMeter, ScoreBadge, StarRating, StatCompare } from "@reviewcheck/ui";
 import { Disclaimer } from "./Disclaimer";
 import { ConsultCtaGrid } from "./CtaGrid";
 import { ShareReport } from "./ShareReport";
+import { OpportunityLoss } from "./OpportunityLoss";
+import { StickyConsultCta } from "./StickyConsultCta";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
   high: { label: "最優先", cls: "bg-red-100 text-red-700" },
@@ -64,7 +68,7 @@ export function ReportView({
   const showPainHope = comparison != null && reviewBehind > 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-24">
       {isMock ? (
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
           <strong className="font-bold">これはサンプル（デモ）です：</strong>
@@ -271,6 +275,16 @@ export function ReportView({
         </section>
       ) : null}
 
+      {/* 機会損失の金額目安（競合に後れているときのみ） */}
+      {showPainHope && comparison ? (
+        <OpportunityLoss
+          storeRating={store.rating}
+          competitorAvgRating={comparison.avgRating}
+          reviewBehind={reviewBehind}
+          avgReviewCount={comparison.avgReviewCount}
+        />
+      ) : null}
+
       {/* あと何件で追いつけるか */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <h2 className="text-lg font-bold text-slate-900">
@@ -386,6 +400,56 @@ export function ReportView({
         </ul>
       </section>
 
+      {/* 月次モニタリング（サブスク）誘導：競合は毎月動く＝放置リスクを継続価値に変える */}
+      <section className="overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50">
+        <div className="p-5 sm:p-6">
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-bold text-white">
+              継続プラン
+            </span>
+            <h2 className="text-lg font-bold text-slate-900">
+              競合は毎月、口コミを増やしています
+            </h2>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+            今日の診断は「ある一日のスナップショット」です。競合の口コミ・星評価・順位は毎月動きます。
+            <strong className="text-slate-900">
+              月次モニタリング
+            </strong>
+            なら、毎月あなたと競合の変化を自動でレポートし、抜かれそうなときにお知らせ。
+            「気づいたら差が開いていた」を防ぎます。
+          </p>
+          <ul className="mt-3 space-y-1.5 text-sm text-slate-700">
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-600" aria-hidden>
+                ✓
+              </span>
+              毎月の順位・口コミ数・星評価の推移レポート
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-600" aria-hidden>
+                ✓
+              </span>
+              競合に抜かれそうなときのアラート
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-600" aria-hidden>
+                ✓
+              </span>
+              その月にやるべき改善アクションの提案
+            </li>
+          </ul>
+          <div className="mt-4">
+            <Link
+              href={CTAS.monitoring.href}
+              className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
+            >
+              {CTAS.monitoring.label}
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {shareUrl ? <ShareReport url={shareUrl} /> : null}
 
       {/* 相談導線 */}
@@ -402,6 +466,8 @@ export function ReportView({
       </section>
 
       <Disclaimer />
+
+      <StickyConsultCta />
     </div>
   );
 }
