@@ -59,16 +59,16 @@ export function ReportView({
       : 0;
   const ratingBehind =
     comparison && comparison.ratingDiff < 0 ? -comparison.ratingDiff : 0;
-  const showPainHope = !isMock && comparison != null && reviewBehind > 0;
+  // mock は明示的なデモ体験時のみ発生する（実店舗の自動取得失敗時は手入力を促す）ため、
+  // 競合に後れているときは痛み→希望をデモでも表示してよい。
+  const showPainHope = comparison != null && reviewBehind > 0;
 
   return (
     <div className="space-y-8">
       {isMock ? (
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-          <strong className="font-bold">デモ／参考値で表示中：</strong>
-          現在 Google Places API
-          が未接続のため、星評価・口コミ数はサンプル値です。正確な数値は、実際のGoogleマップの数値を入力するか、Places
-          API接続後に反映されます。
+          <strong className="font-bold">これはサンプル（デモ）です：</strong>
+          結果の見え方を体験いただくための架空の店舗・数値です。あなたのお店を診断するには、上の入力欄に店舗名またはGoogleマップURLを入れて「無料で診断する」を押してください。
         </div>
       ) : null}
 

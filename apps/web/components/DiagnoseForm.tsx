@@ -51,6 +51,22 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
   }
 
   function buildPayload(demo = false) {
+    // 追体験用デモ：順位・競合比較・あと何件・到達期間がすべて出るサンプルを固定で渡す
+    if (demo) {
+      return {
+        demo: true,
+        query: { text: "サンプル整体院（デモ）" },
+        store: { rating: 4.0, reviewCount: 45, hasOwnerReplies: false },
+        competitors: [
+          { name: "競合A整体院", rating: 4.7, reviewCount: 320 },
+          { name: "競合B整骨院", rating: 4.6, reviewCount: 210 },
+          { name: "競合Cカイロ", rating: 4.5, reviewCount: 160 },
+          { name: "競合D整体", rating: 4.4, reviewCount: 120 },
+        ] as Competitor[],
+        targetRating: undefined,
+      };
+    }
+
     const comps: Competitor[] = competitors
       .filter((r) => r.rating.trim() !== "" || r.reviewCount.trim() !== "")
       .map((r) => ({
