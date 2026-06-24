@@ -23,7 +23,23 @@ const MAPS_HOSTS = [
   "maps.app.goo.gl",
   "goo.gl",
   "g.page",
+  "share.google",
 ];
+
+/** 展開（リダイレクト追跡）が必要な短縮URLか */
+export function isShortMapsUrl(raw: string): boolean {
+  try {
+    const host = new URL((raw ?? "").trim()).hostname.replace(/^www\./, "");
+    return (
+      host === "maps.app.goo.gl" ||
+      host === "goo.gl" ||
+      host === "g.page" ||
+      host === "share.google"
+    );
+  } catch {
+    return false;
+  }
+}
 
 export function parseMapsUrl(raw: string): ParsedMapsUrl {
   const trimmed = (raw ?? "").trim();
@@ -40,6 +56,7 @@ export function parseMapsUrl(raw: string): ParsedMapsUrl {
     (url.pathname.includes("/maps") ||
       host.includes("goo.gl") ||
       host === "g.page" ||
+      host === "share.google" ||
       host.includes("maps"));
 
   const result: ParsedMapsUrl = { isMapsUrl: isMaps };
@@ -53,6 +70,14 @@ export function parseMapsUrl(raw: string): ParsedMapsUrl {
   const placeMatch = url.pathname.match(/\/place\/([^/@]+)/);
   if (placeMatch && placeMatch[1]) {
     result.nameGuess = decodeURIComponent(placeMatch[1].replace(/\+/g, " "));
+  }
+
+  // q / query パラメータ（短縮URL展開後の検索URLでは店舗名が入ることが多い）
+  if (!result.nameGuess) {
+    const q = url.searchParams.get("q") ?? url.searchParams.get("query");
+    if (q && !/^-?\d+(\.\d+)?,-?\d+/.test(q) && !/^https?:/i.test(q)) {
+      result.nameGuess = q;
+    }
   }
 
   // @lat,lng

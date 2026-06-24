@@ -1,5 +1,5 @@
 import type { Competitor, StoreInput } from "../types/index";
-import { parseMapsUrl } from "../utils/mapsUrl";
+import { parseMapsUrl, isShortMapsUrl, looksLikeUrl } from "../utils/mapsUrl";
 import { normalizeRating, toCount } from "../utils/number";
 import type { StoreDataProvider, StoreQuery } from "./types";
 
@@ -146,11 +146,53 @@ export class GooglePlacesProvider implements StoreDataProvider {
   ): Promise<string | null> {
     if (query.placeId) return query.placeId;
 
-    const parsed = query.mapsUrl ? parseMapsUrl(query.mapsUrl) : null;
+    let parsed = query.mapsUrl ? parseMapsUrl(query.mapsUrl) : null;
+
+    // 短縮URL（share.google / maps.app.goo.gl 等）や、名前・place_id を
+    // 取り出せないURLは、リダイレクトを追って展開してから再解析する。
+    if (
+      query.mapsUrl &&
+      (isShortMapsUrl(query.mapsUrl) || !parsed?.placeId) &&
+      !parsed?.nameGuess
+    ) {
+      const expanded = await this.expandUrl(query.mapsUrl);
+      if (expanded) {
+        const reparsed = parseMapsUrl(expanded.url);
+        parsed = {
+          isMapsUrl: true,
+          placeId: reparsed.placeId ?? parsed?.placeId,
+          nameGuess:
+            reparsed.nameGuess ??
+            extractTitleName(expanded.body) ??
+            parsed?.nameGuess,
+          lat: reparsed.lat ?? parsed?.lat,
+          lng: reparsed.lng ?? parsed?.lng,
+          cid: reparsed.cid ?? parsed?.cid,
+        };
+      }
+    }
+
     if (parsed?.placeId) return parsed.placeId;
 
-    const text = query.text?.trim() || parsed?.nameGuess;
+    // URL文字列そのものは検索語にしない（誤検索の防止）。
+    const rawText = query.text?.trim();
+    const text =
+      rawText && !looksLikeUrl(rawText) ? rawText : parsed?.nameGuess;
     if (!text) return null;
+
+    const body: Record<string, unknown> = {
+      textQuery: text,
+      languageCode: "ja",
+      regionCode: "JP",
+    };
+    if (typeof parsed?.lat === "number" && typeof parsed?.lng === "number") {
+      body.locationBias = {
+        circle: {
+          center: { latitude: parsed.lat, longitude: parsed.lng },
+          radius: 500,
+        },
+      };
+    }
 
     const res = await fetch(
       "https://places.googleapis.com/v1/places:searchText",
@@ -161,11 +203,7 @@ export class GooglePlacesProvider implements StoreDataProvider {
           "X-Goog-Api-Key": key,
           "X-Goog-FieldMask": "places.id,places.displayName",
         },
-        body: JSON.stringify({
-          textQuery: text,
-          languageCode: "ja",
-          regionCode: "JP",
-        }),
+        body: JSON.stringify(body),
       },
     );
     if (!res.ok) return null;
@@ -173,6 +211,27 @@ export class GooglePlacesProvider implements StoreDataProvider {
       places?: { id?: string }[];
     };
     return data.places?.[0]?.id ?? null;
+  }
+
+  /** 短縮URLをリダイレクト追跡で展開し、最終URLとHTML本文を返す */
+  private async expandUrl(
+    raw: string,
+  ): Promise<{ url: string; body: string } | null> {
+    try {
+      const res = await fetch(raw, {
+        redirect: "follow",
+        headers: {
+          // 一部の短縮リンクはUAなしだと簡易ページを返すため明示する
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+          "Accept-Language": "ja",
+        },
+      });
+      const body = await res.text().catch(() => "");
+      return { url: res.url || raw, body };
+    } catch {
+      return null;
+    }
   }
 
   /** Place Details を取得して StoreInput＋座標・業種に変換 */
@@ -257,4 +316,22 @@ interface NearbyPlace {
   rating?: number;
   userRatingCount?: number;
   googleMapsUri?: string;
+}
+
+/**
+ * 展開したGoogleマップページのHTMLから店舗名を推測する。
+ * og:title / <title> は「<店舗名> · 住所」「<店舗名> - Google マップ」等の形式。
+ */
+function extractTitleName(html: string): string | undefined {
+  if (!html) return undefined;
+  const og = html.match(
+    /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i,
+  );
+  const title = og?.[1] ?? html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1];
+  if (!title) return undefined;
+  const cleaned = title
+    .replace(/\s*[-–|·•]\s*Google\s*(マップ|Maps).*$/i, "")
+    .replace(/\s*[·•].*$/, "")
+    .trim();
+  return cleaned || undefined;
 }

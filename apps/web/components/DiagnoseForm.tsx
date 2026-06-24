@@ -82,11 +82,13 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
     if (ownerReplies === "yes") storeOverride.hasOwnerReplies = true;
     if (ownerReplies === "no") storeOverride.hasOwnerReplies = false;
 
+    const q = query.trim();
+    const isUrl = /^https?:\/\//i.test(q);
     return {
       demo,
       query: demo
         ? { text: "サンプル整体院（デモ）" }
-        : { text: query.trim(), mapsUrl: /^https?:\/\//i.test(query.trim()) ? query.trim() : undefined },
+        : { text: isUrl ? undefined : q, mapsUrl: isUrl ? q : undefined },
       store: Object.keys(storeOverride).length ? storeOverride : undefined,
       competitors: comps,
       targetRating: targetRating.trim() !== "" ? Number(targetRating) : undefined,
