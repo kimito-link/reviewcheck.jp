@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import {
   diagnose,
+  fetchCompetitors,
   fetchStore,
   InvalidInputError,
   type Competitor,
+  type StoreContext,
   type StoreInput,
 } from "@reviewcheck/core";
 
@@ -30,6 +32,8 @@ interface DiagnoseBody {
   targetRating?: number;
   /** デモ体験（明示）。true のときだけ架空のサンプル値で診断する。 */
   demo?: boolean;
+  /** 競合を自動検出しない（手動入力のみ使う）場合 true。既定は自動検出する。 */
+  noAutoCompetitors?: boolean;
 }
 
 async function handle(body: DiagnoseBody) {
@@ -43,6 +47,7 @@ async function handle(body: DiagnoseBody) {
 
   let base: StoreInput | null = null;
   let providers: string[] = [];
+  let context: StoreContext | undefined;
 
   // 1) クエリがあれば実プロバイダで店舗データを取得。
   //    実データが取れず手入力もない場合、デモ指定のときだけ mock を許可する。
@@ -57,6 +62,7 @@ async function handle(body: DiagnoseBody) {
     );
     base = fetched.store;
     providers = fetched.providers;
+    context = fetched.context;
   }
 
   // 2) 実データが取得できず、手入力の星評価もない
@@ -86,11 +92,26 @@ async function handle(body: DiagnoseBody) {
     ...stripUndefined(override),
   };
 
+  // 4) 競合：手動入力があればそれを優先。無ければ周辺競合を自動検出（実データ取得時のみ）。
+  let competitors: Competitor[] = body.competitors ?? [];
+  if (
+    competitors.length === 0 &&
+    !body.noAutoCompetitors &&
+    !demo &&
+    context
+  ) {
+    try {
+      competitors = await fetchCompetitors(context, { limit: 5 });
+    } catch {
+      competitors = [];
+    }
+  }
+
   try {
     const result = diagnose(
       {
         store,
-        competitors: body.competitors ?? [],
+        competitors,
         targetRating: body.targetRating,
       },
       { providers },

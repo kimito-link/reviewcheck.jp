@@ -27,8 +27,12 @@ export function ReportView({
 }) {
   const { input, comparison, simulation } = result;
   const store = input.store;
+  const competitors = input.competitors ?? [];
   // デモ（架空のサンプル値）のときだけ注記。手入力の実数値には出さない。
   const isMock = store.source === "mock";
+  // 競合がすべて placeId を持つ＝Places から自動検出されたもの
+  const autoCompetitors =
+    competitors.length > 0 && competitors.every((c) => Boolean(c.placeId));
 
   return (
     <div className="space-y-8">
@@ -126,6 +130,64 @@ export function ReportView({
             </strong>
             です。
           </p>
+
+          {competitors.length > 0 ? (
+            <div className="mt-4">
+              <div className="mb-2 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900">
+                  比較した競合店舗
+                </h3>
+                {autoCompetitors ? (
+                  <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                    自動検出
+                  </span>
+                ) : null}
+              </div>
+              <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+                {competitors.map((c, i) => (
+                  <li
+                    key={c.placeId ?? `${c.name}-${i}`}
+                    className="flex items-center justify-between gap-3 p-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-800">
+                        {c.mapsUrl ? (
+                          <a
+                            href={c.mapsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-blue-600 hover:underline"
+                          >
+                            {c.name || `競合${i + 1}`}
+                          </a>
+                        ) : (
+                          (c.name ?? `競合${i + 1}`)
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-4">
+                      <span className="flex items-center gap-1 text-sm">
+                        <span className="text-amber-500">★</span>
+                        <span className="font-bold text-slate-900">
+                          {c.rating.toFixed(1)}
+                        </span>
+                      </span>
+                      <span className="font-mono text-sm text-slate-600">
+                        {c.reviewCount}
+                        <span className="ml-0.5 text-xs text-slate-400">件</span>
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {autoCompetitors ? (
+                <p className="mt-2 text-xs text-slate-400">
+                  ※
+                  周辺の同業種から口コミ数の多い順に自動抽出した目安です。対象は手動でも調整できます。
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </section>
       ) : null}
 

@@ -1,10 +1,18 @@
-import type { StoreInput } from "../types/index";
-import { GooglePlacesProvider } from "./googlePlaces";
+import type { Competitor, StoreInput } from "../types/index";
+import {
+  GooglePlacesProvider,
+  type FetchCompetitorsOptions,
+  type StoreContext,
+} from "./googlePlaces";
 import { MockStoreProvider } from "./mock";
 import type { StoreDataProvider, StoreQuery } from "./types";
 
 export * from "./types";
-export { GooglePlacesProvider } from "./googlePlaces";
+export {
+  GooglePlacesProvider,
+  type StoreContext,
+  type FetchCompetitorsOptions,
+} from "./googlePlaces";
 export { MockStoreProvider } from "./mock";
 
 /** 実データプロバイダ（キー設定済みのもの）。mock は含めない。 */
@@ -19,6 +27,8 @@ export interface FetchStoreResult {
   providers: string[];
   /** モックデータかどうか */
   isMock: boolean;
+  /** 競合自動検出に使う座標・業種（実プロバイダ取得時のみ） */
+  context?: StoreContext;
 }
 
 export interface FetchStoreOptions {
@@ -41,6 +51,19 @@ export async function fetchStore(
   options: FetchStoreOptions = {},
 ): Promise<FetchStoreResult> {
   for (const provider of getEnabledProviders()) {
+    // GooglePlacesProvider は座標・業種つきで取得できる
+    if (provider instanceof GooglePlacesProvider) {
+      const detailed = await provider.fetchStoreDetailed(query);
+      if (detailed) {
+        return {
+          store: detailed.store,
+          providers: [provider.name],
+          isMock: false,
+          context: detailed.context,
+        };
+      }
+      continue;
+    }
     const store = await provider.fetchStore(query);
     if (store) {
       return { store, providers: [provider.name], isMock: false };
@@ -52,4 +75,22 @@ export async function fetchStore(
     return { store, providers: [], isMock: true };
   }
   return { store: null, providers: [], isMock: false };
+}
+
+/**
+ * 起点店舗の周辺から競合を自動検出する。
+ * 実プロバイダ（Google Places）が有効で、座標が分かる場合のみ動作。
+ * それ以外は空配列（手動入力にフォールバック）。
+ */
+export async function fetchCompetitors(
+  context: StoreContext | undefined,
+  options: FetchCompetitorsOptions = {},
+): Promise<Competitor[]> {
+  if (!context) return [];
+  for (const provider of getEnabledProviders()) {
+    if (provider instanceof GooglePlacesProvider) {
+      return provider.fetchCompetitors(context, options);
+    }
+  }
+  return [];
 }
