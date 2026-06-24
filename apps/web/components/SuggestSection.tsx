@@ -30,7 +30,9 @@ export function SuggestSection({
     let alive = true;
     setLoading(true);
     setFailed(false);
-    fetch(`/api/suggest?q=${encodeURIComponent(storeName)}`)
+    fetch(`/api/suggest?q=${encodeURIComponent(storeName)}`, {
+      cache: "no-store",
+    })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((j: SuggestAnalysis) => {
         if (alive) setData(j);

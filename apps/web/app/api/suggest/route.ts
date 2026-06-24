@@ -9,6 +9,8 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
+  // 古い結果（特に修正前のsafe）が残らないようキャッシュさせない
+  "Cache-Control": "no-store, max-age=0",
 };
 
 export function OPTIONS() {
