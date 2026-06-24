@@ -149,15 +149,32 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
           </button>
         </div>
 
+        {/* 追体験：入力前に結果イメージを体験してもらい、入力ハードルを下げる */}
+        {!result ? (
+          <div className="mt-4 rounded-xl border border-dashed border-blue-300 bg-blue-50/60 p-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-bold text-slate-900">
+                  入力せずに、まず結果サンプルを体験
+                </p>
+                <p className="mt-0.5 text-xs text-slate-600">
+                  サンプル店舗で「順位・あと何件・追いつくまでの目安」が
+                  どう表示されるか30秒で確認できます。
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void run(true)}
+                disabled={loading}
+                className="inline-flex shrink-0 items-center justify-center gap-1 rounded-xl border border-blue-600 bg-white px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-600 hover:text-white disabled:opacity-60"
+              >
+                ▶ サンプル結果を見る
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <button
-            type="button"
-            onClick={() => void run(true)}
-            disabled={loading}
-            className="text-sm font-bold text-blue-600 hover:underline disabled:opacity-60"
-          >
-            デモで試す（サンプル店舗）
-          </button>
           <button
             type="button"
             onClick={() => setAdvancedOpen((v) => !v)}

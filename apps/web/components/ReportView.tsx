@@ -17,6 +17,14 @@ const FACTOR_DOT: Record<string, string> = {
   info: "bg-slate-400",
 };
 
+/** 「あと何件」を行動計画に翻訳するときの想定ペース（件/月） */
+const REVIEWS_PER_MONTH = 5;
+
+/** 必要件数を「毎月N件ペースなら約◯ヶ月」に変換 */
+function monthsToReach(reviewsNeeded: number): number {
+  return Math.max(1, Math.ceil(reviewsNeeded / REVIEWS_PER_MONTH));
+}
+
 /** 診断結果の表示。/check と /report/[id] で共通利用。 */
 export function ReportView({
   result,
@@ -33,6 +41,25 @@ export function ReportView({
   // 競合がすべて placeId を持つ＝Places から自動検出されたもの
   const autoCompetitors =
     competitors.length > 0 && competitors.every((c) => Boolean(c.placeId));
+
+  // 主要シナリオ（星5の口コミで埋める想定）＝「あと何件」の代表値
+  const primaryScenario =
+    simulation.scenarios.find((s) => s.newReviewStar === 5) ??
+    simulation.scenarios.find((s) => s.reviewsNeeded != null) ??
+    null;
+  const primaryNeeded =
+    primaryScenario && primaryScenario.reviewsNeeded != null
+      ? primaryScenario.reviewsNeeded
+      : null;
+
+  // 競合に後れを取っているか（痛み→希望コピーの出し分け）
+  const reviewBehind =
+    comparison && comparison.reviewCountDiff < 0
+      ? -comparison.reviewCountDiff
+      : 0;
+  const ratingBehind =
+    comparison && comparison.ratingDiff < 0 ? -comparison.ratingDiff : 0;
+  const showPainHope = !isMock && comparison != null && reviewBehind > 0;
 
   return (
     <div className="space-y-8">
@@ -63,6 +90,19 @@ export function ReportView({
               <p className="text-xs text-slate-500">
                 {[store.category, store.address].filter(Boolean).join("｜")}
               </p>
+            ) : null}
+            {comparison ? (
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5">
+                <span className="text-xs font-medium text-blue-700">
+                  周辺{comparison.total}店中
+                </span>
+                <span className="text-sm font-extrabold text-blue-800">
+                  口コミ数 第{comparison.reviewCountRank}位
+                </span>
+                <span className="text-xs font-medium text-blue-600">
+                  ／ 星評価 第{comparison.ratingRank}位
+                </span>
+              </div>
             ) : null}
             <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-1">
               <div>
@@ -97,6 +137,46 @@ export function ReportView({
           </div>
         </div>
       </section>
+
+      {/* 痛み→希望：後れているときだけ、危機感とすぐの解決策をワンセットで */}
+      {showPainHope ? (
+        <section className="overflow-hidden rounded-2xl border border-amber-200 bg-amber-50">
+          <div className="border-b border-amber-200 bg-amber-100/60 p-4">
+            <p className="flex items-start gap-2 text-sm font-bold text-amber-900">
+              <span aria-hidden>⚠️</span>
+              <span>
+                競合平均より口コミが{reviewBehind}件少なく
+                {ratingBehind > 0
+                  ? `、星評価も${ratingBehind.toFixed(1)}ポイント低い`
+                  : ""}
+                状態です。検討中のお客様に「選ばれにくい」可能性があります。
+              </span>
+            </p>
+          </div>
+          <div className="p-4">
+            <p className="flex items-start gap-2 text-sm font-bold text-emerald-800">
+              <span aria-hidden>✅</span>
+              <span>
+                でも、追いつけます。
+                {primaryNeeded != null && primaryNeeded > 0 ? (
+                  <>
+                    毎月{REVIEWS_PER_MONTH}件ペースで高評価の口コミを増やせば、
+                    <strong className="text-emerald-900">
+                      約{monthsToReach(primaryNeeded)}ヶ月
+                    </strong>
+                    で競合平均に届く計算です。
+                  </>
+                ) : (
+                  <>今の強みを活かせば、競合との差はまだ十分に縮められます。</>
+                )}
+              </span>
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-emerald-700">
+              まずは最初の1件から。下の「あと何件で追いつける？」と「改善のポイント」に、具体的な進め方をまとめています。
+            </p>
+          </div>
+        </section>
+      ) : null}
 
       {/* 競合比較 */}
       {comparison ? (
@@ -226,11 +306,21 @@ export function ReportView({
               <p className="mt-1 text-xs leading-relaxed text-slate-600">
                 {s.note}
               </p>
+              {s.reviewsNeeded != null && s.reviewsNeeded > 0 ? (
+                <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-800">
+                  <span aria-hidden>📅</span>
+                  毎月{REVIEWS_PER_MONTH}件のペースなら、約
+                  <strong className="font-extrabold">
+                    {monthsToReach(s.reviewsNeeded)}ヶ月
+                  </strong>
+                  で到達
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>
         <p className="mt-3 text-xs text-slate-400">
-          ※ Googleの評価は丸め処理・反映タイミングがあるため、件数はあくまで目安です。
+          ※ Googleの評価は丸め処理・反映タイミングがあるため、件数・期間はあくまで目安です。
         </p>
       </section>
 
