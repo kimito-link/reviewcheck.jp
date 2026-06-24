@@ -8,9 +8,13 @@ import { CTAS } from "@reviewcheck/config";
  * 結果画面で常時追従する相談CTA。離脱直前のひと押し用。
  * マイクロコンバージョン（重い「相談」ではなく「15分の無料相談」）で心理的ハードルを下げる。
  */
-export function StickyConsultCta() {
+export function StickyConsultCta({ storeName }: { storeName?: string }) {
   const [closed, setClosed] = useState(false);
   if (closed) return null;
+
+  const href = storeName
+    ? `${CTAS.freeConsult.href}&store=${encodeURIComponent(storeName)}`
+    : CTAS.freeConsult.href;
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
@@ -24,7 +28,7 @@ export function StickyConsultCta() {
           </p>
         </div>
         <Link
-          href={CTAS.freeConsult.href}
+          href={href}
           className="inline-flex shrink-0 items-center justify-center rounded-xl bg-cta px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-cta-strong"
         >
           無料で相談

@@ -12,25 +12,34 @@ const TOPICS: Record<string, string> = {
   report: "詳細レポートのご依頼",
   profile: "Googleビジネスプロフィール改善のご相談",
   monthly: "月額MEO・口コミ改善サポートのご相談",
+  consult: "15分の無料相談",
+  monitoring: "月次モニタリングのお申し込み",
 };
 
 export function ContactForm() {
   const params = useSearchParams();
   const topicKey = params.get("topic") ?? "";
   const topicLabel = TOPICS[topicKey] ?? "お問い合わせ";
+  const isMonitoring = topicKey === "monitoring";
 
-  const [store, setStore] = useState("");
+  const [store, setStore] = useState(params.get("store") ?? "");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
 
   const mailto = `mailto:${SITE.contactEmail}?subject=${encodeURIComponent(
     `【${topicLabel}】${SITE.name}`,
   )}&body=${encodeURIComponent(
-    `■ご相談内容: ${topicLabel}\n■店舗名 / GoogleマップURL: ${store}\n\n■詳細:\n${message}\n`,
+    `■ご相談内容: ${topicLabel}\n■店舗名 / GoogleマップURL: ${store}\n■ご連絡先メール: ${email}\n\n■詳細:\n${message}\n`,
   )}`;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6">
       <p className="text-sm font-bold text-blue-700">{topicLabel}</p>
+      {isMonitoring ? (
+        <p className="mt-2 rounded-lg bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-800">
+          毎月、あなたと競合の口コミ数・星評価・順位の変化を自動でレポートし、抜かれそうなときにお知らせします。お申し込み内容を確認後、開始方法をご連絡します。
+        </p>
+      ) : null}
       <div className="mt-4 space-y-4">
         <div>
           <label className="block text-sm font-bold text-slate-900">
@@ -41,6 +50,27 @@ export function ContactForm() {
             value={store}
             onChange={(e) => setStore(e.target.value)}
             placeholder="例：〇〇クリニック / https://maps.app.goo.gl/..."
+            className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-bold text-slate-900">
+            ご連絡先メール
+            {isMonitoring ? (
+              <span className="ml-1 text-xs font-normal text-emerald-700">
+                （レポートの送付先）
+              </span>
+            ) : (
+              <span className="ml-1 text-xs font-normal text-slate-400">
+                （任意）
+              </span>
+            )}
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="例：owner@example.com"
             className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
           />
         </div>
@@ -60,7 +90,7 @@ export function ContactForm() {
           href={mailto}
           className="inline-flex w-full items-center justify-center rounded-xl bg-cta px-6 py-3.5 text-base font-bold text-white hover:bg-cta-strong"
         >
-          メールで相談する
+          {isMonitoring ? "この内容で申し込む" : "メールで相談する"}
         </a>
         <p className="text-xs text-slate-400">
           ボタンを押すとメールソフトが開きます。LINEでのご相談も歓迎です（画面右下・ヘッダーのLINEボタン）。直接 {SITE.contactEmail} 宛にご連絡いただいても構いません。

@@ -67,6 +67,12 @@ export function ReportView({
   // 競合に後れているときは痛み→希望をデモでも表示してよい。
   const showPainHope = comparison != null && reviewBehind > 0;
 
+  // 相談・モニタリング導線に店舗名を引き継ぎ、お問い合わせフォームを自動入力する
+  const storeQuery = !isMock ? (store.mapsUrl || store.name || "") : "";
+  const monitoringHref = storeQuery
+    ? `${CTAS.monitoring.href}&store=${encodeURIComponent(storeQuery)}`
+    : CTAS.monitoring.href;
+
   return (
     <div className="space-y-8 pb-24">
       {isMock ? (
@@ -441,7 +447,7 @@ export function ReportView({
           </ul>
           <div className="mt-4">
             <Link
-              href={CTAS.monitoring.href}
+              href={monitoringHref}
               className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
             >
               {CTAS.monitoring.label}
@@ -467,7 +473,7 @@ export function ReportView({
 
       <Disclaimer />
 
-      <StickyConsultCta />
+      <StickyConsultCta storeName={storeQuery || undefined} />
     </div>
   );
 }
