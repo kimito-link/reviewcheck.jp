@@ -77,6 +77,12 @@ export const CTAS: Record<string, Cta> = {
     href: "/contact/?topic=monitoring",
     emphasis: "cta",
   },
+  suggest: {
+    key: "suggest",
+    label: "サジェスト（検索候補）対策を相談する",
+    href: "/contact/?topic=suggest",
+    emphasis: "cta",
+  },
   shareReport: {
     key: "shareReport",
     label: "診断結果を共有する",

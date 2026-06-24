@@ -7,6 +7,7 @@ import { ConsultCtaGrid } from "./CtaGrid";
 import { ShareReport } from "./ShareReport";
 import { OpportunityLoss } from "./OpportunityLoss";
 import { StickyConsultCta } from "./StickyConsultCta";
+import { SuggestSection } from "./SuggestSection";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
   high: { label: "最優先", cls: "bg-red-100 text-red-700" },
@@ -279,6 +280,14 @@ export function ReportView({
             </div>
           ) : null}
         </section>
+      ) : null}
+
+      {/* Google検索での見られ方（サジェスト）。実店舗のみ。 */}
+      {!isMock && store.name ? (
+        <SuggestSection
+          storeName={store.name}
+          storeQuery={storeQuery || undefined}
+        />
       ) : null}
 
       {/* 機会損失の金額目安（競合に後れているときのみ） */}

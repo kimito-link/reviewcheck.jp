@@ -14,6 +14,7 @@ const TOPICS: Record<string, string> = {
   monthly: "月額MEO・口コミ改善サポートのご相談",
   consult: "15分の無料相談",
   monitoring: "月次モニタリングのお申し込み",
+  suggest: "サジェスト（検索候補）対策のご相談",
 };
 
 export function ContactForm() {
