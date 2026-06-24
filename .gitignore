@@ -22,3 +22,5 @@ council-answers.json
 # Chrome拡張のビルド成果物
 apps/chrome-extension/*.zip
 apps/chrome-extension/scripts/chrome/.env.cws
+
+.vercel
