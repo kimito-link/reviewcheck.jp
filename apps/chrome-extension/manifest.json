@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "口コミチェック.jp｜Google口コミチェッカー",
+  "short_name": "口コミチェック",
+  "version": "0.1.0",
+  "description": "Googleマップで開いている店舗のGoogle口コミ（星評価・口コミ数・競合との差・あと何件で追いつけるか）を簡易チェックできます。",
+  "default_locale": "ja",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "この店舗を口コミ診断",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": ["activeTab"],
+  "host_permissions": ["https://reviewcheck.jp/*"]
+}

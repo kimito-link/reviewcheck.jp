@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="popup.css" />
+    <title>口コミチェック.jp</title>
+  </head>
+  <body>
+    <header class="header">
+      <div class="logo">口</div>
+      <div>
+        <div class="title">口コミチェック.jp</div>
+        <div class="subtitle">この店舗のGoogle口コミを簡易チェック</div>
+      </div>
+    </header>
+
+    <main class="main">
+      <p class="target-label">診断対象</p>
+      <p id="targetUrl" class="target-url">取得中…</p>
+
+      <button id="scanBtn" class="btn btn-primary">この店舗を診断</button>
+
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <span>診断中…</span>
+      </div>
+
+      <div id="error" class="error hidden"></div>
+
+      <section id="result" class="result hidden">
+        <div class="score-row">
+          <div id="scoreCircle" class="score-circle">
+            <span id="scoreValue">0</span><small>/100</small>
+          </div>
+          <div>
+            <span id="bandBadge" class="badge">選ばれやすさ: -</span>
+            <p id="storeName" class="store-name"></p>
+            <p id="storeStats" class="store-stats"></p>
+          </div>
+        </div>
+
+        <p id="summary" class="summary"></p>
+
+        <div class="sim-box">
+          <p class="sim-label">目標に近づくには</p>
+          <p id="simText" class="sim-text"></p>
+        </div>
+
+        <button id="detailBtn" class="btn btn-dark">詳しい診断結果を見る</button>
+
+        <div class="cta-group">
+          <a id="ctaImprove" class="btn btn-outline" target="_blank" rel="noopener">口コミ改善を相談する</a>
+          <a id="ctaMeo" class="btn btn-outline" target="_blank" rel="noopener">MEO対策を相談する</a>
+        </div>
+      </section>
+
+      <p class="disclaimer">
+        この診断は公開情報や入力情報をもとにした簡易診断です。星評価・口コミ増加・順位を保証するものではありません。口コミ購入・やらせ・競合への低評価工作は行いません。診断ボタンを押したページのみを処理し、閲覧履歴の収集は行いません。
+      </p>
+    </main>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

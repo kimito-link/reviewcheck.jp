@@ -1,0 +1,26 @@
+{
+  "name": "reviewcheck-site",
+  "version": "0.1.0",
+  "private": true,
+  "description": "口コミチェック.jp / Review Check Site - 店舗名・GoogleマップURLでGoogle口コミ（星評価・口コミ数）の状態と競合との差を簡易診断し、口コミ改善・MEO対策の相談につなげるサービス",
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "dev": "pnpm --filter @reviewcheck/web dev",
+    "build": "pnpm --filter @reviewcheck/web build",
+    "start": "pnpm --filter @reviewcheck/web start",
+    "lint": "pnpm --filter @reviewcheck/web lint",
+    "typecheck": "pnpm -r typecheck",
+    "icons": "node scripts/generate-icons.mjs",
+    "ext:zip": "pnpm --filter @reviewcheck/chrome-extension zip"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.0",
+    "typescript": "^5.7.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["sharp"]
+  }
+}

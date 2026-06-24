@@ -1,0 +1,9 @@
+{
+  "name": "@reviewcheck/chrome-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "口コミチェック.jp Chrome拡張 (Manifest V3)",
+  "scripts": {
+    "zip": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/chrome/build-zip.ps1"
+  }
+}
