@@ -8,6 +8,7 @@ import { ShareReport } from "./ShareReport";
 import { OpportunityLoss } from "./OpportunityLoss";
 import { StickyConsultCta } from "./StickyConsultCta";
 import { SuggestSection } from "./SuggestSection";
+import { ReverseHackPromo } from "./ReverseHackPromo";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
   high: { label: "最優先", cls: "bg-red-100 text-red-700" },
@@ -479,6 +480,9 @@ export function ReportView({
           <ConsultCtaGrid />
         </div>
       </section>
+
+      {/* 二次導線：同チーム「リバースハック WEB健康診断」へ（本命CTAの後ろに配置） */}
+      <ReverseHackPromo />
 
       <Disclaimer />
 
