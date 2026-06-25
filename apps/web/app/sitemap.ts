@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/bad-review-measures/",
     "/competitor-review-comparison/",
     "/plans/",
+    "/review-tool/",
     "/contact/",
     "/privacy/",
     "/terms/",

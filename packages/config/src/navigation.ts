@@ -6,7 +6,7 @@ export interface NavLink {
 /** ヘッダー・主要導線 */
 export const MAIN_NAV: NavLink[] = [
   { label: "口コミ診断", href: "/check/" },
-  { label: "Google口コミ診断", href: "/google-review-check/" },
+  { label: "口コミ作成ツール", href: "/review-tool/" },
   { label: "口コミ改善", href: "/review-improvement/" },
   { label: "MEO対策", href: "/meo/" },
   { label: "総合パッケージ・料金", href: "/plans/" },
@@ -31,6 +31,7 @@ export const FOOTER_LINKS: { heading: string; links: NavLink[] }[] = [
     heading: "診断ツール",
     links: [
       { label: "口コミ診断", href: "/check/" },
+      { label: "口コミ作成ツール", href: "/review-tool/" },
       { label: "Google口コミ診断", href: "/google-review-check/" },
       { label: "競合口コミ比較", href: "/competitor-review-comparison/" },
     ],

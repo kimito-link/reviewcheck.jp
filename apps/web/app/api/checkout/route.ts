@@ -68,6 +68,22 @@ export async function POST(request: Request) {
       allow_promotion_codes: true,
       billing_address_collection: "required",
       locale: "ja",
+      // 上村案の「①ヒットしたURL ②どんな評価を伸ばしたいか」をStripeの安全な決済画面で取得。
+      // 我々のフォームに項目を足さず、摩擦ゼロのまま注文ブリーフを回収する。
+      custom_fields: [
+        {
+          key: "business_url",
+          label: { type: "custom", custom: "店舗・ビジネスのURL（診断したURL）" },
+          type: "text",
+          optional: false,
+        },
+        {
+          key: "review_focus",
+          label: { type: "custom", custom: "伸ばしたい評価・お客様に伝えたい点" },
+          type: "text",
+          optional: true,
+        },
+      ],
       metadata: {
         plan: plan.key,
         store: (body.store ?? "").slice(0, 200),

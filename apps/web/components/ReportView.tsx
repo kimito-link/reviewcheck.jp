@@ -473,6 +473,32 @@ export function ReportView({
       </section>
 
       {/* 総合改善パッケージへの購入導線（本命アップセル） */}
+      <section className="overflow-hidden rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+        <div className="p-5 sm:p-6">
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-bold text-white">
+              無料ツール
+            </span>
+            <h2 className="text-lg font-bold text-slate-900">
+              口コミを増やす一歩目を、今すぐ
+            </h2>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+            来店されたお客様が
+            <strong className="text-slate-900">タップで答えるだけ</strong>
+            で、自然な口コミの下書きが完成。コピーしてGoogleに貼るだけです。やらせ・サクラは一切なし、ご本人の率直な感想を正しく集めます。
+          </p>
+          <div className="mt-4">
+            <Link
+              href="/review-tool/"
+              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
+            >
+              口コミ作成ツールを試す →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="overflow-hidden rounded-2xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-white">
         <div className="p-5 sm:p-6">
           <div className="flex items-center gap-2">
