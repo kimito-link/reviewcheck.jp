@@ -9,6 +9,7 @@ import { OpportunityLoss } from "./OpportunityLoss";
 import { StickyConsultCta } from "./StickyConsultCta";
 import { SuggestSection } from "./SuggestSection";
 import { ReverseHackPromo } from "./ReverseHackPromo";
+import { ReviewInsights } from "./ReviewInsights";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
   high: { label: "最優先", cls: "bg-red-100 text-red-700" },
@@ -127,7 +128,7 @@ export function ReportView({
                 <span className="text-xs text-slate-500">口コミ数</span>
                 <p className="font-mono text-xl font-extrabold text-slate-900">
                   {store.reviewCount}
-                  <span className="ml-0.5 text-xs font-medium text-slate-400">
+                  <span className="ml-0.5 text-xs font-medium text-slate-500">
                     件
                   </span>
                 </p>
@@ -266,14 +267,14 @@ export function ReportView({
                       </span>
                       <span className="font-mono text-sm text-slate-600">
                         {c.reviewCount}
-                        <span className="ml-0.5 text-xs text-slate-400">件</span>
+                        <span className="ml-0.5 text-xs text-slate-500">件</span>
                       </span>
                     </div>
                   </li>
                 ))}
               </ul>
               {autoCompetitors ? (
-                <p className="mt-2 text-xs text-slate-400">
+                <p className="mt-2 text-xs text-slate-500">
                   ※
                   周辺の同業種から口コミ数の多い順に自動抽出した目安です。対象は手動でも調整できます。
                 </p>
@@ -281,6 +282,11 @@ export function ReportView({
             </div>
           ) : null}
         </section>
+      ) : null}
+
+      {/* マップ口コミの中身分析（代表口コミが取得できた場合のみ） */}
+      {result.reviewAnalysis ? (
+        <ReviewInsights analysis={result.reviewAnalysis} />
       ) : null}
 
       {/* Google検索での見られ方（サジェスト）。実店舗のみ。 */}
@@ -349,7 +355,7 @@ export function ReportView({
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-xs text-slate-400">
+        <p className="mt-3 text-xs text-slate-500">
           ※ Googleの評価は丸め処理・反映タイミングがあるため、件数・期間はあくまで目安です。
         </p>
       </section>

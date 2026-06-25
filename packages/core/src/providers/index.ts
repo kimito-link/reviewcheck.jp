@@ -1,4 +1,5 @@
 import type { Competitor, StoreInput } from "../types/index";
+import type { ReviewItem } from "../reviews/index";
 import {
   GooglePlacesProvider,
   type FetchCompetitorsOptions,
@@ -12,6 +13,7 @@ export {
   GooglePlacesProvider,
   type StoreContext,
   type FetchCompetitorsOptions,
+  type NearbyStore,
 } from "./googlePlaces";
 export { MockStoreProvider } from "./mock";
 
@@ -29,6 +31,8 @@ export interface FetchStoreResult {
   isMock: boolean;
   /** 競合自動検出に使う座標・業種（実プロバイダ取得時のみ） */
   context?: StoreContext;
+  /** Places が返した代表口コミ（口コミ分析に使う。実プロバイダ取得時のみ） */
+  reviews?: ReviewItem[];
 }
 
 export interface FetchStoreOptions {
@@ -60,6 +64,7 @@ export async function fetchStore(
           providers: [provider.name],
           isMock: false,
           context: detailed.context,
+          reviews: detailed.reviews,
         };
       }
       continue;
@@ -75,6 +80,23 @@ export async function fetchStore(
     return { store, providers: [], isMock: true };
   }
   return { store: null, providers: [], isMock: false };
+}
+
+/**
+ * 現在地周辺の店舗候補を取得する（摩擦ゼロの入口）。
+ * 実プロバイダ（Google Places）が有効なときのみ。未接続なら空配列。
+ */
+export async function fetchNearbyStores(
+  lat: number,
+  lng: number,
+  options: { radius?: number; limit?: number } = {},
+): Promise<import("./googlePlaces").NearbyStore[]> {
+  for (const provider of getEnabledProviders()) {
+    if (provider instanceof GooglePlacesProvider) {
+      return provider.searchNearbyStores(lat, lng, options);
+    }
+  }
+  return [];
 }
 
 /**

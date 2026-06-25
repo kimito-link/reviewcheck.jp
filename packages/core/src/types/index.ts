@@ -147,6 +147,11 @@ export interface DiagnosisResult {
   disclaimer: string;
   /** 接続済みデータプロバイダ名（mock時は空） */
   providers: string[];
+  /**
+   * マップ口コミの簡易分析（代表口コミが取得できた場合のみ）。
+   * reportId（input）には含めず、ライブ診断時にAPIが付与する。
+   */
+  reviewAnalysis?: import("../reviews/index").ReviewAnalysis | null;
 }
 
 /** 入力が不正なときに投げる */

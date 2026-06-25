@@ -38,7 +38,7 @@ export function SeoServicePage({ data }: { data: SeoServicePageData }) {
       {/* ヒーロー */}
       <section className="bg-gradient-to-b from-blue-50 to-slate-50 py-12 sm:py-16">
         <Container>
-          <nav className="text-xs text-slate-400">
+          <nav className="text-xs text-slate-500">
             <Link href="/" className="hover:text-blue-600">
               トップ
             </Link>

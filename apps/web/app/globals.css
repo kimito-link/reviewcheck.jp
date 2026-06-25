@@ -45,11 +45,24 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 4rem;
+  /* スマホで横スワイプ時に画面が横へずれる（意図しない横スクロール・
+     横方向のラバーバンド）を防ぐ。clip は position:sticky/fixed を壊さない。 */
+  overflow-x: clip;
+  overscroll-behavior-x: none;
 }
 
 body {
   @apply bg-slate-50 text-slate-900 antialiased;
   font-family: var(--font-sans);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+}
+
+/* 長いURL・英数字の連続などがコンテナを突き破って横にはみ出すのを防ぐ */
+:where(p, li, dd, td) {
+  overflow-wrap: anywhere;
 }
 
 h1,

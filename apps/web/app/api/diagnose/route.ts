@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import {
+  analyzeReviews,
   diagnose,
   fetchCompetitors,
   fetchStore,
   InvalidInputError,
   type Competitor,
+  type ReviewItem,
   type StoreContext,
   type StoreInput,
 } from "@reviewcheck/core";
@@ -48,6 +50,7 @@ async function handle(body: DiagnoseBody) {
   let base: StoreInput | null = null;
   let providers: string[] = [];
   let context: StoreContext | undefined;
+  let reviews: ReviewItem[] = [];
 
   // 1) クエリがあれば実プロバイダで店舗データを取得。
   //    実データが取れず手入力もない場合、デモ指定のときだけ mock を許可する。
@@ -63,6 +66,7 @@ async function handle(body: DiagnoseBody) {
     base = fetched.store;
     providers = fetched.providers;
     context = fetched.context;
+    reviews = fetched.reviews ?? [];
   }
 
   // 2) 実データが取得できず、手入力の星評価もない
@@ -116,6 +120,10 @@ async function handle(body: DiagnoseBody) {
       },
       { providers },
     );
+    // 5) 取得できた代表口コミを簡易分析して付与（共有用IDには含めない）。
+    //    デモ時は雰囲気が伝わるようサンプル口コミで分析を見せる（価値の先出し）。
+    const reviewSource = demo ? DEMO_REVIEWS : reviews;
+    result.reviewAnalysis = analyzeReviews(reviewSource);
     return NextResponse.json(result, { headers: CORS_HEADERS });
   } catch (e) {
     if (e instanceof InvalidInputError) {
@@ -130,6 +138,15 @@ async function handle(body: DiagnoseBody) {
     );
   }
 }
+
+// デモ体験用のサンプル口コミ（「サンプル整体院（デモ）」に対応）。
+const DEMO_REVIEWS: ReviewItem[] = [
+  { rating: 5, text: "先生の施術がとても丁寧で、スタッフの対応も親切でした。説明もわかりやすく安心して通えます。", relativeTime: "2週間前" },
+  { rating: 5, text: "腰痛が楽になりました。院内も清潔で雰囲気が良いです。また行きたいです。", relativeTime: "1か月前" },
+  { rating: 4, text: "技術は満足ですが、人気で予約が取りにくく待ち時間が少し長いのが残念。", relativeTime: "1か月前" },
+  { rating: 2, text: "受付の対応が少し冷たく感じました。料金もやや高い印象です。", relativeTime: "2か月前" },
+  { rating: 5, text: "駐車場があり通いやすいです。リーズナブルでコスパが良いと思います。", relativeTime: "3か月前" },
+];
 
 function stripUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
   const out: Record<string, unknown> = {};

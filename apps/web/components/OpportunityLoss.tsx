@@ -112,7 +112,7 @@ export function OpportunityLoss({
               取りこぼし率を約{(lostRate * 100).toFixed(1)}%、
               取りこぼし客数を月 約{lostCustomers.toFixed(1)}人と仮定しています。
             </p>
-            <p className="text-slate-400">
+            <p className="text-slate-500">
               ※
               実際の集客は立地・業種・季節・広告など多くの要因で変わります。本試算はあくまで概算の目安で、効果を保証するものではありません。
             </p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Competitor, DiagnosisResult } from "@reviewcheck/core";
+import type { Competitor, DiagnosisResult, NearbyStore } from "@reviewcheck/core";
 import { encodeReportId } from "@reviewcheck/core";
 import { SITE, POLICY_NOTE } from "@reviewcheck/config";
 import { ReportView } from "./ReportView";
@@ -10,6 +10,13 @@ interface CompetitorRow {
   name: string;
   rating: string;
   reviewCount: string;
+}
+
+/** 明示的に渡す店舗クエリ（現在地候補のワンタップ診断など） */
+interface PlaceQuery {
+  placeId?: string;
+  text?: string;
+  mapsUrl?: string;
 }
 
 const MAX_ROWS = 5;
@@ -28,6 +35,12 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [result, setResult] = useState<DiagnosisResult | null>(null);
+
+  // 現在地からの店舗候補（摩擦ゼロの入口）
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [nearby, setNearby] = useState<NearbyStore[] | null>(null);
+  const [areaHint, setAreaHint] = useState<string | null>(null);
 
   // /check/#competitors で来たら詳細を開く
   useEffect(() => {
@@ -50,7 +63,57 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
     setCompetitors((rows) => rows.filter((_, idx) => idx !== i));
   }
 
-  function buildPayload(demo = false) {
+  // 現在地から周辺店舗候補を取得（入力ゼロ）。地図URLを貼る/打つ摩擦を消す。
+  function findNearby() {
+    setGeoError(null);
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGeoError("この端末では位置情報を利用できません。店舗名で検索してください。");
+      return;
+    }
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `/api/nearby?lat=${latitude}&lng=${longitude}`,
+            { cache: "no-store" },
+          );
+          const data = await res.json();
+          const stores: NearbyStore[] = Array.isArray(data?.stores)
+            ? data.stores
+            : [];
+          setNearby(stores);
+          setAreaHint(typeof data?.areaHint === "string" ? data.areaHint : null);
+          if (stores.length === 0) {
+            setGeoError(
+              "周辺の店舗候補が見つかりませんでした。店舗名やGoogleマップURLで検索してください。",
+            );
+          }
+        } catch {
+          setGeoError("周辺店舗の取得に失敗しました。店舗名で検索してください。");
+        } finally {
+          setGeoLoading(false);
+        }
+      },
+      () => {
+        setGeoLoading(false);
+        setGeoError(
+          "位置情報の取得が許可されませんでした。店舗名やGoogleマップURLで検索してください。",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  }
+
+  // 現在地候補をワンタップで診断（入力不要）
+  function diagnoseNearby(store: NearbyStore) {
+    setQuery(store.name ?? "");
+    setNearby(null);
+    void run(false, { placeId: store.placeId, text: store.name });
+  }
+
+  function buildPayload(demo = false, place?: PlaceQuery) {
     // 追体験用デモ：順位・競合比較・あと何件・到達期間がすべて出るサンプルを固定で渡す
     if (demo) {
       return {
@@ -84,22 +147,24 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
 
     const q = query.trim();
     const isUrl = /^https?:\/\//i.test(q);
+    // 現在地候補など、明示的に渡された店舗（placeId）があれば最優先で使う
+    const queryField = place
+      ? { placeId: place.placeId, text: place.text, mapsUrl: place.mapsUrl }
+      : { text: isUrl ? undefined : q, mapsUrl: isUrl ? q : undefined };
     return {
       demo,
-      query: demo
-        ? { text: "サンプル整体院（デモ）" }
-        : { text: isUrl ? undefined : q, mapsUrl: isUrl ? q : undefined },
+      query: demo ? { text: "サンプル整体院（デモ）" } : queryField,
       store: Object.keys(storeOverride).length ? storeOverride : undefined,
       competitors: comps,
       targetRating: targetRating.trim() !== "" ? Number(targetRating) : undefined,
     };
   }
 
-  async function run(demo = false) {
+  async function run(demo = false, place?: PlaceQuery) {
     setError(null);
     setNotice(null);
     setResult(null);
-    if (!demo && !query.trim() && rating.trim() === "") {
+    if (!demo && !place && !query.trim() && rating.trim() === "") {
       setError("店舗名またはGoogleマップURLを入力してください（または「デモで試す」）。");
       return;
     }
@@ -108,7 +173,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
       const res = await fetch("/api/diagnose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildPayload(demo)),
+        body: JSON.stringify(buildPayload(demo, place)),
       });
       const data = await res.json();
       // 実データが取得できない場合：架空の数値は出さず、実数値の入力を促す
@@ -166,6 +231,82 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
             {loading ? "診断中…" : "無料で診断する"}
           </button>
         </div>
+
+        {/* 摩擦ゼロの入口：入力せず現在地からワンタップで診断 */}
+        {!result ? (
+          <div className="mt-3">
+            <div className="flex items-center gap-3">
+              <span className="h-px flex-1 bg-slate-200" />
+              <span className="text-xs font-medium text-slate-500">または</span>
+              <span className="h-px flex-1 bg-slate-200" />
+            </div>
+            <button
+              type="button"
+              onClick={findNearby}
+              disabled={geoLoading || loading}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-800 transition hover:border-blue-400 hover:text-blue-700 disabled:opacity-60 sm:w-auto"
+            >
+              <span aria-hidden>📍</span>
+              {geoLoading ? "現在地を確認中…" : "現在地からお店を探す（入力不要）"}
+            </button>
+
+            {geoError ? (
+              <p className="mt-2 text-xs text-amber-700">{geoError}</p>
+            ) : null}
+
+            {nearby && nearby.length > 0 ? (
+              <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50/50 p-3">
+                <p className="text-xs font-bold text-slate-700">
+                  現在地周辺{areaHint ? `（${areaHint}付近）` : ""}のお店
+                  <span className="ml-1 font-normal text-slate-500">
+                    ／ タップで診断
+                  </span>
+                </p>
+                <ul className="mt-2 max-h-72 space-y-1.5 overflow-y-auto">
+                  {nearby.map((s) => (
+                    <li key={s.placeId}>
+                      <button
+                        type="button"
+                        onClick={() => diagnoseNearby(s)}
+                        disabled={loading}
+                        className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-blue-400 hover:bg-blue-50 disabled:opacity-60"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-bold text-slate-900">
+                            {s.name ?? "店舗"}
+                          </span>
+                          {s.category ? (
+                            <span className="block truncate text-xs text-slate-500">
+                              {s.category}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-3">
+                          {typeof s.rating === "number" ? (
+                            <span className="text-xs font-bold text-slate-700">
+                              ★{s.rating.toFixed(1)}
+                            </span>
+                          ) : null}
+                          {typeof s.reviewCount === "number" ? (
+                            <span className="font-mono text-xs text-slate-500">
+                              {s.reviewCount}件
+                            </span>
+                          ) : null}
+                          <span className="text-blue-600" aria-hidden>
+                            ›
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-[11px] text-slate-500">
+                  ※ 位置情報はお店候補の表示にのみ使用し、保存しません。
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {/* 追体験：入力前に結果イメージを体験してもらい、入力ハードルを下げる */}
         {!result ? (
@@ -325,7 +466,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
                       type="button"
                       onClick={() => removeCompetitor(i)}
                       aria-label="削除"
-                      className="col-span-1 text-slate-400 hover:text-red-500"
+                      className="col-span-1 text-slate-500 hover:text-red-500"
                     >
                       ×
                     </button>
@@ -361,7 +502,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
           </div>
         ) : null}
 
-        <p className="mt-3 text-xs text-slate-400">{POLICY_NOTE}</p>
+        <p className="mt-3 text-xs text-slate-500">{POLICY_NOTE}</p>
       </form>
 
       {loading ? <LoadingCard /> : null}
@@ -386,7 +527,7 @@ function LoadingCard() {
       <p className="text-sm font-medium text-slate-600">
         口コミの状態を診断しています…
       </p>
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-500">
         星評価・口コミ数・競合との差・選ばれやすさスコアを計算中
       </p>
     </div>

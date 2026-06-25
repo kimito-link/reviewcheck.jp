@@ -54,7 +54,7 @@ export default function PrivacyPage() {
             本ポリシーに関するお問い合わせは、{SITE.contactEmail} または当サイトの相談・お問い合わせ窓口までご連絡ください。
           </p>
         </section>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500">
           ※本ポリシーは草案です。実運用に合わせて加筆・修正してください。
         </p>
       </div>

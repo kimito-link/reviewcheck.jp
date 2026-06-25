@@ -37,7 +37,7 @@ export function StickyConsultCta({ storeName }: { storeName?: string }) {
           type="button"
           onClick={() => setClosed(true)}
           aria-label="閉じる"
-          className="shrink-0 rounded-lg p-1 text-slate-400 hover:text-slate-600"
+          className="shrink-0 rounded-lg p-1 text-slate-500 hover:text-slate-600"
         >
           ×
         </button>

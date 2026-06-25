@@ -1,4 +1,5 @@
 import type { Competitor, StoreInput } from "../types/index";
+import type { ReviewItem } from "../reviews/index";
 import { parseMapsUrl, isShortMapsUrl, looksLikeUrl } from "../utils/mapsUrl";
 import { normalizeRating, toCount } from "../utils/number";
 import type { StoreDataProvider, StoreQuery } from "./types";
@@ -49,10 +50,14 @@ export class GooglePlacesProvider implements StoreDataProvider {
     return detailed?.store ?? null;
   }
 
-  /** 店舗本体＋座標・業種（競合検索の起点）をまとめて取得 */
+  /** 店舗本体＋座標・業種（競合検索の起点）＋代表口コミをまとめて取得 */
   async fetchStoreDetailed(
     query: StoreQuery,
-  ): Promise<{ store: StoreInput; context: StoreContext } | null> {
+  ): Promise<{
+    store: StoreInput;
+    context: StoreContext;
+    reviews: ReviewItem[];
+  } | null> {
     const key = this.apiKey;
     if (!key) return null;
     try {
@@ -133,6 +138,69 @@ export class GooglePlacesProvider implements StoreDataProvider {
           reviewCount: toCount(p.userRatingCount ?? 0),
           mapsUrl: p.googleMapsUri,
           placeId: p.id,
+        }));
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * 現在地周辺の店舗候補を取得する（摩擦ゼロの入口用）。
+   * ユーザーが店名やURLを入力しなくても、近い順に候補を出してワンタップ診断につなげる。
+   * 1回の searchNearby で各店舗の評価・口コミ数まで取得（追加リクエストなし）。
+   */
+  async searchNearbyStores(
+    lat: number,
+    lng: number,
+    options: { radius?: number; limit?: number } = {},
+  ): Promise<NearbyStore[]> {
+    const key = this.apiKey;
+    if (!key) return [];
+    if (typeof lat !== "number" || typeof lng !== "number") return [];
+
+    const radius = options.radius ?? 500;
+    const limit = options.limit ?? 12;
+
+    try {
+      const res = await fetch(
+        "https://places.googleapis.com/v1/places:searchNearby",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": key,
+            "X-Goog-FieldMask":
+              "places.id,places.displayName,places.rating,places.userRatingCount,places.primaryTypeDisplayName,places.formattedAddress,places.googleMapsUri",
+          },
+          body: JSON.stringify({
+            maxResultCount: 20,
+            // 現在地に近い順（自分の店を見つけやすくする）
+            rankPreference: "DISTANCE",
+            languageCode: "ja",
+            regionCode: "JP",
+            locationRestriction: {
+              circle: { center: { latitude: lat, longitude: lng }, radius },
+            },
+          }),
+        },
+      );
+      if (!res.ok) return [];
+      const data = (await res.json()) as { places?: NearbyDetailPlace[] };
+      return (data.places ?? [])
+        .filter((p) => p.id)
+        .slice(0, limit)
+        .map((p) => ({
+          placeId: p.id as string,
+          name: p.displayName?.text,
+          rating:
+            typeof p.rating === "number" ? normalizeRating(p.rating) : undefined,
+          reviewCount:
+            typeof p.userRatingCount === "number"
+              ? toCount(p.userRatingCount)
+              : undefined,
+          category: p.primaryTypeDisplayName?.text,
+          address: p.formattedAddress,
+          mapsUrl: p.googleMapsUri,
         }));
     } catch {
       return [];
@@ -234,11 +302,15 @@ export class GooglePlacesProvider implements StoreDataProvider {
     }
   }
 
-  /** Place Details を取得して StoreInput＋座標・業種に変換 */
+  /** Place Details を取得して StoreInput＋座標・業種＋代表口コミに変換 */
   private async fetchDetails(
     placeId: string,
     key: string,
-  ): Promise<{ store: StoreInput; context: StoreContext } | null> {
+  ): Promise<{
+    store: StoreInput;
+    context: StoreContext;
+    reviews: ReviewItem[];
+  } | null> {
     const fields = [
       "id",
       "displayName",
@@ -252,10 +324,14 @@ export class GooglePlacesProvider implements StoreDataProvider {
       "googleMapsUri",
       "regularOpeningHours",
       "location",
+      // 代表口コミ（最大5件程度）。口コミ分析に使う。
+      "reviews",
     ].join(",");
 
+    // languageCode=ja を付けないと displayName / primaryTypeDisplayName が英語で返る
+    // （例: "Ramen restaurant"）。カテゴリ等を日本語にするため必須。
     const res = await fetch(
-      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=ja&regionCode=JP`,
       {
         headers: {
           "X-Goog-Api-Key": key,
@@ -291,7 +367,16 @@ export class GooglePlacesProvider implements StoreDataProvider {
       placeId: p.id ?? placeId,
     };
 
-    return { store, context };
+    const reviews: ReviewItem[] = (p.reviews ?? [])
+      .map((r) => ({
+        rating: typeof r.rating === "number" ? r.rating : undefined,
+        text: r.text?.text ?? r.originalText?.text,
+        authorName: r.authorAttribution?.displayName,
+        relativeTime: r.relativePublishTimeDescription,
+      }))
+      .filter((r) => typeof r.rating === "number" || (r.text && r.text.trim() !== ""));
+
+    return { store, context, reviews };
   }
 }
 
@@ -308,6 +393,16 @@ interface PlaceDetails {
   googleMapsUri?: string;
   regularOpeningHours?: unknown;
   location?: { latitude?: number; longitude?: number };
+  reviews?: PlaceReview[];
+}
+
+interface PlaceReview {
+  rating?: number;
+  text?: { text?: string; languageCode?: string };
+  originalText?: { text?: string; languageCode?: string };
+  authorAttribution?: { displayName?: string };
+  relativePublishTimeDescription?: string;
+  publishTime?: string;
 }
 
 interface NearbyPlace {
@@ -316,6 +411,22 @@ interface NearbyPlace {
   rating?: number;
   userRatingCount?: number;
   googleMapsUri?: string;
+}
+
+interface NearbyDetailPlace extends NearbyPlace {
+  primaryTypeDisplayName?: { text?: string };
+  formattedAddress?: string;
+}
+
+/** 現在地周辺の店舗候補（摩擦ゼロ入口用） */
+export interface NearbyStore {
+  placeId: string;
+  name?: string;
+  rating?: number;
+  reviewCount?: number;
+  category?: string;
+  address?: string;
+  mapsUrl?: string;
 }
 
 /**

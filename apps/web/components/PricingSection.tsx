@@ -13,7 +13,7 @@ export function PricingSection() {
             <p className="mt-2 text-2xl font-extrabold text-blue-700">
               {p.price}
               {p.priceNote ? (
-                <span className="ml-1 text-xs font-medium text-slate-400">
+                <span className="ml-1 text-xs font-medium text-slate-500">
                   {p.priceNote}
                 </span>
               ) : null}
@@ -24,7 +24,7 @@ export function PricingSection() {
           </div>
         ))}
       </div>
-      <p className="mt-4 text-xs text-slate-400">{PRICING_NOTE}</p>
+      <p className="mt-4 text-xs text-slate-500">{PRICING_NOTE}</p>
     </div>
   );
 }

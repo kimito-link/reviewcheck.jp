@@ -62,7 +62,7 @@ export function ContactForm() {
                 （レポートの送付先）
               </span>
             ) : (
-              <span className="ml-1 text-xs font-normal text-slate-400">
+              <span className="ml-1 text-xs font-normal text-slate-500">
                 （任意）
               </span>
             )}
@@ -93,7 +93,7 @@ export function ContactForm() {
         >
           {isMonitoring ? "この内容で申し込む" : "メールで相談する"}
         </a>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500">
           ボタンを押すとメールソフトが開きます。LINEでのご相談も歓迎です（画面右下・ヘッダーのLINEボタン）。直接 {SITE.contactEmail} 宛にご連絡いただいても構いません。
         </p>
       </div>

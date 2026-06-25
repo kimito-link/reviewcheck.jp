@@ -146,7 +146,7 @@ export function SuggestSection({
           </div>
         )}
 
-        <p className="mt-3 text-xs text-slate-400">
+        <p className="mt-3 text-xs text-slate-500">
           ※
           表示はGoogleが実際に返した候補のみです。地域・端末・検索履歴により表示は変わります。候補の有無は時期によって変動します。
         </p>

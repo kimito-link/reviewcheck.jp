@@ -26,7 +26,7 @@ export default function ContactPage() {
         <LineCtaButton size="lg" />
       </div>
       <div className="mt-8 max-w-2xl">
-        <Suspense fallback={<div className="text-slate-400">読み込み中…</div>}>
+        <Suspense fallback={<div className="text-slate-500">読み込み中…</div>}>
           <ContactForm />
         </Suspense>
         <div className="mt-6">

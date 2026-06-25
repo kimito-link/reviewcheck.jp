@@ -12,10 +12,14 @@ const MARK = join(ROOT, "apps/web/public/brand/reversehack-logo.png");
 
 const WHITE = { r: 255, g: 255, b: 255, alpha: 1 };
 
+// 元ロゴ(2268x2268)は横長の全ロゴ（鮫＋炎＋ワードマーク楕円）で、小サイズだと
+// 鮫が潰れて読めない。鮫の顔にフォーカスした正方形領域だけを切り出してアイコン化する。
+const SHARK_CROP = { left: 910, top: 600, width: 640, height: 640 };
+
 async function emit(size, outPath) {
   mkdirSync(dirname(outPath), { recursive: true });
   await sharp(MARK)
-    .trim({ threshold: 25 })
+    .extract(SHARK_CROP)
     .resize(size, size, { fit: "contain", background: WHITE })
     .flatten({ background: WHITE })
     .png()

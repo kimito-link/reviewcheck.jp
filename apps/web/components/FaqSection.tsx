@@ -11,7 +11,7 @@ export function FaqSection({ items }: { items: FaqItem[] }) {
             {f.question}
           </summary>
           <p className="mt-3 text-sm leading-relaxed text-slate-700">
-            <span className="mr-2 font-bold text-slate-400">A.</span>
+            <span className="mr-2 font-bold text-slate-500">A.</span>
             {f.answer}
           </p>
         </details>

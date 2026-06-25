@@ -48,7 +48,7 @@ export function Footer() {
         <p className="mt-10 rounded-lg bg-white/5 p-4 text-xs leading-relaxed text-slate-400">
           {DISCLAIMER}
         </p>
-        <p className="mt-6 text-xs text-slate-500">
+        <p className="mt-6 text-xs text-slate-400">
           © {new Date().getFullYear()} リバースハック（reverse-Re:birth hack） /{" "}
           {SITE.name}
         </p>

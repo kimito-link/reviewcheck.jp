@@ -44,7 +44,7 @@ export default function TermsPage() {
             本規約は予告なく変更されることがあります。変更後の規約は本ページに掲載した時点で効力を生じます。
           </p>
         </section>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500">
           ※本規約は草案です。実運用に合わせて加筆・修正してください。
         </p>
       </div>
