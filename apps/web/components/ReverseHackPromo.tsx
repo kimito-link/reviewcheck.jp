@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 /**
  * 二次導線：同チーム「リバースハック WEB健康診断」への送客カード。
@@ -89,6 +90,18 @@ export function ReverseHackPromo() {
             </a>
           ) : null}
         </div>
+
+        {/* 呼び戻し導線：サイト健康が気になる層を、月額の総合パッケージ(Pro)へ回収 */}
+        <p className="mt-4 rounded-xl bg-white p-3 text-xs leading-relaxed text-slate-600 ring-1 ring-slate-200">
+          口コミもサイトも、まとめてプロに任せたい方は{" "}
+          <Link
+            href="/plans/"
+            className="font-bold text-blue-600 hover:underline"
+          >
+            総合改善パッケージ（Pro）
+          </Link>
+          へ。口コミ獲得・MEO・サジェスト対策・公式WEB改善まで、月額でまるごと伴走します。
+        </p>
       </div>
     </section>
   );
