@@ -49,15 +49,19 @@ export function ReverseHackPromo() {
             関連ツール
           </span>
           <h2 className="text-base font-bold text-slate-900 sm:text-lg">
-            口コミは「表面」。風評・Webの根っこまで1分で。
+            口コミは「表面」。サイトの健康と風評の根っこまで1分で。
           </h2>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-slate-700">
-          会社名・ドメインを入れるだけで、検索の悪評
+          会社名・サイトURLを入れるだけで、
+          <strong className="text-slate-900">
+            サイトの健康（セキュリティ・表示速度・SEO対策）
+          </strong>
+          に加え、検索の悪評
           <span className="whitespace-nowrap">（サジェスト）</span>
-          ・SSL・メールなりすまし対策・情報漏えいリスクまで、
+          ・SSL・メールなりすまし対策・情報漏えいリスクまで
           <strong className="text-slate-900">まとめて無料診断</strong>。
-          口コミ改善と並行して「検索での見られ方」も守れます。
+          口コミ改善と並行して「サイトと検索での見られ方」も守れます。
         </p>
         <p className="mt-1 text-xs text-slate-500">
           運営：リバースハック（口コミチェック.jp と同チーム）／登録不要・約1分
