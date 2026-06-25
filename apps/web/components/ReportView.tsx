@@ -9,6 +9,7 @@ import { OpportunityLoss } from "./OpportunityLoss";
 import { StickyConsultCta } from "./StickyConsultCta";
 import { SuggestSection } from "./SuggestSection";
 import { ReverseHackPromo } from "./ReverseHackPromo";
+import { WebHealthCheckPromo } from "./WebHealthCheckPromo";
 import { ReviewInsights } from "./ReviewInsights";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
@@ -548,6 +549,9 @@ export function ReportView({
 
       {/* 二次導線：同チーム「リバースハック WEB健康診断」へ（本命CTAの後ろに配置） */}
       <ReverseHackPromo />
+
+      {/* 関連ツール：サイトURLで健康診断（君斗りんく WEBサイト健康診断 / web-health-check.link） */}
+      <WebHealthCheckPromo />
 
       <Disclaimer />
 
