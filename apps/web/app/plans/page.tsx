@@ -4,6 +4,7 @@ import { PACKAGE_ITEMS } from "@reviewcheck/config";
 import { Container } from "@/components/Container";
 import { Section } from "@/components/Section";
 import { PlanCards } from "@/components/PlanCards";
+import { CrossSellGrid } from "@/components/CrossSellGrid";
 import { Disclaimer } from "@/components/Disclaimer";
 import { LineCtaButton } from "@/components/LineCtaButton";
 import { TrustBadges } from "@/components/TrustBadges";
@@ -270,6 +271,53 @@ export default function PlansPage() {
             </li>
           ))}
         </ol>
+      </Section>
+
+      {/* 納品物・進め方（運用の見える化） */}
+      <Section
+        title="毎月の「納品物」がはっきりしているから、続けやすい。"
+        lead="やりっぱなしにしません。実施した施策と成果を、毎月レポートでお渡しします。"
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="text-2xl">🗒️</div>
+            <h3 className="mt-2 text-base font-bold text-slate-900">
+              月次の完了レポート
+            </h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+              その月に実施した施策（口コミ獲得導線・返信・MEO・サジェスト等）と、★評価・口コミ数・順位の推移をまとめてお渡しします。
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="text-2xl">📸</div>
+            <h3 className="mt-2 text-base font-bold text-slate-900">
+              取得できた口コミの記録
+            </h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+              施策によって新たに投稿された口コミは、スクリーンショット等で「見える化」して記録。成果が一目で分かります。
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="text-2xl">💬</div>
+            <h3 className="mt-2 text-base font-bold text-slate-900">
+              LINEでいつでも相談
+            </h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+              レポートはLINE／メールで納品。次の一手の相談も、契約中はいつでも承ります。
+            </p>
+          </div>
+        </div>
+        <p className="mt-4 text-xs leading-relaxed text-slate-500">
+          ※ 口コミは実際にご利用いただいたお客様による正規の投稿に限ります。やらせ・サクラ・口コミ購入は行いません。投稿数や★評価の増加・検索順位は保証するものではありません。
+        </p>
+      </Section>
+
+      {/* クロスセル：関連サービス */}
+      <Section tone="muted" title="">
+        <CrossSellGrid
+          heading="あわせて整えると効果的なサービス"
+          intro="口コミ改善を軸に、集客の入口（MEO・サイト・SNS）までまとめて整えられます。"
+        />
       </Section>
 
       {/* FAQ */}

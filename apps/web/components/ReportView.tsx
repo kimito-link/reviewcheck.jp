@@ -9,6 +9,7 @@ import { OpportunityLoss } from "./OpportunityLoss";
 import { StickyConsultCta } from "./StickyConsultCta";
 import { SuggestSection } from "./SuggestSection";
 import { ReverseHackPromo } from "./ReverseHackPromo";
+import { CrossSellGrid } from "./CrossSellGrid";
 import { ReviewInsights } from "./ReviewInsights";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
@@ -75,6 +76,26 @@ export function ReportView({
   const monitoringHref = storeQuery
     ? `${CTAS.monitoring.href}&store=${encodeURIComponent(storeQuery)}`
     : CTAS.monitoring.href;
+
+  // スコア帯に応じた「次の一手」レコメンド（転換率＝LTV向上の主訴求）
+  const nextStep =
+    result.score < 60
+      ? {
+          tone: "urgent" as const,
+          headline: "競合に差をつけられています。今が立て直しのタイミングです。",
+          line: "口コミ数・星評価の差は、放置するほど広がります。月額パッケージで“口コミが自然に増える仕組み”を入れるのが最短の近道です。",
+        }
+      : result.score < 80
+        ? {
+            tone: "boost" as const,
+            headline: "あと一歩で「選ばれる」状態。仕組み化で一気に伸ばせます。",
+            line: "獲得導線（タップ式ツール・QR・LINE）と返信運用を整えれば、今の評価を加速できます。",
+          }
+        : {
+            tone: "keep" as const,
+            headline: "良い状態です。あとは“競合に抜かれない”仕組みづくり。",
+            line: "継続的な口コミ獲得とモニタリングで、選ばれ続けるお店をキープしましょう。",
+          };
 
   return (
     <div className="space-y-8 pb-24">
@@ -509,7 +530,15 @@ export function ReportView({
               口コミも検索も、まるごと改善するなら
             </h2>
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+          <div className="mt-3 rounded-xl border border-amber-200 bg-white/70 p-3">
+            <p className="text-sm font-bold text-slate-900">
+              {nextStep.headline}
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-700">
+              {nextStep.line}
+            </p>
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-slate-700">
             「消す」より「上げる」。AI口コミ対策・提携弁護士の窓口・口コミ獲得ツール・公式WEB/LINE/アプリまで、
             <strong className="text-slate-900">月額パッケージ</strong>
             で「選ばれ続けるお店」をつくります。WEB・LINE・アプリは契約中ずっと無料提供。
@@ -545,6 +574,9 @@ export function ReportView({
           <ConsultCtaGrid />
         </div>
       </section>
+
+      {/* クロスセル：関連サービス（MEO/HP/SNS/サジェスト/返信）への紹介導線 */}
+      <CrossSellGrid />
 
       {/* 二次導線：同チーム「リバースハック WEB健康診断」へ（本命CTAの後ろに配置） */}
       <ReverseHackPromo />

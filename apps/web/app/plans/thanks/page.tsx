@@ -27,6 +27,9 @@ export default function ThanksPage() {
           決済が完了しました。担当より2営業日以内に、初期ヒアリングと基盤づくり（公式WEB・LINE・アプリ等）の進め方をご連絡します。
           お急ぎの場合はLINEからもご連絡いただけます。
         </p>
+        <p className="mx-auto mt-4 max-w-md rounded-xl bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
+          毎月、実施した施策と★評価・口コミ数の推移を「完了レポート」（取得できた口コミのスクリーンショット含む）にまとめ、LINE／メールでお渡しします。
+        </p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <LineCtaButton size="lg" text="LINEで担当に連絡する" />
           <Link

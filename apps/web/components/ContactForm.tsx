@@ -15,6 +15,8 @@ const TOPICS: Record<string, string> = {
   consult: "15分の無料相談",
   monitoring: "月次モニタリングのお申し込み",
   suggest: "サジェスト（検索候補）対策のご相談",
+  web: "ホームページ制作・改善のご相談",
+  sns: "SNS運用・集客のご相談",
   // 総合改善パッケージ（プラン）の申し込み・相談
   ...PLAN_TOPIC_LABELS,
 };

@@ -5,3 +5,4 @@ export * from "./plans";
 export * from "./navigation";
 export * from "./faq";
 export * from "./reviewTool";
+export * from "./crossSell";
