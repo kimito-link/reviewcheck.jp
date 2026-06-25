@@ -205,6 +205,22 @@ export default function HomePage() {
       {/* 価格 */}
       <Section id="pricing" title="料金の目安">
         <PricingSection />
+        <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border-2 border-amber-300 bg-amber-50 p-6 text-center sm:flex-row sm:justify-between sm:text-left">
+          <div>
+            <p className="text-base font-bold text-slate-900">
+              口コミも検索も、まるごとお任せしたい方へ
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              AI口コミ対策・口コミ獲得ツール・公式WEB/LINE/アプリまで含む月額の総合パッケージ（3プラン）もご用意しています。
+            </p>
+          </div>
+          <Link
+            href="/plans/"
+            className="inline-flex shrink-0 rounded-lg bg-amber-500 px-6 py-3.5 text-base font-bold text-white transition hover:bg-amber-600"
+          >
+            総合パッケージ・料金を見る
+          </Link>
+        </div>
       </Section>
 
       {/* 注意事項 */}

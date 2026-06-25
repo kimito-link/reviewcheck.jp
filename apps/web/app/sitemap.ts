@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/review-reply/",
     "/bad-review-measures/",
     "/competitor-review-comparison/",
+    "/plans/",
     "/contact/",
     "/privacy/",
     "/terms/",

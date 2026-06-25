@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { SITE } from "@reviewcheck/config";
+import { SITE, PLAN_TOPIC_LABELS } from "@reviewcheck/config";
 
 const TOPICS: Record<string, string> = {
   improvement: "Google口コミ改善のご相談",
@@ -15,6 +15,8 @@ const TOPICS: Record<string, string> = {
   consult: "15分の無料相談",
   monitoring: "月次モニタリングのお申し込み",
   suggest: "サジェスト（検索候補）対策のご相談",
+  // 総合改善パッケージ（プラン）の申し込み・相談
+  ...PLAN_TOPIC_LABELS,
 };
 
 export function ContactForm() {
@@ -22,6 +24,7 @@ export function ContactForm() {
   const topicKey = params.get("topic") ?? "";
   const topicLabel = TOPICS[topicKey] ?? "お問い合わせ";
   const isMonitoring = topicKey === "monitoring";
+  const isApply = isMonitoring || topicKey.startsWith("plan-");
 
   const [store, setStore] = useState(params.get("store") ?? "");
   const [email, setEmail] = useState("");
@@ -91,7 +94,7 @@ export function ContactForm() {
           href={mailto}
           className="inline-flex w-full items-center justify-center rounded-xl bg-cta px-6 py-3.5 text-base font-bold text-white hover:bg-cta-strong"
         >
-          {isMonitoring ? "この内容で申し込む" : "メールで相談する"}
+          {isApply ? "この内容で申し込む" : "メールで相談する"}
         </a>
         <p className="text-xs text-slate-500">
           ボタンを押すとメールソフトが開きます。LINEでのご相談も歓迎です（画面右下・ヘッダーのLINEボタン）。直接 {SITE.contactEmail} 宛にご連絡いただいても構いません。

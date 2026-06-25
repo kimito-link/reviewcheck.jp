@@ -9,7 +9,7 @@ export const MAIN_NAV: NavLink[] = [
   { label: "Google口コミ診断", href: "/google-review-check/" },
   { label: "口コミ改善", href: "/review-improvement/" },
   { label: "MEO対策", href: "/meo/" },
-  { label: "悪い口コミ対策", href: "/bad-review-measures/" },
+  { label: "総合パッケージ・料金", href: "/plans/" },
 ];
 
 /** トップから内部リンクする主要ページ（内部リンク設計） */
@@ -21,6 +21,7 @@ export const INTERNAL_LINKS: NavLink[] = [
   { label: "口コミ返信サポート", href: "/review-reply/" },
   { label: "悪い口コミ対策", href: "/bad-review-measures/" },
   { label: "競合口コミ比較", href: "/competitor-review-comparison/" },
+  { label: "総合改善パッケージ・料金", href: "/plans/" },
   { label: "改善を相談する", href: "/contact/?topic=improvement" },
 ];
 
@@ -44,8 +45,9 @@ export const FOOTER_LINKS: { heading: string; links: NavLink[] }[] = [
     ],
   },
   {
-    heading: "相談",
+    heading: "相談・お申し込み",
     links: [
+      { label: "総合改善パッケージ・料金", href: "/plans/" },
       { label: "口コミ改善を相談する", href: "/contact/?topic=improvement" },
       { label: "MEO対策を相談する", href: "/contact/?topic=meo" },
       { label: "詳細レポートを依頼する", href: "/contact/?topic=report" },

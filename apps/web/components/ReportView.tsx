@@ -472,6 +472,39 @@ export function ReportView({
         </div>
       </section>
 
+      {/* 総合改善パッケージへの購入導線（本命アップセル） */}
+      <section className="overflow-hidden rounded-2xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-white">
+        <div className="p-5 sm:p-6">
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-bold text-white">
+              総合パッケージ
+            </span>
+            <h2 className="text-lg font-bold text-slate-900">
+              口コミも検索も、まるごと改善するなら
+            </h2>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+            「消す」より「上げる」。AI口コミ対策・提携弁護士の窓口・口コミ獲得ツール・公式WEB/LINE/アプリまで、
+            <strong className="text-slate-900">月額パッケージ</strong>
+            で「選ばれ続けるお店」をつくります。WEB・LINE・アプリは契約中ずっと無料提供。
+          </p>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <Link
+              href="/plans/"
+              className="inline-flex items-center justify-center rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-amber-600"
+            >
+              総合パッケージ・料金を見る
+            </Link>
+            <Link
+              href="/plans/#pricing"
+              className="inline-flex items-center justify-center rounded-xl border border-amber-400 bg-white px-5 py-3 text-sm font-bold text-amber-700 transition hover:bg-amber-50"
+            >
+              3つの料金プランを比較
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {shareUrl ? <ShareReport url={shareUrl} /> : null}
 
       {/* 相談導線 */}
