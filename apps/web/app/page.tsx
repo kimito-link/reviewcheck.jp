@@ -57,6 +57,72 @@ const STEPS = [
   { title: "改善を相談", desc: "口コミ改善・返信・MEO対策を正当な方法でサポート。" },
 ];
 
+const WEB_HEALTH_URL = "https://app.reverse-re-birth-hack.com/";
+
+interface FeatureCard {
+  icon: string;
+  title: string;
+  desc: string;
+  href: string;
+  external?: boolean;
+  badge?: string;
+}
+
+const FEATURES: FeatureCard[] = [
+  {
+    icon: "🔍",
+    title: "無料で口コミ診断",
+    desc: "星評価・口コミ数・競合との差・「あと何件で追いつけるか」を30秒で。",
+    href: "/check/",
+    badge: "まずはココ",
+  },
+  {
+    icon: "🧭",
+    title: "使い方を追体験",
+    desc: "診断 → 結果の見方 → 改善 → 申込までを、実際の画面つきで①→⑤で確認。",
+    href: "/walkthrough/",
+    badge: "はじめての方へ",
+  },
+  {
+    icon: "💬",
+    title: "サジェスト診断",
+    desc: "検索の予測候補（サジェスト）に悪い言葉が出ていないかチェック。診断結果に表示されます。",
+    href: "/check/",
+  },
+  {
+    icon: "📊",
+    title: "競合と比較",
+    desc: "周辺店舗との順位・星評価・口コミ数の差を見える化します。",
+    href: "/check/#competitors",
+  },
+  {
+    icon: "✍️",
+    title: "口コミ作成ツール",
+    desc: "お客様はタップするだけで口コミの下書きが完成。やらせ・購入はしません。",
+    href: "/review-tool/",
+  },
+  {
+    icon: "🩺",
+    title: "WEBサイト健康診断",
+    desc: "DNS・SSL・表示速度・SEO・なりすまし対策まで無料チェック（同チームの関連ツール）。",
+    href: WEB_HEALTH_URL,
+    external: true,
+    badge: "関連ツール",
+  },
+  {
+    icon: "⭐",
+    title: "口コミ改善・MEO・悪評対策",
+    desc: "レビュー返信方針・Googleビジネスプロフィール改善・悪い口コミ対策をサポート。",
+    href: "/review-improvement/",
+  },
+  {
+    icon: "🧩",
+    title: "料金・申込（総合パッケージ）",
+    desc: "口コミ獲得・WEB/LINE/アプリ・AI/弁護士窓口まで、月額でまるごとお任せ。",
+    href: "/plans/",
+  },
+];
+
 export default function HomePage() {
   return (
     <>
@@ -97,6 +163,58 @@ export default function HomePage() {
           </div>
         </Container>
       </section>
+
+      {/* できること（機能一覧・導線の見える化） */}
+      <Section
+        title="このサイトでできること"
+        lead="探さなくて大丈夫。主な機能はここから直接ひらけます。"
+        tone="muted"
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {FEATURES.map((f) => {
+            const inner = (
+              <>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-slate-100 text-2xl">
+                    {f.icon}
+                  </span>
+                  {f.badge ? (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+                      {f.badge}
+                    </span>
+                  ) : null}
+                </div>
+                <h3 className="mt-3 text-base font-bold text-slate-900">
+                  {f.title}
+                  {f.external ? (
+                    <span className="ml-1 text-xs font-normal text-slate-400">↗</span>
+                  ) : null}
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                  {f.desc}
+                </p>
+              </>
+            );
+            const cls =
+              "flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md";
+            return f.external ? (
+              <a
+                key={f.title}
+                href={f.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cls}
+              >
+                {inner}
+              </a>
+            ) : (
+              <Link key={f.title} href={f.href} className={cls}>
+                {inner}
+              </Link>
+            );
+          })}
+        </div>
+      </Section>
 
       {/* 口コミチェックとは（SEO向け概要） */}
       <Section title="口コミチェック.jpとは">

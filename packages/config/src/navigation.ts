@@ -5,11 +5,12 @@ export interface NavLink {
 
 /** ヘッダー・主要導線 */
 export const MAIN_NAV: NavLink[] = [
+  { label: "使い方", href: "/walkthrough/" },
   { label: "口コミ診断", href: "/check/" },
   { label: "口コミ作成ツール", href: "/review-tool/" },
   { label: "口コミ改善", href: "/review-improvement/" },
   { label: "MEO対策", href: "/meo/" },
-  { label: "総合パッケージ・料金", href: "/plans/" },
+  { label: "料金・申込", href: "/plans/" },
 ];
 
 /** トップから内部リンクする主要ページ（内部リンク設計） */
