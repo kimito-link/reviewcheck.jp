@@ -72,11 +72,15 @@ async function handle(body: DiagnoseBody) {
   // 2) 実データが取得できず、手入力の星評価もない
   //    → 架空の数値は出さず、実数値の入力を促す（正直な診断）。
   if (!base && !hasManualRating) {
+    // クエリ種別に応じて、原因が伝わる正確なメッセージを返す（“準備中”という誤解を避ける）。
+    const triedMapsUrl = Boolean(query.mapsUrl?.trim());
+    const message = triedMapsUrl
+      ? "このURLからはお店を特定できませんでした。Googleマップでお店を開いた際のURL（maps.app.goo.gl/… や maps.google.com/…）を貼り付けるか、店舗名（例：渋谷 ○○整体院）で検索してください。Googleマップ以外のURLには対応していません。"
+      : "お店を特定できませんでした。店舗名（例：渋谷 ○○整体院）またはGoogleマップの店舗URLで入力してください。すぐに診断したい場合は、下に星評価・口コミ数を入力して「この条件で再診断する」を押してください。";
     return NextResponse.json(
       {
         needsManualInput: true,
-        message:
-          "自動取得は現在準備中です。正確に診断するため、Googleマップに表示されている星評価と口コミ数を入力してください。",
+        message,
         storeNameGuess: query.text?.trim() || null,
         mapsUrl: query.mapsUrl?.trim() || null,
       },
