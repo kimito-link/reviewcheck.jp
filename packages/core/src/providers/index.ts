@@ -1,5 +1,6 @@
 import type { Competitor, StoreInput } from "../types/index";
 import type { ReviewItem } from "../reviews/index";
+import { TtlCache } from "../cache/index";
 import {
   GooglePlacesProvider,
   type FetchCompetitorsOptions,
@@ -7,6 +8,24 @@ import {
 } from "./googlePlaces";
 import { MockStoreProvider } from "./mock";
 import type { StoreDataProvider, StoreQuery } from "./types";
+
+/** 取得済み店舗詳細の短時間キャッシュ（再診断ループでのSKU払い直し・待ち時間を防ぐ）。 */
+type DetailedStore = {
+  store: StoreInput;
+  context: StoreContext;
+  reviews: ReviewItem[];
+};
+const TTL_MS = 30 * 60 * 1000; // 30分
+const storeCache = new TtlCache<DetailedStore>(TTL_MS);
+const competitorsCache = new TtlCache<Competitor[]>(TTL_MS);
+
+function storeCacheKey(q: StoreQuery): string {
+  return [
+    (q.placeId ?? "").trim().toLowerCase(),
+    (q.mapsUrl ?? "").trim().toLowerCase(),
+    (q.text ?? "").trim().toLowerCase(),
+  ].join("|");
+}
 
 export * from "./types";
 export {
@@ -54,10 +73,17 @@ export async function fetchStore(
   query: StoreQuery,
   options: FetchStoreOptions = {},
 ): Promise<FetchStoreResult> {
+  const cacheKey = storeCacheKey(query);
   for (const provider of getEnabledProviders()) {
     // GooglePlacesProvider は座標・業種つきで取得できる
     if (provider instanceof GooglePlacesProvider) {
-      const detailed = await provider.fetchStoreDetailed(query);
+      // キャッシュにあれば最上位SKUの再課金を避けて即返す
+      let detailed = cacheKey ? storeCache.get(cacheKey) : undefined;
+      if (!detailed) {
+        const fetched = await provider.fetchStoreDetailed(query);
+        if (fetched && cacheKey) storeCache.set(cacheKey, fetched);
+        detailed = fetched ?? undefined;
+      }
       if (detailed) {
         return {
           store: detailed.store,
@@ -109,9 +135,14 @@ export async function fetchCompetitors(
   options: FetchCompetitorsOptions = {},
 ): Promise<Competitor[]> {
   if (!context) return [];
+  const key = `${context.placeId ?? ""}|${options.limit ?? ""}|${options.radius ?? ""}`;
   for (const provider of getEnabledProviders()) {
     if (provider instanceof GooglePlacesProvider) {
-      return provider.fetchCompetitors(context, options);
+      const cached = competitorsCache.get(key);
+      if (cached) return cached;
+      const result = await provider.fetchCompetitors(context, options);
+      if (result.length > 0) competitorsCache.set(key, result);
+      return result;
     }
   }
   return [];
