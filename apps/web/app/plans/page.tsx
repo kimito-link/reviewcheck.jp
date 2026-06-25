@@ -213,6 +213,19 @@ export default function PlansPage() {
         lead="守備範囲に合わせて3プラン。束ねるほど割安です。まずは無料診断からどうぞ。"
       >
         <PlanCards />
+        <p className="mt-4 text-xs leading-relaxed text-slate-500">
+          Light・Standardは
+          <strong className="text-slate-700">クレジットカード（Stripe）</strong>
+          でそのままお申し込みいただけます（月額・自動更新／いつでも解約可）。
+          お支払い条件は
+          <Link
+            href="/commerce-disclosure/"
+            className="font-bold text-blue-600 hover:underline"
+          >
+            特定商取引法に基づく表記
+          </Link>
+          をご確認ください。Proは内容に応じてお見積りします。
+        </p>
       </Section>
 
       {/* 役割分担（非弁回避） */}

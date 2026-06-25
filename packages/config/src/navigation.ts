@@ -58,6 +58,7 @@ export const FOOTER_LINKS: { heading: string; links: NavLink[] }[] = [
     links: [
       { label: "プライバシーポリシー", href: "/privacy/" },
       { label: "利用規約", href: "/terms/" },
+      { label: "特定商取引法に基づく表記", href: "/commerce-disclosure/" },
     ],
   },
 ];

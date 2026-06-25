@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { PLANS, PLANS_NOTE } from "@reviewcheck/config";
+import { PlanCheckoutButton } from "./PlanCheckoutButton";
 
 /** 総合改善パッケージの料金プラン（Light / Standard / Pro）。 */
 export function PlanCards() {
@@ -74,16 +74,14 @@ export function PlanCards() {
                 ))}
               </ul>
 
-              <Link
-                href={`/contact/?topic=${plan.topic}`}
-                className={`mt-6 inline-flex items-center justify-center rounded-xl px-5 py-3.5 text-sm font-bold transition ${
-                  featured
-                    ? "bg-amber-500 text-white shadow hover:bg-amber-600"
-                    : "border-2 border-blue-600 bg-white text-blue-700 hover:bg-blue-50"
-                }`}
-              >
-                {plan.name}を申し込む・相談する
-              </Link>
+              <div className="mt-auto flex flex-col">
+                <PlanCheckoutButton
+                  planKey={plan.key}
+                  topic={plan.topic}
+                  purchasable={Boolean(plan.checkout)}
+                  featured={featured}
+                />
+              </div>
             </div>
           );
         })}

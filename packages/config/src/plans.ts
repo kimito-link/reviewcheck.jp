@@ -137,6 +137,15 @@ export interface Plan {
   ribbon?: string;
   /** /contact/?topic= に渡すキー */
   topic: string;
+  /**
+   * Stripe Checkout（その場決済）の設定。
+   * 設定があるプランは「カードで申し込む」ボタンを出す。
+   * amountJpy は実際に請求する金額（税込）。Pro 等の見積りプランは未設定。
+   */
+  checkout?: {
+    amountJpy: number;
+    interval: "month";
+  };
 }
 
 export const PLANS: Plan[] = [
@@ -149,6 +158,7 @@ export const PLANS: Plan[] = [
     per: "／月〜",
     priceNote: "税別・契約期間中",
     topic: "plan-light",
+    checkout: { amountJpy: 33000, interval: "month" },
     features: [
       { text: "契約者専用 AIサポート（24時間）" },
       { text: "口コミ獲得・評判改善コンサル" },
@@ -170,6 +180,7 @@ export const PLANS: Plan[] = [
     featured: true,
     ribbon: "いちばん選ばれています",
     topic: "plan-standard",
+    checkout: { amountJpy: 66000, interval: "month" },
     features: [
       { text: "Lightの内容すべて", head: true },
       { text: "AI 口コミ対策サポート（申請はご自身で）" },
