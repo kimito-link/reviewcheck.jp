@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/competitor-review-comparison/",
     "/plans/",
     "/review-tool/",
+    "/walkthrough/",
     "/contact/",
     "/privacy/",
     "/terms/",

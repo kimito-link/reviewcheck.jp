@@ -31,6 +31,7 @@ export const FOOTER_LINKS: { heading: string; links: NavLink[] }[] = [
     heading: "診断ツール",
     links: [
       { label: "口コミ診断", href: "/check/" },
+      { label: "はじめての方へ（追体験）", href: "/walkthrough/" },
       { label: "口コミ作成ツール", href: "/review-tool/" },
       { label: "Google口コミ診断", href: "/google-review-check/" },
       { label: "競合口コミ比較", href: "/competitor-review-comparison/" },
