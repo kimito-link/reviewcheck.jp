@@ -91,11 +91,96 @@ export function ReportView({
             headline: "あと一歩で「選ばれる」状態。仕組み化で一気に伸ばせます。",
             line: "獲得導線（タップ式ツール・QR・LINE）と返信運用を整えれば、今の評価を加速できます。",
           }
-        : {
+          : {
             tone: "keep" as const,
             headline: "良い状態です。あとは“競合に抜かれない”仕組みづくり。",
             line: "継続的な口コミ獲得とモニタリングで、選ばれ続けるお店をキープしましょう。",
           };
+
+  // 診断結果から、弱点に直結する機能ページへ誘導する「次の一手」を出し分ける
+  const reviewAnalysis = result.reviewAnalysis;
+  const fewReviews =
+    reviewBehind > 0 ||
+    (comparison != null && store.reviewCount < comparison.avgReviewCount);
+  const lowRating = ratingBehind > 0 || store.rating < 4.2;
+  const hasNegativeReviews =
+    (reviewAnalysis?.negativeCount ?? 0) > 0 ||
+    (reviewAnalysis?.flaggedKeywords?.length ?? 0) > 0;
+  const profileFactorWeak = result.factors.some(
+    (f) =>
+      f.status !== "good" &&
+      /プロフィール|写真|情報|営業時間|カテゴリ|ウェブ|電話/.test(f.title),
+  );
+
+  type NextAction = {
+    key: string;
+    icon: string;
+    title: string;
+    desc: string;
+    href: string;
+    label: string;
+    weight: number;
+  };
+  const nextActions: NextAction[] = [];
+  if (fewReviews) {
+    nextActions.push({
+      key: "reviews",
+      icon: "✍️",
+      title: "口コミの件数を増やす",
+      desc: "競合より口コミが少なめ。来店客にタップ式ツールで“正規の口コミ”を依頼するのが最短です。",
+      href: "/review-tool/",
+      label: "口コミ作成ツールを使う",
+      weight: 1,
+    });
+  }
+  if (lowRating) {
+    nextActions.push({
+      key: "rating",
+      icon: "⭐",
+      title: "星評価を底上げする",
+      desc: "評価が伸び悩み中。獲得導線の設計と運用改善で、平均★を引き上げます。",
+      href: "/review-improvement/",
+      label: "口コミ改善を見る",
+      weight: 2,
+    });
+  }
+  if (hasNegativeReviews) {
+    nextActions.push({
+      key: "reply",
+      icon: "💬",
+      title: "低評価に丁寧に返信する",
+      desc: "気になる口コミが見られます。誠実な返信は、検討中のお客様の安心につながります。",
+      href: "/review-reply/",
+      label: "返信サポートを見る",
+      weight: 2,
+    });
+  }
+  if (profileFactorWeak) {
+    nextActions.push({
+      key: "meo",
+      icon: "🗺️",
+      title: "プロフィールを充実させる（MEO）",
+      desc: "写真・営業時間・カテゴリなどを整えると、地図での見え方が変わります。",
+      href: "/meo/",
+      label: "MEO対策を見る",
+      weight: 3,
+    });
+  }
+  // サジェスト（検索の評判）は結果に含まれないため、確認導線を常設する
+  nextActions.push({
+    key: "suggest",
+    icon: "🔍",
+    title: "検索の評判（サジェスト）を確認",
+    desc: "店名の検索候補に悪い言葉が出ていないかをチェックできます。",
+    href: storeQuery
+      ? `/suggest-check/?store=${encodeURIComponent(storeQuery)}`
+      : "/suggest-check/",
+    label: "サジェスト診断を開く",
+    weight: 4,
+  });
+  const topActions = [...nextActions]
+    .sort((a, b) => a.weight - b.weight)
+    .slice(0, 4);
 
   return (
     <div className="space-y-8 pb-24">
@@ -208,6 +293,46 @@ export function ReportView({
             <p className="mt-1.5 text-xs leading-relaxed text-emerald-700">
               まずは最初の1件から。下の「あと何件で追いつける？」と「改善のポイント」に、具体的な進め方をまとめています。
             </p>
+          </div>
+        </section>
+      ) : null}
+
+      {/* 診断結果から選んだ「次の一手」：弱点に直結する機能ページへ誘導 */}
+      {topActions.length > 0 ? (
+        <section className="rounded-2xl border-2 border-blue-200 bg-blue-50/60 p-5 sm:p-6">
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-bold text-white">
+              次の一手
+            </span>
+            <h2 className="text-lg font-bold text-slate-900">
+              この結果から、いま効く打ち手はこちら
+            </h2>
+          </div>
+          <p className="mt-1 text-sm text-slate-600">
+            診断内容に合わせて、優先度の高い順に並べています。
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {topActions.map((a) => (
+              <Link
+                key={a.key}
+                href={a.href}
+                className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-xl">
+                    {a.icon}
+                  </span>
+                  <span className="font-bold text-slate-900">{a.title}</span>
+                </div>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
+                  {a.desc}
+                </p>
+                <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                  {a.label}
+                  <span aria-hidden>→</span>
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
       ) : null}

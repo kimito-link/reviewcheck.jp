@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/plans/",
     "/review-tool/",
     "/walkthrough/",
+    "/suggest-check/",
     "/contact/",
     "/privacy/",
     "/terms/",

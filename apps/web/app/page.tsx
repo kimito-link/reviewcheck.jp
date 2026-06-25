@@ -86,8 +86,8 @@ const FEATURES: FeatureCard[] = [
   {
     icon: "💬",
     title: "サジェスト診断",
-    desc: "検索の予測候補（サジェスト）に悪い言葉が出ていないかチェック。診断結果に表示されます。",
-    href: "/check/",
+    desc: "検索の予測候補（サジェスト）に悪い言葉が出ていないか、店名を入れて無料チェック。",
+    href: "/suggest-check/",
   },
   {
     icon: "📊",

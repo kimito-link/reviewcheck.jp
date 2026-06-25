@@ -43,6 +43,7 @@ export const FOOTER_LINKS: { heading: string; links: NavLink[] }[] = [
     links: [
       { label: "口コミ改善", href: "/review-improvement/" },
       { label: "MEO対策", href: "/meo/" },
+      { label: "サジェスト診断", href: "/suggest-check/" },
       { label: "口コミ返信サポート", href: "/review-reply/" },
       { label: "悪い口コミ対策", href: "/bad-review-measures/" },
     ],
