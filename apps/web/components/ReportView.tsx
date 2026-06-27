@@ -4,6 +4,7 @@ import { CTAS } from "@reviewcheck/config";
 import { ScoreMeter, ScoreBadge, StarRating, StatCompare } from "@reviewcheck/ui";
 import { Disclaimer } from "./Disclaimer";
 import { ConsultCtaGrid } from "./CtaGrid";
+import { LineCtaButton } from "./LineCtaButton";
 import { ShareReport } from "./ShareReport";
 import { OpportunityLoss } from "./OpportunityLoss";
 import { StickyConsultCta } from "./StickyConsultCta";
@@ -257,6 +258,29 @@ export function ReportView({
         </div>
       </section>
 
+      {/* 主CTA：結果を見た直後の「次の一手」を1つに定める（LINEで気軽に相談）。
+          石川氏の指摘C(CTA過多→主を1つに)・F(相談ハードルを下げる)に対応。
+          成果は断定せず「相談だけでOK」を明示する。 */}
+      {!isMock ? (
+        <section className="rounded-2xl border-2 border-[#06C755]/40 bg-[#06C755]/5 p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-slate-900">
+            この結果、どう動けばいい？ まずは無料で相談
+          </h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
+            「何から手を付ければいいか分からない」で大丈夫です。診断結果を見ながら、
+            あなたのお店に合った進め方を一緒に整理します。
+            <strong className="text-slate-900">相談だけでOK・売り込みはしません。</strong>
+          </p>
+          <div className="mt-4 max-w-sm">
+            {/* topic 省略＝口コミ・評判の窓口LINEへ（IT系は別CTAで出し分け済み）。 */}
+            <LineCtaButton text="LINEで無料相談する" fullWidth size="lg" />
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            ※ 口コミの件数・星評価・検索順位などの成果は、Googleの判断に依存するため保証はできません。正当な方法での改善をご提案します。
+          </p>
+        </section>
+      ) : null}
+
       {/* 痛み→希望：後れているときだけ、危機感とすぐの解決策をワンセットで */}
       {showPainHope ? (
         <section className="overflow-hidden rounded-2xl border border-amber-200 bg-amber-50">
@@ -336,6 +360,27 @@ export function ReportView({
           </div>
         </section>
       ) : null}
+
+      {/* 評判の土台＝サイトが安全に動いていること（IT窓口への横導線） */}
+      <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-bold text-slate-900">
+              口コミの“土台”は、サイトが安全に動いていること
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-600">
+              改ざん・マルウェア・更新放置はせっかくの集客を台無しにします。気になる方は、サイトの安全性も無料でご相談ください（運営：リバースハック）。
+            </p>
+          </div>
+          <Link
+            href="/security-diagnosis/"
+            className="inline-flex shrink-0 items-center justify-center gap-1 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-blue-400 hover:text-blue-700"
+          >
+            サイトの安全性を見る
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
+      </section>
 
       {/* 競合比較 */}
       {comparison ? (
@@ -686,6 +731,28 @@ export function ReportView({
       </section>
 
       {shareUrl ? <ShareReport url={shareUrl} /> : null}
+
+      {/* 再接触（リスト取得）：今すぐ動かない人向けに「あとで受け取る」入口。
+          石川氏の指摘E（離脱後に再接触できるようLINE/メールでリストを取る）に対応。
+          友だち追加でこちらから最新情報・改善のヒントを届けられるようにする。 */}
+      {!isMock ? (
+        <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-slate-900">
+                今すぐでなくてOK。診断結果と改善のヒントをLINEで受け取る
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                友だち追加しておくと、口コミ・MEOの最新情報や、あなたのお店向けの
+                改善のヒントをお届けします。気が向いたときに相談していただけます。
+              </p>
+            </div>
+            <div className="shrink-0">
+              <LineCtaButton text="LINEで受け取る" />
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {/* 相談導線 */}
       <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
