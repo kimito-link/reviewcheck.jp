@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/Container";
 import { DiagnoseForm } from "@/components/DiagnoseForm";
-import { Disclaimer } from "@/components/Disclaimer";
 import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { softwareApplicationJsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
@@ -32,10 +31,8 @@ export default function CheckPage() {
         店舗名またはGoogleマップURLを入れるだけ。星評価・口コミ数・競合との差・「あと何件で追いつけるか」を診断します。
       </p>
       <div className="mt-8">
+        {/* 免責文は DiagnoseForm 内で出す（結果表示時は ReportView 内の Disclaimer に一本化し、二重表示を防ぐ）。 */}
         <DiagnoseForm />
-      </div>
-      <div className="mt-8">
-        <Disclaimer />
       </div>
     </Container>
   );

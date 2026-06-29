@@ -5,6 +5,7 @@ import type { Competitor, DiagnosisResult, NearbyStore } from "@reviewcheck/core
 import { encodeReportId } from "@reviewcheck/core";
 import { SITE, POLICY_NOTE } from "@reviewcheck/config";
 import { ReportView } from "./ReportView";
+import { Disclaimer } from "./Disclaimer";
 
 interface CompetitorRow {
   name: string;
@@ -507,6 +508,10 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
 
       {loading ? <LoadingCard /> : null}
       {result ? <ReportView result={result} shareUrl={shareUrl} /> : null}
+
+      {/* 結果表示時は ReportView 内の Disclaimer に一本化（二重表示を防ぐ）。
+          フォームのみのときだけ、ここで免責文を出す。 */}
+      {!result ? <Disclaimer /> : null}
     </div>
   );
 }

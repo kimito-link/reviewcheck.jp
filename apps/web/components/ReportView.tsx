@@ -258,29 +258,6 @@ export function ReportView({
         </div>
       </section>
 
-      {/* 主CTA：結果を見た直後の「次の一手」を1つに定める（LINEで気軽に相談）。
-          石川氏の指摘C(CTA過多→主を1つに)・F(相談ハードルを下げる)に対応。
-          成果は断定せず「相談だけでOK」を明示する。 */}
-      {!isMock ? (
-        <section className="rounded-2xl border-2 border-[#06C755]/40 bg-[#06C755]/5 p-5 sm:p-6">
-          <h2 className="text-lg font-bold text-slate-900">
-            この結果、どう動けばいい？ まずは無料で相談
-          </h2>
-          <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
-            「何から手を付ければいいか分からない」で大丈夫です。診断結果を見ながら、
-            あなたのお店に合った進め方を一緒に整理します。
-            <strong className="text-slate-900">相談だけでOK・売り込みはしません。</strong>
-          </p>
-          <div className="mt-4 max-w-sm">
-            {/* topic 省略＝口コミ・評判の窓口LINEへ（IT系は別CTAで出し分け済み）。 */}
-            <LineCtaButton text="LINEで無料相談する" fullWidth size="lg" />
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            ※ 口コミの件数・星評価・検索順位などの成果は、Googleの判断に依存するため保証はできません。正当な方法での改善をご提案します。
-          </p>
-        </section>
-      ) : null}
-
       {/* 痛み→希望：後れているときだけ、危機感とすぐの解決策をワンセットで */}
       {showPainHope ? (
         <section className="overflow-hidden rounded-2xl border border-amber-200 bg-amber-50">
@@ -321,46 +298,6 @@ export function ReportView({
         </section>
       ) : null}
 
-      {/* 診断結果から選んだ「次の一手」：弱点に直結する機能ページへ誘導 */}
-      {topActions.length > 0 ? (
-        <section className="rounded-2xl border-2 border-blue-200 bg-blue-50/60 p-5 sm:p-6">
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-bold text-white">
-              次の一手
-            </span>
-            <h2 className="text-lg font-bold text-slate-900">
-              この結果から、いま効く打ち手はこちら
-            </h2>
-          </div>
-          <p className="mt-1 text-sm text-slate-600">
-            診断内容に合わせて、優先度の高い順に並べています。
-          </p>
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {topActions.map((a) => (
-              <Link
-                key={a.key}
-                href={a.href}
-                className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-xl">
-                    {a.icon}
-                  </span>
-                  <span className="font-bold text-slate-900">{a.title}</span>
-                </div>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
-                  {a.desc}
-                </p>
-                <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
-                  {a.label}
-                  <span aria-hidden>→</span>
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
       {/* 評判の土台＝サイトが安全に動いていること（IT窓口への横導線） */}
       <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -385,7 +322,13 @@ export function ReportView({
       {/* 競合比較 */}
       {comparison ? (
         <section>
-          <h2 className="mb-3 text-lg font-bold text-slate-900">競合との比較</h2>
+          <h2 className="mb-3 text-xl font-extrabold text-slate-900 sm:text-2xl">
+            競合との比較
+          </h2>
+          <p className="mb-3 text-sm text-slate-600">
+            近隣の同業店と、あなたのお店の星評価・口コミ数を並べました。
+            「いま、お客様にどう見えているか」の客観的な位置づけです。
+          </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <StatCompare
               label="星評価"
@@ -498,19 +441,103 @@ export function ReportView({
         />
       ) : null}
 
+      {/* 診断結果から選んだ「次の一手」：競合・口コミ・サジェストまで一通り見たうえで、
+          弱点に直結する機能ページへ誘導する。石川氏の指摘（診断結果→競合→できる打ち手の流れ）に対応し、
+          結果を見せ切ってから打ち手を提示する位置に配置。 */}
+      {topActions.length > 0 ? (
+        <section className="rounded-2xl border-2 border-blue-200 bg-blue-50/60 p-5 sm:p-6">
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-bold text-white">
+              次の一手
+            </span>
+            <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
+              この結果から、いま効く打ち手はこちら
+            </h2>
+          </div>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+            上の診断結果（競合との差・口コミの中身・検索での見られ方）をふまえ、
+            効果が出やすい順に並べています。気になるものから始めてください。
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {topActions.map((a) => (
+              <Link
+                key={a.key}
+                href={a.href}
+                className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-xl">
+                    {a.icon}
+                  </span>
+                  <span className="font-bold text-slate-900">{a.title}</span>
+                </div>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
+                  {a.desc}
+                </p>
+                <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                  {a.label}
+                  <span aria-hidden>→</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* 主CTA：診断結果と打ち手を見せたうえで「迷ったらまず無料相談」へ。
+          石川氏の指摘（結果を見ずに相談へ進むのは違和感）に対応し、結果の後ろへ配置。
+          成果は断定せず「相談だけでOK」を明示する。 */}
+      {!isMock ? (
+        <section className="rounded-2xl border-2 border-[#06C755]/40 bg-[#06C755]/5 p-5 sm:p-6">
+          <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
+            どれから手を付けるか迷ったら、まず無料で相談
+          </h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
+            「何から始めればいいか分からない」で大丈夫です。診断結果を見ながら、
+            あなたのお店に合った進め方を一緒に整理します。
+            <strong className="text-slate-900">相談だけでOK・売り込みはしません。</strong>
+          </p>
+          <div className="mt-4 max-w-sm">
+            {/* topic 省略＝口コミ・評判の窓口LINEへ（IT系は別CTAで出し分け済み）。 */}
+            <LineCtaButton text="LINEで無料相談する" fullWidth size="lg" />
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            ※ 口コミの件数・星評価・検索順位などの成果は、Googleの判断に依存するため保証はできません。正当な方法での改善をご提案します。
+          </p>
+        </section>
+      ) : null}
+
       {/* あと何件で追いつけるか */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-bold text-slate-900">
+        <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
           あと何件で目標に近づける？
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
-          現在 星 {simulation.currentRating}・口コミ {simulation.currentReviewCount} 件 →
-          目標 星 <strong className="text-slate-900">{simulation.targetRating}</strong>
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+          いまの星評価から
+          <strong className="text-slate-900">「目標の星評価」</strong>
+          に届くには、高評価の口コミがあと何件くらい必要かの目安です。
+          目標は
           {simulation.targetBasis === "competitor"
-            ? "（競合平均を目標に設定）"
+            ? "近隣の競合平均"
             : simulation.targetBasis === "custom"
-              ? "（指定の目標）"
-              : "（推奨の目標値）"}
+              ? "あなたが指定した値"
+              : "おすすめの基準値"}
+          を採用しています。
+        </p>
+        <p className="mt-2 inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+          <span>
+            現在 星 <strong className="text-slate-900">{simulation.currentRating}</strong>
+            ・口コミ <strong className="text-slate-900">{simulation.currentReviewCount}</strong> 件
+          </span>
+          <span aria-hidden>→</span>
+          <span>
+            目標 星 <strong className="text-slate-900">{simulation.targetRating}</strong>
+            {simulation.targetBasis === "competitor"
+              ? "（競合平均）"
+              : simulation.targetBasis === "custom"
+                ? "（指定）"
+                : "（推奨）"}
+          </span>
         </p>
         <ul className="mt-4 space-y-3">
           {simulation.scenarios.map((s) => (
@@ -553,9 +580,16 @@ export function ReportView({
 
       {/* 選ばれやすさスコアの内訳 */}
       <section>
-        <h2 className="mb-3 text-lg font-bold text-slate-900">
+        <h2 className="mb-2 text-xl font-extrabold text-slate-900 sm:text-2xl">
           選ばれやすさスコアの内訳
         </h2>
+        <p className="mb-3 text-sm leading-relaxed text-slate-600">
+          「選ばれやすさ」とは、
+          <strong className="text-slate-900">Googleマップやネット検索でお店を見つけた来店検討中のお客様に、
+          来店先として選ばれやすいか</strong>
+          という意味です。星評価・口コミ数・返信状況・プロフィールの充実度など、
+          来店を後押しする要素を項目ごとに採点しています。
+        </p>
         <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
           {result.factors.map((f) => (
             <li key={f.id} className="flex flex-col gap-1 p-4 sm:flex-row sm:gap-4">
@@ -587,7 +621,9 @@ export function ReportView({
 
       {/* 改善ポイント */}
       <section>
-        <h2 className="mb-3 text-lg font-bold text-slate-900">改善のポイント</h2>
+        <h2 className="mb-3 text-xl font-extrabold text-slate-900 sm:text-2xl">
+          改善のポイント
+        </h2>
         <ul className="space-y-3">
           {result.improvements.map((imp) => {
             const p = PRIORITY_LABEL[imp.priority];

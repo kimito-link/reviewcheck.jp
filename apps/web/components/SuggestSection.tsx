@@ -71,13 +71,14 @@ export function SuggestSection({
           <span className="text-lg" aria-hidden>
             🔍
           </span>
-          <h2 className="text-lg font-bold text-slate-900">
+          <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
             Google検索での見られ方（サジェスト）
           </h2>
         </div>
-        <p className="mt-1 text-sm text-slate-600">
-          検索窓に店名を入れたとき、Googleが自動表示する候補（オートコンプリート）です。
-          来店前のお客様の多くが最初に目にします。
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+          口コミと並んで第一印象を左右するのが、検索したときの「見られ方」です。
+          検索窓に店名を入れたとき、Googleが自動表示する候補（オートコンプリート）を確認しました。
+          来店前のお客様の多くが、口コミを見る前にこの候補を目にします。
         </p>
 
         {loading ? (
