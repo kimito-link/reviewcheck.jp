@@ -73,8 +73,11 @@ export const CTAS: Record<string, Cta> = {
   },
   monitoring: {
     key: "monitoring",
+    // 継続監視サブスク（自販機型・月額）の本番申込ページへ。
+    // 診断→継続監視の「橋」。plan=reviewcheck で口コミ監視プランを初期選択。
+    // store（店舗名）は ReportView 側でクエリ連結する。
     label: "月次モニタリングを始める",
-    href: "/contact/?topic=monitoring",
+    href: "https://partner.reverse-re-birth-hack.com/monitor?plan=reviewcheck",
     emphasis: "cta",
   },
   suggest: {
