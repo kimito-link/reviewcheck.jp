@@ -74,8 +74,20 @@ export function ReportView({
 
   // 相談・モニタリング導線に店舗名を引き継ぎ、お問い合わせフォームを自動入力する
   const storeQuery = !isMock ? (store.mapsUrl || store.name || "") : "";
-  const monitoringHref = storeQuery
-    ? `${CTAS.monitoring.href}&store=${encodeURIComponent(storeQuery)}`
+  // 継続監視の「橋」(partnership /monitor)へは store と url を混ぜず分離して渡す（地雷#4）。
+  // store=店名（H1 に差し込む・表示専用）、url=公開マップURL（対象URL欄プレフィル）、score=診断スコア。
+  // それぞれ encodeURIComponent し、着地側は React 既定エスケープで表示する。
+  const monitoringParams = new URLSearchParams();
+  if (!isMock) {
+    if (store.name) monitoringParams.set("store", store.name);
+    if (store.mapsUrl) monitoringParams.set("url", store.mapsUrl);
+    if (Number.isFinite(result.score)) {
+      monitoringParams.set("score", String(Math.round(result.score)));
+    }
+  }
+  const monitoringExtra = monitoringParams.toString();
+  const monitoringHref = monitoringExtra
+    ? `${CTAS.monitoring.href}&${monitoringExtra}`
     : CTAS.monitoring.href;
 
   // スコア帯に応じた「次の一手」レコメンド（転換率＝LTV向上の主訴求）
