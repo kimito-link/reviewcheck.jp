@@ -768,7 +768,9 @@ export function ReportView({
         </div>
       </section>
 
-      {shareUrl ? <ShareReport url={shareUrl} /> : null}
+      {shareUrl ? (
+        <ShareReport url={shareUrl} storeName={store.name} score={result.score} />
+      ) : null}
 
       {/* 再接触（リスト取得）：今すぐ動かない人向けに「あとで受け取る」入口。
           石川氏の指摘E（離脱後に再接触できるようLINE/メールでリストを取る）に対応。
