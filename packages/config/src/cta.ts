@@ -75,9 +75,15 @@ export const CTAS: Record<string, Cta> = {
     key: "monitoring",
     // 継続監視サブスク（自販機型・月額）の本番申込ページへ。
     // 診断→継続監視の「橋」。plan=reviewcheck で口コミ監視プランを初期選択。
-    // store（店舗名）は ReportView 側でクエリ連結する。
+    // tier=bamboo で竹を初期選択、from=check で「診断の続き」着地を発火、
+    // utm_* で診断経由の成約を測定できるようにする（partnership 側 P0-1/P0-4）。
+    // ref=RVCHK は「ハウスパートナー方式」（P1-2）。診断→直販の成約を運営者自身の
+    // 代理店行(referralCode=RVCHK)に紐付け、partnership の webhook が契約・監視対象を
+    // 自動作成できるようにする（ref 無しだと通知のみで DB に残らない・発見A）。
+    // 報酬式は不変。RVCHK 宛の報酬行は支払確定で選ばない運用ルールで除外する（コード側ガード不要）。
+    // store（店舗名）・score・url は ReportView 側でクエリ連結する。
     label: "月次モニタリングを始める",
-    href: "https://partner.reverse-re-birth-hack.com/monitor?plan=reviewcheck",
+    href: "https://partner.reverse-re-birth-hack.com/monitor?plan=reviewcheck&tier=bamboo&ref=RVCHK&from=check&utm_source=reviewcheck&utm_medium=report&utm_campaign=monitoring",
     emphasis: "cta",
   },
   suggest: {
