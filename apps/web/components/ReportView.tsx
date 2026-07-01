@@ -689,12 +689,14 @@ export function ReportView({
             </li>
           </ul>
           <div className="mt-4">
-            <Link
+            <a
               href={monitoringHref}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
             >
               {CTAS.monitoring.label}
-            </Link>
+            </a>
           </div>
         </div>
       </section>
