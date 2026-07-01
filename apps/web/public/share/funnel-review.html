@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>【ご相談】口コミチェック.jp ― 診断→サブスク導線レビュー</title>
+<style>
+  :root{
+    --ink:#0f172a; --sub:#475569; --mut:#64748b; --line:#e2e8f0;
+    --bg:#f8fafc; --card:#fff; --brand:#2563eb; --brand-d:#1d4ed8;
+    --amber:#f59e0b; --amber-bg:#fffbeb; --green:#06c755; --green-d:#05a648;
+    --red:#dc2626; --emerald:#059669; --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.8; font-size:16px;
+  }
+  .wrap{max-width:880px; margin:0 auto; padding:0 16px 80px}
+  header.top{
+    background:linear-gradient(135deg,#1e3a8a,#2563eb); color:#fff;
+    padding:40px 16px 36px; text-align:center;
+  }
+  header.top .badge{
+    display:inline-block; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35);
+    padding:4px 12px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.04em;
+  }
+  header.top h1{font-size:clamp(20px,5vw,28px); margin:14px 0 8px; line-height:1.5}
+  header.top p{margin:0; font-size:14px; opacity:.92}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:22px; margin:18px 0; box-shadow:0 1px 3px rgba(15,23,42,.04);
+  }
+  h2.sec{
+    font-size:clamp(17px,4.4vw,21px); margin:34px 0 6px; padding-left:12px;
+    border-left:5px solid var(--brand); line-height:1.45;
+  }
+  h2.sec .no{color:var(--brand); font-weight:800; margin-right:6px}
+  .lead{color:var(--sub); font-size:14.5px; margin:0 0 6px}
+  h3{font-size:16px; margin:18px 0 6px}
+  ul{margin:8px 0; padding-left:1.25em}
+  li{margin:4px 0}
+  .muted{color:var(--mut); font-size:13px}
+  .pill{display:inline-block; background:#eff6ff; color:var(--brand-d); border:1px solid #bfdbfe;
+    border-radius:999px; padding:2px 10px; font-size:12px; font-weight:700; margin:2px 4px 2px 0}
+  .grid2{display:grid; grid-template-columns:1fr; gap:12px}
+  @media(min-width:620px){.grid2{grid-template-columns:1fr 1fr}}
+  .mini{border:1px solid var(--line); border-radius:12px; padding:14px; background:#fff}
+  .mini h4{margin:0 0 4px; font-size:14px}
+  .mini p{margin:0; font-size:13px; color:var(--sub)}
+  /* スクショ */
+  .shots{display:grid; grid-template-columns:1fr; gap:14px}
+  @media(min-width:620px){.shots{grid-template-columns:1fr 1fr 1fr}}
+  .shot{border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff}
+  .shot img{width:100%; height:auto; display:block; border-bottom:1px solid var(--line)}
+  .shot .cap{padding:8px 10px; font-size:12px; color:var(--sub)}
+  .shot .cap b{color:var(--ink)}
+  /* フロー */
+  .flow{display:grid; grid-template-columns:1fr; gap:8px}
+  @media(min-width:720px){.flow{grid-template-columns:repeat(5,1fr); align-items:stretch}}
+  .step{position:relative; background:#fff; border:1px solid var(--line); border-radius:12px;
+    padding:12px 10px; text-align:center}
+  .step .n{display:inline-grid; place-items:center; width:24px; height:24px; border-radius:999px;
+    background:var(--brand); color:#fff; font-size:12px; font-weight:800; margin-bottom:6px}
+  .step b{display:block; font-size:13.5px}
+  .step span{font-size:11.5px; color:var(--mut)}
+  .step.weak{border-color:#fca5a5; background:#fef2f2}
+  .step.weak .n{background:var(--red)}
+  .arrow{text-align:center; color:#94a3b8; font-weight:800}
+  @media(min-width:720px){.arrow{display:none}}
+  /* LINE */
+  .line-ch{display:grid; grid-template-columns:1fr; gap:12px}
+  @media(min-width:620px){.line-ch{grid-template-columns:1fr 1fr}}
+  .line-box{border:1px solid #b7f0c9; background:#f0fdf4; border-radius:12px; padding:14px}
+  .line-box .tag{display:inline-block; background:var(--green); color:#fff; font-size:11px;
+    font-weight:800; padding:2px 8px; border-radius:6px}
+  .line-box h4{margin:8px 0 4px; font-size:14.5px}
+  .line-box p{margin:0; font-size:13px; color:#15803d}
+  .where{font-size:13px; color:var(--sub); margin-top:6px}
+  .where code{background:#f1f5f9; padding:1px 6px; border-radius:5px; font-size:12px}
+  /* 料金 */
+  .plans{display:grid; grid-template-columns:1fr; gap:10px}
+  @media(min-width:620px){.plans{grid-template-columns:repeat(3,1fr)}}
+  .plan{border:1px solid var(--line); border-radius:12px; padding:14px; background:#fff; text-align:center}
+  .plan.feat{border:2px solid var(--amber); background:var(--amber-bg)}
+  .plan .tier{font-size:22px}
+  .plan .nm{font-weight:800; margin:2px 0}
+  .plan .pr{font-size:18px; font-weight:800; color:var(--brand-d)}
+  .plan .pr small{font-size:12px; color:var(--mut); font-weight:600}
+  .plan .au{font-size:11.5px; color:var(--mut); margin-top:4px}
+  /* 問題意識 */
+  .warn{border-left:5px solid var(--amber); background:var(--amber-bg); border-radius:0 12px 12px 0;
+    padding:14px 16px; margin:10px 0}
+  .warn b{color:#b45309}
+  /* 質問 */
+  .q{counter-reset:q; list-style:none; padding:0; margin:0}
+  .q>li{background:#fff; border:1px solid var(--line); border-left:5px solid var(--brand);
+    border-radius:0 12px 12px 0; padding:14px 16px; margin:10px 0}
+  .q>li::before{counter-increment:q; content:"Q" counter(q); color:var(--brand);
+    font-weight:800; font-size:13px; display:block; margin-bottom:2px}
+  .q>li b{font-size:15px}
+  .q>li p{margin:4px 0 0; font-size:13.5px; color:var(--sub)}
+  .note{font-size:12.5px; color:var(--mut); margin-top:24px; border-top:1px dashed var(--line); padding-top:16px}
+  a.btn{display:inline-block; background:var(--brand); color:#fff; text-decoration:none;
+    padding:10px 18px; border-radius:10px; font-weight:700; font-size:14px}
+  /* 合言葉ゲート */
+  #gate{position:fixed; inset:0; background:#0f172a; color:#fff; z-index:50;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center}
+  #gate h2{margin:0 0 4px; font-size:20px}
+  #gate p{margin:0 0 18px; font-size:13px; opacity:.8}
+  #gate input{font-size:18px; text-align:center; letter-spacing:.4em; padding:12px 16px;
+    border-radius:10px; border:1px solid #334155; background:#1e293b; color:#fff; width:200px}
+  #gate button{margin-top:14px; background:var(--brand); color:#fff; border:0; padding:12px 24px;
+    border-radius:10px; font-weight:700; font-size:15px; cursor:pointer}
+  #gate .err{color:#fca5a5; font-size:13px; min-height:18px; margin-top:10px}
+  body.locked{overflow:hidden}
+  #content[hidden]{display:none}
+</style>
+</head>
+<body class="locked">
+
+<!-- 合言葉ゲート -->
+<div id="gate">
+  <h2>合言葉を入力してください</h2>
+  <p>関係者限定の共有ページです</p>
+  <input id="pass" type="tel" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="••••" />
+  <div class="err" id="err"></div>
+  <button id="enter">表示する</button>
+</div>
+
+<div id="content" hidden>
+  <header class="top">
+    <span class="badge">関係者限定・導線レビュー依頼</span>
+    <h1>口コミチェック.jp<br>「診断 → サブスク」導線レビューのお願い</h1>
+    <p>現状の画面・LINE導線をまとめました。改善点をご指摘いただけますか？</p>
+  </header>
+
+  <div class="wrap">
+
+    <!-- 0. このページについて -->
+    <div class="card">
+      <p class="lead" style="margin:0">
+        いつもありがとうございます。以前ご指摘いただいた「診断 → 月額サブスク加入」の導線の弱さについて、
+        <b>診断結果から継続監視サブスク（月額2,200〜5,500円）へ繋がる流れを一通り実装し、本番で動く状態</b>にしました。
+        決済・契約・解約停止まで自動で回ります。ただ<b>“見せ方・順番・タイミング”はまだ荒削り</b>です。
+        現状の画面と導線を共有しますので、改善点を率直にご指摘いただけますと幸いです。
+      </p>
+    </div>
+
+    <!-- 1. 前提情報 -->
+    <h2 class="sec"><span class="no">01</span>前提（目的・ターゲット・現状課題）</h2>
+    <div class="grid2">
+      <div class="mini">
+        <h4>🎯 目的・ゴール</h4>
+        <p>無料診断ツールを入口に、<b>継続監視の月額サブスク（2,200〜5,500円）</b>へ加入してもらうこと。入りやすい価格で始めて長く続けてもらう。KPI は「診断完了率」より「申込・継続（CVR/LTV）」。</p>
+      </div>
+      <div class="mini">
+        <h4>👤 ターゲット</h4>
+        <p>店舗・クリニック・士業など<b>ローカルビジネスのオーナー</b>。「Google口コミ・MEO・ネットの評判」に不安はあるが、何から手を付けるべきか分からない層。</p>
+      </div>
+      <div class="mini">
+        <h4>🏢 自社</h4>
+        <p>口コミ・MEO改善ブランド「リバースハック」。やらせ・口コミ購入は一切せず、<b>Google規約に沿った正当な改善</b>のみ。LINEで専門家が直接アドバイス。</p>
+      </div>
+      <div class="mini">
+        <h4>⚠️ 現状の課題</h4>
+        <p>無料診断は触ってもらえるが、<b>その後の「相談」「サブスク申込」への転換が弱い</b>。診断＝ゴールで離脱しがち。</p>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:8px">
+      ※ 制約：景表法・Google ポリシーの対象。成果（順位・件数・星評価）は保証できないため、断定的な訴求は不可。
+    </p>
+
+    <!-- 2. ツールA：reviewcheck.jp -->
+    <h2 class="sec"><span class="no">02</span>ツールA：口コミチェック.jp の現在の画面</h2>
+    <p class="lead"><a href="https://reviewcheck.jp/" target="_blank" rel="noopener">https://reviewcheck.jp/</a> ― 店名/URLを入れるとGoogle口コミを無料診断。</p>
+    <div class="shots">
+      <div class="shot">
+        <img src="/walkthrough/step1-form.jpeg" alt="入力画面" loading="lazy" />
+        <div class="cap"><b>① 入力</b><br>店名 or マップURLを入れて無料診断</div>
+      </div>
+      <div class="shot">
+        <img src="/walkthrough/step2-result.jpeg" alt="結果画面" loading="lazy" />
+        <div class="cap"><b>② 結果</b><br>スコア・競合比較・「あと何件」を表示</div>
+      </div>
+      <div class="shot">
+        <img src="/walkthrough/step5-plans.jpeg" alt="料金画面" loading="lazy" />
+        <div class="cap"><b>③ 料金</b><br>月額サブスク（松竹梅の3プラン）へ</div>
+      </div>
+    </div>
+
+    <!-- 導線フロー -->
+    <h3>導線の全体像（今回つなぎました）</h3>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><b>集客</b><span>広告/SEO/SNS</span></div>
+      <div class="arrow">↓</div>
+      <div class="step"><span class="n">2</span><b>無料診断</b><span>店名入力→結果</span></div>
+      <div class="arrow">↓</div>
+      <div class="step"><span class="n">3</span><b>結果＋SNSシェア</b><span>「継続監視する」導線</span></div>
+      <div class="arrow">↓</div>
+      <div class="step"><span class="n">4</span><b>申込/LINE相談</b><span>松竹梅を選ぶ</span></div>
+      <div class="arrow">↓</div>
+      <div class="step"><span class="n">5</span><b>月額サブスク</b><span>2,200〜5,500円</span></div>
+    </div>
+    <p class="muted" style="margin-top:8px">
+      ※ 以前弱かった④⑤（診断→課金）を今回つなぎました：診断結果に<b>「この結果を継続監視する」ボタン</b>と<b>SNSシェア</b>を追加し、
+      決済〜契約〜解約停止まで自動で回るようにしています。まだ荒削りなので、ここの見せ方こそご意見をいただきたい部分です。
+    </p>
+
+    <!-- LINE導線 -->
+    <h3>LINE導線マップ（用途別の2チャネル）</h3>
+    <div class="line-ch">
+      <div class="line-box">
+        <span class="tag">LINE</span>
+        <h4>口コミ・風評チャネル（既定）</h4>
+        <p>口コミ改善・MEO・サジェスト・悪評対策の相談窓口。「店名を送るだけで方向性をアドバイス」。</p>
+      </div>
+      <div class="line-box">
+        <span class="tag">LINE</span>
+        <h4>IT・マルウェアチャネル</h4>
+        <p>サイト改ざん・マルウェア・セキュリティ・WordPress保守などのIT相談窓口。話題で自動的に振り分け。</p>
+      </div>
+    </div>
+    <p class="where">
+      LINE相談ボタンの設置箇所：<code>ヘッダー（常時）</code>
+      <code>診断後の相談セクション</code> <code>LP最下部CTA</code> <code>モバイル追従バー</code>。
+      話題（topic）に応じて上記2チャネルへ自動で振り分けています。
+    </p>
+
+    <!-- 料金 -->
+    <h3>継続監視サブスク（月額）の料金 ― 松竹梅</h3>
+    <p class="lead" style="margin:0 0 8px">
+      無料診断の「その後」を月額で見張り続けるプラン。入りやすい価格で始めてもらい、続けてもらうほど積み上がる設計です。
+    </p>
+    <div class="plans">
+      <div class="plan"><div class="tier">梅</div><div class="nm">監視のみ</div><div class="pr">2,200円<small>／月</small></div><div class="au">毎日の継続監視＋変化通知</div></div>
+      <div class="plan feat"><div class="tier">竹</div><div class="nm">監視＋レポート</div><div class="pr">3,300円<small>／月</small></div><div class="au">＋月次改善レポート（おすすめ）</div></div>
+      <div class="plan"><div class="tier">松</div><div class="nm">＋専門家レビュー</div><div class="pr">5,500円<small>／月</small></div><div class="au">＋専門家の月1レビュー・優先対応</div></div>
+    </div>
+    <p class="muted" style="margin-top:8px">※ 税込・いつでも解約可。決済〜契約〜解約停止まで自動化済み。申込：<code>partner.reverse-re-birth-hack.com/monitor</code></p>
+
+    <!-- 3. ツールB -->
+    <h2 class="sec"><span class="no">03</span>ツールB：WEB健康診断（関連ツール）</h2>
+    <p class="lead"><a href="https://app.web-health-check.link/" target="_blank" rel="noopener">https://app.web-health-check.link/</a> ― 会社名/URLを入れると、サイトの安全性・表示速度・SEO・なりすまし・風評を約1分で無料診断。</p>
+    <div class="warn">
+      <b>同じ課題：</b>こちらも「ツールとしての診断体験」は完結していますが、
+      診断後に<b>「で、どうすればいい？」→ 相談・サブスク</b>へつなぐ導線が弱く、
+      “診断して終わり”になりがちです。アカウント不要・約1分の手軽さが強みな反面、
+      <b>離脱後に再接触する仕組み（メール/LINE登録など）がない</b>のも気になっています。
+    </div>
+
+    <!-- 4. 問題意識 -->
+    <h2 class="sec"><span class="no">04</span>私たちの問題意識</h2>
+    <div class="card">
+      <p class="lead" style="margin:0 0 8px">導線は「作った」段階で、まだ改善の余地が大きいと感じています。</p>
+      <ul>
+        <li><b>診断＝ゴール化：</b>結果を見て満足（または不安だけ抱えて）離脱し、「継続監視する」ボタンまで進まない懸念。</li>
+        <li><b>“行動”の見せ方：</b>橋（継続監視CTA）は付けたが、結果のどこに・どんな文言で出すのが一番押されるか自信がない。</li>
+        <li><b>サブスクの納得づくり：</b>月額2,200〜5,500円の価値が、診断結果と地続きで腹落ちしているか。松竹梅の差の見せ方は妥当か。</li>
+        <li><b>再接触：</b>今すぐ動かない人へLINE/メールで後追いする仕組みが、まだ弱い。</li>
+      </ul>
+    </div>
+
+    <!-- 5. 質問 -->
+    <h2 class="sec"><span class="no">05</span>お聞きしたいこと（改善のご指摘）</h2>
+    <p class="lead">各観点で「具体的な箇所」と「改善案」をセットでご指摘いただけると助かります。</p>
+    <ol class="q">
+      <li><b>診断結果 → 行動への接続</b><p>結果画面で、ユーザーを「相談・申込」へ動かすには、何を・どこに・どう見せるべきでしょうか。結果＝ゴール化を防ぐ仕掛けがあれば知りたいです。</p></li>
+      <li><b>継続監視サブスク（月額2,200〜5,500円）の納得づくり</b><p>無料診断の流れの中で、月額サブスクの価値をどう橋渡しすれば「高い」ではなく「必要」と感じてもらえるでしょうか。松竹梅の差の見せ方・提示の順番・タイミングの観点で。</p></li>
+      <li><b>CTAの優先順位と配置</b><p>「無料診断／LINE相談／料金を見る／総合パッケージ」が並ぶ中で、どれを主役にし、どこへ置くのが転換に効きますか。CTAが多すぎ・分散していないかも見ていただきたいです。</p></li>
+      <li><b>信頼性の見せ方</b><p>「やらせなし・規約準拠」は訴求していますが、実績・証拠が弱めです。成果保証ができない制約の中で、信頼を積む見せ方の工夫を知りたいです。</p></li>
+      <li><b>再接触（離脱後フォロー）の設計</b><p>今すぐ動かない人へ、LINE登録やメールなどで後追いする導線をどこに・どう自然に差し込むのが良いでしょうか。</p></li>
+      <li><b>2ツールの役割分担</b><p>口コミチェック.jp と WEB健康診断、2つの無料ツールをどう連携させ、最終的に1つのサブスクへ集約するのが理想でしょうか。</p></li>
+    </ol>
+
+    <p class="note">
+      ※ 本ページは関係者限定の共有資料です（検索除外設定）。スクリーンショットは実画面です。<br>
+      お手数をおかけしますが、ご確認のほどよろしくお願いいたします。 ― リバースハック
+    </p>
+
+  </div>
+</div>
+
+<script>
+  (function(){
+    var PASS = "5555";
+    var gate = document.getElementById("gate");
+    var content = document.getElementById("content");
+    var input = document.getElementById("pass");
+    var err = document.getElementById("err");
+    function unlock(){
+      if(input.value.trim() === PASS){
+        gate.style.display = "none";
+        content.hidden = false;
+        document.body.classList.remove("locked");
+        try{ sessionStorage.setItem("fr_ok","1"); }catch(e){}
+      }else{
+        err.textContent = "合言葉が違います";
+        input.value = "";
+        input.focus();
+      }
+    }
+    document.getElementById("enter").addEventListener("click", unlock);
+    input.addEventListener("keydown", function(e){ if(e.key === "Enter") unlock(); });
+    try{ if(sessionStorage.getItem("fr_ok") === "1"){ gate.style.display="none"; content.hidden=false; document.body.classList.remove("locked"); } }catch(e){}
+    input.focus();
+  })();
+</script>
+</body>
+</html>
