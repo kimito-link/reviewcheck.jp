@@ -1,10 +1,11 @@
 import type { DiagnosisResult } from "@reviewcheck/core";
 import Link from "next/link";
-import { CTAS } from "@reviewcheck/config";
+import { CTAS, buildLineConsultMessage } from "@reviewcheck/config";
 import { ScoreMeter, ScoreBadge, StarRating, StatCompare } from "@reviewcheck/ui";
 import { Disclaimer } from "./Disclaimer";
 import { ConsultCtaGrid } from "./CtaGrid";
 import { LineCtaButton } from "./LineCtaButton";
+import { LineConsultCta } from "./LineConsultCta";
 import { ShareReport } from "./ShareReport";
 import { OpportunityLoss } from "./OpportunityLoss";
 import { StickyConsultCta } from "./StickyConsultCta";
@@ -89,6 +90,13 @@ export function ReportView({
   const monitoringHref = monitoringExtra
     ? `${CTAS.monitoring.href}&${monitoringExtra}`
     : CTAS.monitoring.href;
+
+  // LINE相談CTAでコピーさせる初回メッセージ定型文（LINE導線 P0-3）。
+  // isMock（デモ表示）では実在の店名を出さず、店名なしの汎用文にする。
+  const lineConsultMessage = buildLineConsultMessage(
+    isMock ? "" : store.name,
+    isMock ? null : result.score,
+  );
 
   // スコア帯に応じた「次の一手」レコメンド（転換率＝LTV向上の主訴求）
   const nextStep =
@@ -502,7 +510,7 @@ export function ReportView({
       {!isMock ? (
         <section className="rounded-2xl border-2 border-[#06C755]/40 bg-[#06C755]/5 p-5 sm:p-6">
           <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
-            どれから手を付けるか迷ったら、まず無料で相談
+            診断結果の「次の一歩」を、無料で聞く
           </h2>
           <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
             「何から始めればいいか分からない」で大丈夫です。診断結果を見ながら、
@@ -510,8 +518,14 @@ export function ReportView({
             <strong className="text-slate-900">相談だけでOK・売り込みはしません。</strong>
           </p>
           <div className="mt-4 max-w-sm">
-            {/* topic 省略＝口コミ・評判の窓口LINEへ（IT系は別CTAで出し分け済み）。 */}
-            <LineCtaButton text="LINEで無料相談する" fullWidth size="lg" />
+            {/* topic 省略＝口コミ・評判の窓口LINEへ（IT系は別CTAで出し分け済み）。
+                クリックで店名・スコア入りの相談文をコピーしてLINEへ（LINE導線 P0-3）。 */}
+            <LineConsultCta
+              text="診断結果の“次の一歩”を無料で聞く"
+              message={lineConsultMessage}
+              fullWidth
+              size="lg"
+            />
           </div>
           <p className="mt-2 text-xs text-slate-500">
             ※ 口コミの件数・星評価・検索順位などの成果は、Googleの判断に依存するため保証はできません。正当な方法での改善をご提案します。
@@ -758,6 +772,30 @@ export function ReportView({
               {nextStep.line}
             </p>
           </div>
+
+          {/* A1（LINE導線 P0-3）: スコア低帯＝感情ピーク直後に「まずスクショを送るだけ」の
+              無料相談の出口を1つ足す。交換条件（スクショ→見立て1点）を明示して警戒を下げる。
+              isMock・スコア60以上では出さない（回帰の守り＝直帯の表示は変えない）。 */}
+          {!isMock && result.score < 60 ? (
+            <div className="mt-3 rounded-xl border border-[#06C755]/40 bg-[#06C755]/5 p-3">
+              <p className="text-sm font-bold text-slate-900">
+                いきなり契約はまだ、という方へ。
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-700">
+                診断結果のスクショを送るだけで、
+                <strong className="text-slate-900">「最初に直すべき1点」</strong>
+                を専門家が無料で返信します。相談だけでOK・売り込みはしません。
+              </p>
+              <div className="mt-3 max-w-sm">
+                <LineConsultCta
+                  text="この診断結果を専門家に見てもらう（無料）"
+                  message={lineConsultMessage}
+                  fullWidth
+                  size="lg"
+                />
+              </div>
+            </div>
+          ) : null}
           <p className="mt-3 text-sm leading-relaxed text-slate-700">
             「消す」より「上げる」。AI口コミ対策・提携弁護士の窓口・口コミ獲得ツール・公式WEB/LINE/アプリまで、
             <strong className="text-slate-900">月額パッケージ</strong>
@@ -792,15 +830,20 @@ export function ReportView({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-bold text-slate-900">
-                今すぐでなくてOK。診断結果と改善のヒントをLINEで受け取る
+                診断結果をLINEに保存して、あとで続きから話す
               </p>
               <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                友だち追加しておくと、口コミ・MEOの最新情報や、あなたのお店向けの
-                改善のヒントをお届けします。気が向いたときに相談していただけます。
+                この結果ページは保存されません。スクショを1枚送っておくと、気になったときに
+                専門家と続きから話せます。月1回、口コミ・MEOの実務ヒントもお届けします
+                （不要なら通知オフでOK）。
               </p>
             </div>
             <div className="shrink-0">
-              <LineCtaButton text="LINEで受け取る" />
+              {/* クリックで相談文をコピーしてLINEへ（LINE導線 P0-3・A4）。 */}
+              <LineConsultCta
+                text="診断結果をLINEに保存する"
+                message={lineConsultMessage}
+              />
             </div>
           </div>
         </section>

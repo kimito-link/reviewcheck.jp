@@ -41,11 +41,40 @@ export const SITE = {
   /** 問い合わせメール（後で実アドレスに差し替え） */
   contactEmail: "support@reviewcheck.jp",
   /**
-   * LINE公式アカウント（最重要のコンバージョン導線）。
-   * 運営「リバースハック」の相談LINE。
+   * 用途別LINE公式アカウント（自動販売機型＝topicで出し分け）。
+   * reverse-Re:birth hack のチャネル設計に準拠：
+   *  - repute: 風評・口コミ・サジェスト・逆SEO（reviewcheck.jp の主戦場＝既定）
+   *            → 「リバースハック｜評判コンサルタント」系の風評窓口（lin.ee/JelcWtx）
+   *  - it:     マルウェア駆除・セキュリティ・WordPress保守・サーバー/メール等のITトラブル
+   *            → 「リバースハック｜ITインフラサポート公式（@revit＝@830vppqt・認証済）」（lin.ee/58NU9sq）
+   * ※ url が空のチャネルは repute にフォールバックする（リンク切れ防止）。
+   *
+   * 【2026-07-02 修正・地雷#1】以前は repute に lin.ee/58NU9sq を入れていたが、
+   *   実機確認で lin.ee/58NU9sq は「ITインフラサポート公式」＝IT窓口だった（風評ではない）。
+   *   同一URLを partnership shared/const.ts は LINE_URL_IT として正しく参照している。
+   *   よって repute を本来の風評窓口 lin.ee/JelcWtx（＝partnership の LINE_URL_REPUTATION）に修正。
+   *   it は @830vppqt（＝58NU9sq と同一のITアカウント）を lin.ee 短縮形に統一。
+   */
+  lineChannels: {
+    repute: {
+      key: "repute",
+      url: "https://lin.ee/JelcWtx",
+      label: "LINEで相談する（口コミ・風評）",
+    },
+    it: {
+      key: "it",
+      // リバースハック｜ITインフラサポート公式（@revit / @830vppqt・認証済）の友だち追加URL。
+      // @830vppqt と lin.ee/58NU9sq は同一アカウント（実機確認済）。短縮形に統一。
+      url: "https://lin.ee/58NU9sq",
+      label: "LINEで相談する（IT・マルウェア）",
+    },
+  },
+  /**
+   * 後方互換のエイリアス（既存の SITE.line.url 参照を維持）。
+   * 既定の相談導線＝repute チャネル（風評窓口）。
    */
   line: {
-    url: "https://lin.ee/58NU9sq",
+    url: "https://lin.ee/JelcWtx",
     label: "LINEで相談する",
   },
   /** ヒーロー直下・CTA付近に出す信頼シグナル（運営：リバースハック） */
@@ -92,7 +121,7 @@ export const COMMERCE = {
   deliveryTiming:
     "お申し込み・決済確認後、順次。初期ヒアリングを経て、口コミ・MEO・評判改善の基盤づくり（公式WEB・LINE・アプリ等）を開始します。月額の役務は契約期間中、継続して提供します。",
   cancellation:
-    "解約はお問い合わせフォームまたはLINE（https://lin.ee/58NU9sq）よりお申し出ください。お申し出を確認した月の手続き完了をもって、翌月以降の請求を停止します。役務・デジタル提供の性質上、提供済み期間分の返金はいたしかねます。提供物に重大な不備があった場合は、契約・サポートの範囲で対応します。なお、検索順位・口コミ件数・星評価等の成果は検索エンジン等の判断に依存するため保証の対象外です。",
+    "解約はお問い合わせフォームまたはLINE（https://lin.ee/JelcWtx）よりお申し出ください。お申し出を確認した月の手続き完了をもって、翌月以降の請求を停止します。役務・デジタル提供の性質上、提供済み期間分の返金はいたしかねます。提供物に重大な不備があった場合は、契約・サポートの範囲で対応します。なお、検索順位・口コミ件数・星評価等の成果は検索エンジン等の判断に依存するため保証の対象外です。",
 } as const;
 
 /**
@@ -105,3 +134,54 @@ export const DISCLAIMER =
 /** 正当性ポリシー（フォーム・診断結果に併記する短い宣言） */
 export const POLICY_NOTE =
   "口コミの購入・偽レビュー・競合への低評価などの違反行為は行いません。Googleのポリシーに違反しない正当な口コミ改善を前提とします。";
+
+/** LINEチャネルのキー（repute=風評・口コミ / it=IT・マルウェア） */
+export type LineChannelKey = keyof typeof SITE.lineChannels;
+
+/** LINEチャネル1件の型 */
+export type LineChannel = (typeof SITE.lineChannels)[LineChannelKey];
+
+/**
+ * topic（/contact/?topic=… の値や CTA キー）→ LINEチャネルの対応表。
+ * ここに無い topic は既定（repute＝風評・口コミ）に流れる。
+ * 自動販売機型：誰が見ても同じ分岐になるよう、対応はこの1か所で管理する。
+ */
+const TOPIC_TO_LINE_CHANNEL: Record<string, LineChannelKey> = {
+  // --- IT系チャネル（RH IT）---
+  malware: "it",
+  "malware-removal": "it",
+  security: "it",
+  "security-diagnosis": "it",
+  wordpress: "it",
+  "wordpress-maintenance": "it",
+  server: "it",
+  "server-migration": "it",
+  mail: "it",
+  "mail-trouble": "it",
+  workspace: "it",
+  "site-health": "it",
+  // --- 風評・口コミ系チャネル（既定）---
+  improvement: "repute",
+  meo: "repute",
+  "review-reply": "repute",
+  "bad-review": "repute",
+  report: "repute",
+  profile: "repute",
+  monthly: "repute",
+  consult: "repute",
+  monitoring: "repute",
+  suggest: "repute",
+  web: "repute",
+  sns: "repute",
+};
+
+/**
+ * topic からテキスト先頭一致でチャネルを引く（plan-xxx 等の接頭辞にも対応）。
+ * 未設定・該当なしは repute。url 未設定チャネルも repute にフォールバック。
+ */
+export function lineChannelForTopic(topic?: string | null): LineChannel {
+  const key = topic ? TOPIC_TO_LINE_CHANNEL[topic] : undefined;
+  const channel = key ? SITE.lineChannels[key] : SITE.lineChannels.repute;
+  // url 未設定（IT未開設など）は既定の repute に逃がす＝リンク切れ防止
+  return channel.url ? channel : SITE.lineChannels.repute;
+}

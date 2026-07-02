@@ -10,6 +10,28 @@ export interface Cta {
   emphasis?: "primary" | "cta" | "default";
 }
 
+/**
+ * LINE相談の初回メッセージ定型文（LINE導線 P0-3）。
+ *
+ * 設計原則（DESIGN-line-funnel-2026-07-02.md §1-2）: lin.ee URL にパラメータは載らない
+ * ので、診断結果の文脈（店名・スコア）は「ユーザーがコピペで持ち込む」形にする。
+ * CTA クリック時にこの文をクリップボードへコピーし、LINE のトークに貼って送ってもらう。
+ *
+ * 表示・コピーは信頼できない入力として扱い、店名は前後空白を除いて差し込む。
+ * @param storeName 店舗名（表示専用）。空なら店名なしの文面にフォールバック。
+ * @param score 診断スコア（0-100想定）。有限数でなければスコア無しの文面にする。
+ */
+export function buildLineConsultMessage(
+  storeName?: string | null,
+  score?: number | null,
+): string {
+  const name = storeName?.trim();
+  const hasScore = typeof score === "number" && Number.isFinite(score);
+  const scoreLabel = hasScore ? `／スコア${Math.round(score as number)}点` : "";
+  const head = name ? `【口コミ診断の続き】${name}${scoreLabel}。` : "【口コミ診断の続き】";
+  return `${head}診断結果について見立てをお願いします。`;
+}
+
 export const CTAS: Record<string, Cta> = {
   freeCheck: {
     key: "freeCheck",
