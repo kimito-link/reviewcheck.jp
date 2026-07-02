@@ -132,9 +132,9 @@
 
 <div id="content" hidden>
   <header class="top">
-    <span class="badge">関係者限定・導線レビュー依頼</span>
-    <h1>口コミチェック.jp<br>「診断 → サブスク」導線レビューのお願い</h1>
-    <p>現状の画面・LINE導線をまとめました。改善点をご指摘いただけますか？</p>
+    <span class="badge">関係者限定・導線の完成報告</span>
+    <h1>口コミチェック.jp<br>「診断 → LINE → 月額サブスク → 継続報酬」導線 完成報告</h1>
+    <p>流入から成約・継続報酬までの導線を実装し、本番反映まで完了しました。</p>
   </header>
 
   <div class="wrap">
@@ -142,12 +142,32 @@
     <!-- 0. このページについて -->
     <div class="card">
       <p class="lead" style="margin:0">
-        いつもありがとうございます。以前ご指摘いただいた「診断 → 月額サブスク加入」の導線の弱さについて、
-        <b>診断結果から継続監視サブスク（月額2,200〜5,500円）へ繋がる流れを一通り実装し、本番で動く状態</b>にしました。
-        決済・契約・解約停止まで自動で回ります。ただ<b>“見せ方・順番・タイミング”はまだ荒削り</b>です。
-        現状の画面と導線を共有しますので、改善点を率直にご指摘いただけますと幸いです。
+        いつもありがとうございます。以前ご相談した「診断 → 月額サブスク加入」の導線について、
+        <b>流入から成約・継続報酬までを一通り実装し、すべて本番で動く状態</b>になりました。
+        無料の診断を入口に、LINE接客・申込・決済・契約・監視開始・解約停止まで自動で回ります。
+        さらに<b>「無料診断を配るだけで継続報酬になる」紹介（アフィリエイト）の仕組み</b>も入れました。
+        全体像と流入経路を、この1ページにまとめています。まだ「見せ方・順番・タイミング」は磨けるので、
+        気づいた点があればご指摘いただけると助かります。
       </p>
     </div>
+
+    <!-- 全体像フロー（流入→成約→報酬） -->
+    <h2 class="sec"><span class="no">00</span>全体像（流入 → 成約 → 継続報酬）</h2>
+    <p class="lead">無料診断を入口に、成約と「毎月の継続」をつくる“自動販売機型”の導線です。</p>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><b>無料診断</b><span>口コミ／マルウェア</span></div>
+      <div class="arrow">↓</div>
+      <div class="step"><span class="n">2</span><b>感情ピーク</b><span>LINE相談 or 申込</span></div>
+      <div class="arrow">↓</div>
+      <div class="step"><span class="n">3</span><b>LINEで自動接客</b><span>見立て→提案→決済</span></div>
+      <div class="arrow">↓</div>
+      <div class="step"><span class="n">4</span><b>月額サブスク</b><span>契約・監視を自動開始</span></div>
+      <div class="arrow">↓</div>
+      <div class="step"><span class="n">5</span><b>継続報酬</b><span>紹介者に自動ひも付け</span></div>
+    </div>
+    <p class="muted" style="margin-top:8px">
+      ※ 以前弱かった「診断→成約」の橋を全部つなぎ、さらに「誰の紹介で成約したか」を紹介コードで自動判定するところまで実装・本番反映済みです。
+    </p>
 
     <!-- 1. 前提情報 -->
     <h2 class="sec"><span class="no">01</span>前提（目的・ターゲット・現状課題）</h2>
@@ -228,6 +248,13 @@
       <code>診断後の相談セクション</code> <code>LP最下部CTA</code> <code>モバイル追従バー</code>。
       話題（topic）に応じて上記2チャネルへ自動で振り分けています。
     </p>
+    <div class="warn" style="border-left-color:var(--green);background:#f0fdf4;margin-top:12px">
+      <b style="color:#15803d">LINEに来た後は“自動で接客”します：</b>
+      友だち追加のあいさつ → 状況ヒアリング → 見立て → プラン提案 → 決済リンク発行まで、
+      ほぼ自動で対応する仕組みが動いています。診断から来た人には冒頭に
+      <b>「診断の続きですね」の一言</b>を添えて会話がつながるようにしました。
+      診断結果ページのボタンを押すと<b>相談用の定型文が自動でコピー</b>され、貼って送るだけで話が始まります。
+    </div>
 
     <!-- 料金 -->
     <h3>継続監視サブスク（月額）の料金 ― 松竹梅</h3>
@@ -241,6 +268,29 @@
     </div>
     <p class="muted" style="margin-top:8px">※ 税込・いつでも解約可。決済〜契約〜解約停止まで自動化済み。申込：<code>partner.reverse-re-birth-hack.com/monitor</code></p>
 
+    <!-- アフィリエイト導線（目玉） -->
+    <h2 class="sec" style="border-left-color:var(--amber)"><span class="no" style="color:var(--amber)">★</span>紹介（アフィリエイト）：無料診断を配るだけで継続報酬</h2>
+    <p class="lead">
+      今回の目玉です。<b>紹介者が自分の無料診断リンクを配るだけ</b>で、そこから成約した分の
+      <b>成約報酬と毎月の継続報酬が、その紹介者に自動で入る</b>仕組みを実装しました。
+      「これをやれば収益化できる」を、そのまま形にしています。
+    </p>
+    <div class="flow" style="grid-template-columns:1fr">
+      <div style="display:grid;grid-template-columns:1fr;gap:8px">
+        <div class="mini"><h4>① 配る</h4><p>管理画面から自分専用の無料診断リンク（<code>?ref=紹介コード</code>付き）をコピー／LINE・Xでシェア。</p></div>
+        <div class="mini"><h4>② 診断される</h4><p>受け取った人が口コミ診断 → 結果 → 申込ページまで、紹介コードが自動で引き継がれます。</p></div>
+        <div class="mini"><h4>③ 継続報酬</h4><p>月額プランを契約すると、その成約と毎月の継続分が<b>その紹介者の報酬</b>に自動でひも付きます。</p></div>
+      </div>
+    </div>
+    <div class="line-ch" style="margin-top:12px">
+      <div class="mini"><h4>💬 LINE経由</h4><p>合言葉のようにコードを担当が把握して手動でひも付け（今までの運用のまま）。</p></div>
+      <div class="mini"><h4>🔗 リンク経由</h4><p>コードがURLで自動伝搬。担当が介在しなくても報酬が正しく付く。</p></div>
+    </div>
+    <p class="muted" style="margin-top:8px">
+      ※ 料金・報酬の計算式は一切変えていません。既存の紹介コード（パートナー）の仕組みに乗せています。
+      紹介リンクを介さない自然流入は、従来どおり運営側の扱いです（既存の動きは1つも変えていません）。
+    </p>
+
     <!-- 3. ツールB -->
     <h2 class="sec"><span class="no">03</span>ツールB：WEB健康診断（関連ツール）</h2>
     <p class="lead"><a href="https://app.web-health-check.link/" target="_blank" rel="noopener">https://app.web-health-check.link/</a> ― 会社名/URLを入れると、サイトの安全性・表示速度・SEO・なりすまし・風評を約1分で無料診断。</p>
@@ -252,9 +302,9 @@
     </div>
 
     <!-- 4. 問題意識 -->
-    <h2 class="sec"><span class="no">04</span>私たちの問題意識</h2>
+    <h2 class="sec"><span class="no">04</span>実装は完了、ここからは“磨き込み”</h2>
     <div class="card">
-      <p class="lead" style="margin:0 0 8px">導線は「作った」段階で、まだ改善の余地が大きいと感じています。</p>
+      <p class="lead" style="margin:0 0 8px">流入から成約・継続報酬まで全部つないで本番反映済みです。ここからは見せ方・順番・タイミングの磨き込みの段階で、次の点を良くしたいと思っています。</p>
       <ul>
         <li><b>診断＝ゴール化：</b>結果を見て満足（または不安だけ抱えて）離脱し、「継続監視する」ボタンまで進まない懸念。</li>
         <li><b>“行動”の見せ方：</b>橋（継続監視CTA）は付けたが、結果のどこに・どんな文言で出すのが一番押されるか自信がない。</li>
