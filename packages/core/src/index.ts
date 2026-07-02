@@ -8,3 +8,4 @@ export * from "./suggest/index";
 export * from "./reviews/index";
 export { diagnose } from "./diagnose";
 export * from "./aicheck/index";
+export * from "./insight/index";
