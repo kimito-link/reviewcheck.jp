@@ -4,6 +4,7 @@ import {
   decodeReportId,
   composeAiCheckScore,
   filterAiAnswer,
+  scoreSearch,
   type AiCheckFactorInput,
 } from "@reviewcheck/core";
 import { SITE } from "@reviewcheck/config";
@@ -47,6 +48,23 @@ async function fetchAiProbe(
     const res = await fetch(u.toString(), { next: { revalidate: 86400 } });
     if (!res.ok) return null;
     return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/** suggest API で検索の見え方（ネガ候補件数）を得る。失敗は null＝按分。 */
+async function fetchSuggest(
+  base: string,
+  store: string,
+): Promise<{ negativeCount: number } | null> {
+  try {
+    const u = new URL("/api/suggest", base);
+    u.searchParams.set("q", store);
+    const res = await fetch(u.toString(), { next: { revalidate: 86400 } });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { negatives?: unknown[] };
+    return { negativeCount: Array.isArray(data.negatives) ? data.negatives.length : 0 };
   } catch {
     return null;
   }
@@ -106,11 +124,19 @@ export default async function AiReportPage({
   const area = input.store.address;
   const base = SITE.baseUrl;
 
-  // 各項目を取得（失敗した項目は「対象外(null)」＝按分で吸収・設計 地雷#8）。
-  const probe = await fetchAiProbe(base, storeName, area);
-  // サイトURLが入力にあれば site-health を取る（AI診断の入口は店名主体なので多くは対象外）。
+  // 各項目を並列取得（失敗した項目は「対象外(null)」＝按分で吸収・設計 地雷#8）。
   const siteUrl = input.store.mapsUrl && /^https?:\/\//.test(input.store.mapsUrl) ? input.store.mapsUrl : null;
-  const site = siteUrl ? await fetchSiteHealth(siteUrl) : null;
+  const [probe, suggest, site] = await Promise.all([
+    fetchAiProbe(base, storeName, area),
+    fetchSuggest(base, storeName),
+    siteUrl ? fetchSiteHealth(siteUrl) : Promise.resolve(null),
+  ]);
+
+  // 検索の見え方（P1-5）: suggest のネガ件数から。取得不可は按分。
+  const searchScore = suggest
+    ? scoreSearch(suggest.negativeCount, undefined, true)
+    : null;
+  const negativeSuggestCount = suggest?.negativeCount ?? 0;
 
   const factors: AiCheckFactorInput[] = [
     {
@@ -121,10 +147,20 @@ export default async function AiReportPage({
           ? "AIに認識されている傾向があります"
           : "AIにまだ十分認識されていない傾向があります",
     },
-    // 口コミ・検索・なりすましは P0 では店名のみ入口のため対象外→按分（P1で本実装・設計 §4 P1-5）。
+    // 口コミは店名のみ入口では公開データ未取得のため対象外→按分（P1-5 Places連携時に本実装）。
     { key: "reviews", score: null },
-    { key: "search", score: null },
+    {
+      key: "search",
+      score: searchScore,
+      note:
+        searchScore != null
+          ? negativeSuggestCount > 0
+            ? "検索候補に気になる語がある傾向です"
+            : "検索候補は概ね良好な傾向です"
+          : undefined,
+    },
     { key: "siteHealth", score: site?.score ?? null, note: site?.note },
+    // なりすまし兆候は判定材料が揃わない入口では対象外→按分（P1で本実装）。
     { key: "impersonation", score: null },
   ];
 
@@ -145,7 +181,7 @@ export default async function AiReportPage({
     storeName,
     aiSafeHead,
     aiRedactedCount,
-    negativeSuggestCount: 0, // P0 は未実装（P1-5 でサジェスト本実装）
+    negativeSuggestCount, // P1-5: suggest 実データ
     probedAtLabel,
     probedModel: probe?.model ?? "AI",
     shareUrl: `${SITE.baseUrl}/ai-report/${id}/`,
