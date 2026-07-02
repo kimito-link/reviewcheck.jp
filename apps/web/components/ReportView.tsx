@@ -1,6 +1,6 @@
 import type { DiagnosisResult } from "@reviewcheck/core";
 import Link from "next/link";
-import { CTAS, buildLineConsultMessage } from "@reviewcheck/config";
+import { CTAS, buildLineConsultMessage, withRefCode } from "@reviewcheck/config";
 import { ScoreMeter, ScoreBadge, StarRating, StatCompare } from "@reviewcheck/ui";
 import { Disclaimer } from "./Disclaimer";
 import { ConsultCtaGrid } from "./CtaGrid";
@@ -39,9 +39,12 @@ function monthsToReach(reviewsNeeded: number): number {
 export function ReportView({
   result,
   shareUrl,
+  refCode,
 }: {
   result: DiagnosisResult;
   shareUrl?: string;
+  /** アフィリエイター紹介コード（?ref=RH-XXXX で着地時）。monitor 橋URLに伝搬し成約を紹介者報酬に。 */
+  refCode?: string;
 }) {
   const { input, comparison, simulation } = result;
   const store = input.store;
@@ -87,9 +90,11 @@ export function ReportView({
     }
   }
   const monitoringExtra = monitoringParams.toString();
+  // アフィリエイター経由（?ref=）なら橋URLの ref を紹介者コードに差し替える（無ければ RVCHK 維持）。
+  const monitoringBase = withRefCode(CTAS.monitoring.href, refCode);
   const monitoringHref = monitoringExtra
-    ? `${CTAS.monitoring.href}&${monitoringExtra}`
-    : CTAS.monitoring.href;
+    ? `${monitoringBase}&${monitoringExtra}`
+    : monitoringBase;
 
   // LINE相談CTAでコピーさせる初回メッセージ定型文（LINE導線 P0-3）。
   // isMock（デモ表示）では実在の店名を出さず、店名なしの汎用文にする。

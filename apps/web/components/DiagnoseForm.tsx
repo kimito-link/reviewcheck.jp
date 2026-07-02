@@ -37,6 +37,16 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [result, setResult] = useState<DiagnosisResult | null>(null);
 
+  // アフィリエイター紹介コード（?ref=RH-XXXX で着地時）。監視サブスクの橋URLに伝搬し、
+  // 成約を紹介者の報酬にひも付ける。useSearchParams は Suspense 境界が要るため、
+  // client 側で window.location.search から読む（着地時1回・空なら undefined＝RVCHK維持）。
+  const [refCode, setRefCode] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = new URLSearchParams(window.location.search).get("ref")?.trim();
+    if (raw && /^[A-Za-z0-9_-]{1,32}$/.test(raw)) setRefCode(raw);
+  }, []);
+
   // 現在地からの店舗候補（摩擦ゼロの入口）
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
@@ -507,7 +517,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
       </form>
 
       {loading ? <LoadingCard /> : null}
-      {result ? <ReportView result={result} shareUrl={shareUrl} /> : null}
+      {result ? <ReportView result={result} shareUrl={shareUrl} refCode={refCode} /> : null}
 
       {/* 結果表示時は ReportView 内の Disclaimer に一本化（二重表示を防ぐ）。
           フォームのみのときだけ、ここで免責文を出す。 */}

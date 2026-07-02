@@ -32,6 +32,32 @@ export function buildLineConsultMessage(
   return `${head}診断結果について見立てをお願いします。`;
 }
 
+/**
+ * 監視サブスクの橋URL（CTAS.monitoring.href）の紹介コード ref を差し替える（アフィリ伝搬）。
+ *
+ * 既定の href は ref=RVCHK（運営者ハウス）固定。診断ページに ?ref=RH-XXXX で着地した
+ * アフィリエイター経由の場合だけ、その ref に差し替えて成約を紹介者の報酬にひも付ける。
+ * ref 無し（自然流入）は RVCHK のまま＝既存挙動を1pxも変えない（回帰の守り）。
+ *
+ * 二重付与を防ぐため、文字列連結でなく URLSearchParams で ref キーを上書きする。
+ * 不正・空の refCode は無視して元の href を返す（安全側）。
+ * @param href 監視サブスクの橋URL（ref=RVCHK を含む絶対URL）。
+ * @param refCode 差し替える紹介コード。空/未指定なら href をそのまま返す。
+ */
+export function withRefCode(href: string, refCode?: string | null): string {
+  const code = refCode?.trim();
+  if (!code) return href;
+  // 紹介コードは英数・ハイフンのみ想定（RH-XXXX / RVCHK 等）。想定外は無視する。
+  if (!/^[A-Za-z0-9_-]{1,32}$/.test(code)) return href;
+  try {
+    const url = new URL(href);
+    url.searchParams.set("ref", code);
+    return url.toString();
+  } catch {
+    return href;
+  }
+}
+
 export const CTAS: Record<string, Cta> = {
   freeCheck: {
     key: "freeCheck",
