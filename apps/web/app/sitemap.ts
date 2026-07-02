@@ -5,6 +5,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const paths = [
     "/",
     "/check/",
+    "/ai-check/",
+    "/ai-search-visibility/",
     "/google-review-check/",
     "/review-improvement/",
     "/meo/",
@@ -15,6 +17,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/review-tool/",
     "/walkthrough/",
     "/suggest-check/",
+    "/malware-removal/",
+    "/security-diagnosis/",
+    "/wordpress-maintenance/",
     "/contact/",
     "/privacy/",
     "/terms/",
