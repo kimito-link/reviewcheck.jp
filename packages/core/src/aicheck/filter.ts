@@ -63,19 +63,59 @@ export interface FilteredAiAnswer {
   safeSentences: string[];
   /** 除外された文の数（「続きは見立てで」の量的ヒントに使う。中身は出さない）。 */
   redactedCount: number;
+  /**
+   * どこにも出さない（LINEにも渡さない・件数も分離）discard された文の数（看板名診断 §2-3）。
+   * センシティブ属性を含む文＝人間が確認しても使ってはいけないので、出力経路そのものを断つ。
+   * opts.discardPatterns を渡さない既存呼び出しでは常に 0（後方互換）。
+   */
+  discardedCount: number;
 }
 
 /**
- * AI回答を表示前フィルタにかける。安全な文のみ safeSentences に残す。
- * 呼び出し側は safeSentences[0] だけ表示し、それ以降とredactedCountはぼかす（§2-3 の線引き）。
+ * 表示前フィルタのオプション（看板名診断 §2-3 の3クラス化・後方互換）。
+ * 省略時は既存の store 版と完全一致（discardPatterns/negativePatterns を追加しない）。
  */
-export function filterAiAnswer(text: string, selfName: string): FilteredAiAnswer {
+export interface FilterOptions {
+  /**
+   * この語を含む文は discard（safe にも redacted 開示側にも入れず・件数も分離）。
+   * 例（看板名 医療/芸能のセンシティブ属性）: 病歴・傷病名・思想・信条・宗教・性的指向・人種・出自。
+   */
+  discardPatterns?: RegExp[];
+  /**
+   * カテゴリ別のネガ断定語を既定に追加する（redacted 側へ寄せる）。
+   * 例: 医療=誤診/医療過誤/訴訟、芸能=逮捕/炎上/文春。既定 NEGATIVE_ASSERTION_PATTERNS は不変。
+   */
+  extraNegativePatterns?: RegExp[];
+}
+
+/**
+ * AI回答を表示前フィルタにかける。
+ * 適用順: discard判定 → redacted判定(既存+extra) → safe（設計 §2-3）。
+ * opts 省略時は store 版と完全一致（discardedCount は常に 0）。
+ */
+export function filterAiAnswer(
+  text: string,
+  selfName: string,
+  opts?: FilterOptions,
+): FilteredAiAnswer {
   const sentences = splitSentences(text);
+  const discardPatterns = opts?.discardPatterns ?? [];
+  const extraNegatives = opts?.extraNegativePatterns ?? [];
   const safe: string[] = [];
   let redacted = 0;
+  let discarded = 0;
   for (const s of sentences) {
-    if (isSafeForPublic(s, selfName)) safe.push(s);
-    else redacted++;
+    // discard（出力経路を断つ）を最優先で判定。
+    if (discardPatterns.some((re) => re.test(s))) {
+      discarded++;
+      continue;
+    }
+    // 既存の安全判定＋カテゴリ別ネガ語（extra）を redacted 側へ。
+    if (isSafeForPublic(s, selfName) && !extraNegatives.some((re) => re.test(s))) {
+      safe.push(s);
+    } else {
+      redacted++;
+    }
   }
-  return { safeSentences: safe, redactedCount: redacted };
+  return { safeSentences: safe, redactedCount: redacted, discardedCount: discarded };
 }
