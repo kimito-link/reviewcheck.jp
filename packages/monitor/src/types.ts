@@ -65,7 +65,8 @@ export type MonitorEventType =
   | "went-unreachable" // 到達不可になった
   | "score-dropped" // スコアが大きく下落
   | "recovered" // 問題が解消・改善した
-  | "no-change"; // 変化なし
+  | "no-change" // 変化なし
+  | "insight"; // 予防型インサイト（月次・severe=false。apps/web の withInsight が追記）
 
 /** 監視で検知した1イベント。通知文面の素材になる。 */
 export interface MonitorEvent {
