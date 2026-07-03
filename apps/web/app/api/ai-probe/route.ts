@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   buildProbePrompt,
+  buildKanbanProbePrompt,
   composeAiVisibilityScore,
   sanitizeStoreName,
+  isKanbanCategory,
 } from "@reviewcheck/core";
 
 /**
@@ -68,10 +70,21 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  // 看板名診断（kanban=カテゴリ）なら カテゴリ別プロンプトプリセットを使う。
+  // 無指定/不正カテゴリは既存の店舗版プロンプト（後方互換・出力1文字も不変）。
+  const kanban = sp.get("kanban") ?? "";
+  const useKanban = isKanbanCategory(kanban);
+  const recommendPrompt = useKanban
+    ? buildKanbanProbePrompt(kanban, "recommend", { name: store, area, field: category })
+    : buildProbePrompt("recommend", { store, area, category });
+  const describePrompt = useKanban
+    ? buildKanbanProbePrompt(kanban, "describe", { name: store, area, field: category })
+    : buildProbePrompt("describe", { store, area, category });
+
   // 2プローブを並列取得（片方失敗でも他方で採点・両方失敗なら score:null＝按分）。
   const [recommendAnswer, describeAnswer] = await Promise.all([
-    askLlm(buildProbePrompt("recommend", { store, area, category })),
-    askLlm(buildProbePrompt("describe", { store, area, category })),
+    askLlm(recommendPrompt),
+    askLlm(describePrompt),
   ]);
 
   const score = composeAiVisibilityScore(recommendAnswer, describeAnswer, store);

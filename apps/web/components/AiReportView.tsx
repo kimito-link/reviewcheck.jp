@@ -6,6 +6,8 @@ import {
   type AiCheckFactorKey,
   buildAiCheckLineMessage,
   buildAiCheckMonitorUrl,
+  buildKanbanLineMessage,
+  buildKanbanMonitorUrl,
   withViaParam,
 } from "@reviewcheck/core";
 import { lineChannelForTopic } from "@reviewcheck/config";
@@ -71,6 +73,8 @@ export interface AiReportData {
   refCode?: string;
   /** 共有URL（絶対）。 */
   shareUrl: string;
+  /** 診断の種類（store=既存お店版・kanban=看板名版）。既定 store で後方互換。 */
+  variant?: "store" | "kanban";
 }
 
 /** ぼかし表示（内容は伏せ、存在だけ見せる）。 */
@@ -94,6 +98,7 @@ export function AiReportView(props: AiReportData) {
     probedModel,
     refCode,
     shareUrl,
+    variant = "store",
   } = props;
   // アフィリ紹介コードは client 側で ?ref= から拾って /monitor へ伝搬（DiagnoseForm と同流儀）。
   const [urlRef, setUrlRef] = useState<string | undefined>(refCode);
@@ -104,8 +109,15 @@ export function AiReportView(props: AiReportData) {
   }, []);
 
   const band = BAND_LABEL[score.band];
-  const lineMessage = buildAiCheckLineMessage(storeName, score.total);
-  const monitorUrl = buildAiCheckMonitorUrl({ refCode: urlRef, storeName });
+  // 看板名版は from=kanban の導線・定型文に切り替える（既定 store は from=aidiag のまま）。
+  const lineMessage =
+    variant === "kanban"
+      ? buildKanbanLineMessage(storeName, score.total)
+      : buildAiCheckLineMessage(storeName, score.total);
+  const monitorUrl =
+    variant === "kanban"
+      ? buildKanbanMonitorUrl({ refCode: urlRef, storeName })
+      : buildAiCheckMonitorUrl({ refCode: urlRef, storeName });
   const lineChannel = lineChannelForTopic(); // 既定＝風評窓口（設計 §2-4）
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 

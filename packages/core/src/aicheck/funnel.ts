@@ -52,6 +52,60 @@ export function buildAiCheckMonitorUrl(opts: {
 }
 
 /**
+ * 看板名診断由来のLINE相談 初回メッセージ定型文（看板名診断 §2-4）。
+ * @param kanbanName 看板名（院名・芸名）。空なら名称なしにフォールバック。
+ */
+export function buildKanbanLineMessage(
+  kanbanName?: string | null,
+  score?: number | null,
+): string {
+  const name = kanbanName?.trim();
+  const hasScore = typeof score === "number" && Number.isFinite(score);
+  const scoreLabel = hasScore ? `／スコア${Math.round(score as number)}点` : "";
+  const head = name
+    ? `【看板名AI診断の続き】${name}${scoreLabel}。`
+    : "【看板名AI診断の続き】";
+  return `${head}ぼかし部分の見立てをお願いします。`;
+}
+
+/** 看板名診断由来の /monitor 直行URL（from=kanban）。ref=RVCHK は絶対に落とさない。 */
+export function buildKanbanMonitorUrl(opts: {
+  refCode?: string | null;
+  storeName?: string | null;
+}): string {
+  const code = opts.refCode?.trim();
+  const ref = code && /^[A-Za-z0-9_-]{1,32}$/.test(code) ? code : "RVCHK";
+  const params = new URLSearchParams({
+    plan: "reviewcheck",
+    tier: "bamboo",
+    ref,
+    from: "kanban",
+    utm_source: "kanban",
+    utm_medium: "report",
+    utm_campaign: "monitoring",
+  });
+  const store = opts.storeName?.trim();
+  if (store) params.set("store", store);
+  return `${MONITOR_BASE}?${params.toString()}`;
+}
+
+/** OSINT公開情報ビュー由来の /monitor 直行URL（from=osint）。ref=RVCHK は絶対に落とさない。 */
+export function buildOsintMonitorUrl(opts: { refCode?: string | null }): string {
+  const code = opts.refCode?.trim();
+  const ref = code && /^[A-Za-z0-9_-]{1,32}$/.test(code) ? code : "RVCHK";
+  const params = new URLSearchParams({
+    plan: "reviewcheck",
+    tier: "bamboo",
+    ref,
+    from: "osint",
+    utm_source: "osint",
+    utm_medium: "report",
+    utm_campaign: "monitoring",
+  });
+  return `${MONITOR_BASE}?${params.toString()}`;
+}
+
+/**
  * SNSシェアURLに計測用 ?via= を付ける（P0-4）。
  * @param shareUrl 診断結果の共有URL（絶対URL）。
  * @param via "x" | "line" | "fb" 等の流入元ラベル。
