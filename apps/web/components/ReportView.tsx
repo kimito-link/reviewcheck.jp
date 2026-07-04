@@ -225,6 +225,17 @@ export function ReportView({
             <div className="mt-3">
               <ScoreBadge band={result.band} />
             </div>
+            {/* 判定基準の開示：石川氏の指摘対応。採点根拠を隠さず内訳への導線を出す。 */}
+            <p className="mt-2 max-w-[14rem] text-center text-[11px] leading-relaxed text-slate-400">
+              ※
+              この判定は、星評価・口コミ数・返信状況・プロフィール充実度などを一定の基準で機械的に採点した結果です。
+              <a
+                href="#score-breakdown"
+                className="text-blue-600 underline"
+              >
+                採点の内訳を見る
+              </a>
+            </p>
           </div>
           <div className="flex-1">
             <p className="text-sm text-slate-500">診断対象</p>
@@ -282,6 +293,37 @@ export function ReportView({
           </div>
         </div>
       </section>
+
+      {/* 主CTA：LINE相談をスコア直後に主役化。石川氏の指摘対応で、
+          「次の一手」セクションより前、スコアと店舗概要の直後に配置する。
+          リード文はスコア帯（result.band）に連動したクッション文を出し分ける。 */}
+      {!isMock ? (
+        <section className="rounded-2xl border-2 border-[#06C755]/40 bg-[#06C755]/5 p-5 sm:p-6">
+          <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
+            診断結果の“次の一歩”を、無料で聞く
+          </h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
+            {result.score < 60
+              ? "この状態を放置すると、来店前に口コミを見た方が他店へ流れてしまう可能性があります。LINEの無料相談では、この結果画面のスクショを送るだけで、「最初に直すべき1点」を専門家がお答えします。ご契約は不要・売り込みもしません。"
+              : result.score < 80
+                ? "あと一歩で「選ばれるお店」です。どこから伸ばすのが最短かは、お店の状況によって変わります。LINEの無料相談では、この結果画面のスクショを送るだけで、あなたのお店に合った次の一手を専門家がお答えします。ご契約は不要・売り込みもしません。"
+                : "良い状態です。あとは競合の動きに抜かれないことが大切です。LINEの無料相談では、この結果画面のスクショを送るだけで、良い状態を守るための注意点を専門家がお答えします。ご契約は不要・売り込みもしません。"}
+          </p>
+          <div className="mt-4 max-w-sm">
+            {/* topic 省略＝口コミ・評判の窓口LINEへ（IT系は別CTAで出し分け済み）。
+                クリックで店名・スコア入りの相談文をコピーしてLINEへ（LINE導線 P0-3）。 */}
+            <LineConsultCta
+              text="診断結果の“次の一歩”を無料で聞く"
+              message={lineConsultMessage}
+              fullWidth
+              size="lg"
+            />
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            ※ 口コミの件数・星評価・検索順位などの成果は、Googleの判断に依存するため保証はできません。正当な方法での改善をご提案します。
+          </p>
+        </section>
+      ) : null}
 
       {/* 痛み→希望：後れているときだけ、危機感とすぐの解決策をワンセットで */}
       {showPainHope ? (
@@ -509,35 +551,6 @@ export function ReportView({
         </section>
       ) : null}
 
-      {/* 主CTA：診断結果と打ち手を見せたうえで「迷ったらまず無料相談」へ。
-          石川氏の指摘（結果を見ずに相談へ進むのは違和感）に対応し、結果の後ろへ配置。
-          成果は断定せず「相談だけでOK」を明示する。 */}
-      {!isMock ? (
-        <section className="rounded-2xl border-2 border-[#06C755]/40 bg-[#06C755]/5 p-5 sm:p-6">
-          <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
-            診断結果の「次の一歩」を、無料で聞く
-          </h2>
-          <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
-            「何から始めればいいか分からない」で大丈夫です。診断結果を見ながら、
-            あなたのお店に合った進め方を一緒に整理します。
-            <strong className="text-slate-900">相談だけでOK・売り込みはしません。</strong>
-          </p>
-          <div className="mt-4 max-w-sm">
-            {/* topic 省略＝口コミ・評判の窓口LINEへ（IT系は別CTAで出し分け済み）。
-                クリックで店名・スコア入りの相談文をコピーしてLINEへ（LINE導線 P0-3）。 */}
-            <LineConsultCta
-              text="診断結果の“次の一歩”を無料で聞く"
-              message={lineConsultMessage}
-              fullWidth
-              size="lg"
-            />
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            ※ 口コミの件数・星評価・検索順位などの成果は、Googleの判断に依存するため保証はできません。正当な方法での改善をご提案します。
-          </p>
-        </section>
-      ) : null}
-
       {/* あと何件で追いつけるか */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
@@ -610,7 +623,7 @@ export function ReportView({
       </section>
 
       {/* 選ばれやすさスコアの内訳 */}
-      <section>
+      <section id="score-breakdown">
         <h2 className="mb-2 text-xl font-extrabold text-slate-900 sm:text-2xl">
           選ばれやすさスコアの内訳
         </h2>

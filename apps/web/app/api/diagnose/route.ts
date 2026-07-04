@@ -10,6 +10,7 @@ import {
   type StoreContext,
   type StoreInput,
 } from "@reviewcheck/core";
+import { incrementDiagnosisCount } from "@/lib/diagnosisCounter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -128,6 +129,10 @@ async function handle(body: DiagnoseBody) {
     //    デモ時は雰囲気が伝わるようサンプル口コミで分析を見せる（価値の先出し）。
     const reviewSource = demo ? DEMO_REVIEWS : reviews;
     result.reviewAnalysis = analyzeReviews(reviewSource);
+    // 累計診断件数のカウント（石川氏の指摘対応）。デモ診断は実利用でないため数えない。
+    if (!demo) {
+      incrementDiagnosisCount().catch(() => {});
+    }
     return NextResponse.json(result, { headers: CORS_HEADERS });
   } catch (e) {
     if (e instanceof InvalidInputError) {

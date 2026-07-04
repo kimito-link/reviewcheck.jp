@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { FOOTER_LINKS, SITE, DISCLAIMER } from "@reviewcheck/config";
+import { FOOTER_LINKS, SITE, DISCLAIMER, COMMERCE } from "@reviewcheck/config";
 import { Container } from "./Container";
 
 export function Footer() {
@@ -45,7 +45,21 @@ export function Footer() {
             </div>
           ))}
         </div>
-        <p className="mt-10 rounded-lg bg-white/5 p-4 text-xs leading-relaxed text-slate-400">
+        {/* 運営会社ブロック：石川氏の指摘対応。特商法表記への導線とあわせて明示する。 */}
+        <div className="mt-10 rounded-lg border border-white/10 bg-white/5 p-4 text-xs leading-relaxed text-slate-400">
+          <h3 className="text-sm font-bold text-white">運営会社</h3>
+          <p className="mt-2">
+            {COMMERCE.seller}（運営統括責任者：{COMMERCE.manager}）
+          </p>
+          <p className="mt-1">{COMMERCE.address}</p>
+          <Link
+            href="/commerce-disclosure/"
+            className="mt-2 inline-block font-bold text-amber-300 underline underline-offset-2 hover:text-amber-200"
+          >
+            特定商取引法に基づく表記
+          </Link>
+        </div>
+        <p className="mt-4 rounded-lg bg-white/5 p-4 text-xs leading-relaxed text-slate-400">
           {DISCLAIMER}
         </p>
         <p className="mt-6 text-xs text-slate-400">
