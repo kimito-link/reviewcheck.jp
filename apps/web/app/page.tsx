@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { COMMON_FAQ } from "@reviewcheck/config";
+import { COMMON_FAQ, SITE } from "@reviewcheck/config";
 import { Container } from "@/components/Container";
 import { Section } from "@/components/Section";
 import { DiagnoseForm } from "@/components/DiagnoseForm";
@@ -8,6 +8,7 @@ import { PricingSection } from "@/components/PricingSection";
 import { InternalLinks } from "@/components/InternalLinks";
 import { Disclaimer } from "@/components/Disclaimer";
 import { TrustBadges } from "@/components/TrustBadges";
+import { DiagnosisCounter } from "@/components/DiagnosisCounter";
 import { LineCtaButton } from "@/components/LineCtaButton";
 import { JsonLd } from "@/components/JsonLd";
 import { softwareApplicationJsonLd, faqJsonLd } from "@/lib/jsonld";
@@ -145,22 +146,26 @@ export default function HomePage() {
               <br className="hidden sm:block" />
               あと何件の高評価口コミで競合に近づけるか、無料で診断できます。
             </p>
+            <TrustBadges onDark className="mt-5 justify-center" />
+            <DiagnosisCounter className="mt-2 justify-center text-slate-200" />
           </div>
-          <div className="mx-auto mt-8 max-w-2xl rounded-2xl bg-white p-4 shadow-xl sm:p-6">
+          <div className="mx-auto mt-7 max-w-2xl rounded-2xl bg-white p-4 shadow-xl sm:p-6">
             <DiagnoseForm />
           </div>
-          <div className="mx-auto mt-6 max-w-2xl">
-            <TrustBadges onDark />
-          </div>
-          <div className="mx-auto mt-6 flex max-w-2xl flex-col items-center justify-center gap-3 sm:flex-row">
-            <LineCtaButton size="lg" text="口コミ改善を相談する" />
-            <Link
-              href="/check/#competitors"
-              className="inline-flex rounded-lg bg-white/10 px-6 py-3.5 text-base font-bold text-white ring-1 ring-white/20 transition hover:bg-white/20"
+          {/* 石川氏の指摘対応：ファーストビューの主役は診断フォーム1本に絞る。
+              LINE相談は控えめなテキストリンクのみ残す（ボタン2つの行は削除）。 */}
+          <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-slate-300">
+            診断せずに相談したい方は{" "}
+            <a
+              href={SITE.lineChannels.repute.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-amber-300 underline underline-offset-2 hover:text-amber-200"
             >
-              競合と比較する
-            </Link>
-          </div>
+              LINEで無料相談
+            </a>{" "}
+            もできます
+          </p>
         </Container>
       </section>
 
@@ -323,22 +328,16 @@ export default function HomePage() {
       {/* 価格 */}
       <Section id="pricing" title="料金の目安">
         <PricingSection />
-        <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border-2 border-amber-300 bg-amber-50 p-6 text-center sm:flex-row sm:justify-between sm:text-left">
-          <div>
-            <p className="text-base font-bold text-slate-900">
-              口コミも検索も、まるごとお任せしたい方へ
-            </p>
-            <p className="mt-1 text-sm text-slate-600">
-              AI口コミ対策・口コミ獲得ツール・公式WEB/LINE/アプリまで含む月額の総合パッケージ（3プラン）もご用意しています。
-            </p>
-          </div>
+        {/* 石川氏の指摘対応：大型バナーは削除し、控えめな1行リンクのみ残す。 */}
+        <p className="mt-6 text-center text-sm text-slate-600">
+          詳しい料金・総合パッケージは{" "}
           <Link
             href="/plans/"
-            className="inline-flex shrink-0 rounded-lg bg-amber-500 px-6 py-3.5 text-base font-bold text-white transition hover:bg-amber-600"
+            className="font-bold text-blue-700 underline underline-offset-2 hover:text-blue-800"
           >
-            総合パッケージ・料金を見る
+            こちら
           </Link>
-        </div>
+        </p>
       </Section>
 
       {/* 注意事項 */}
