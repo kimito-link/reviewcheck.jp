@@ -6,6 +6,7 @@ import { encodeReportId } from "@reviewcheck/core";
 import { SITE, POLICY_NOTE } from "@reviewcheck/config";
 import { ReportView } from "./ReportView";
 import { Disclaimer } from "./Disclaimer";
+import { resolveRefCode } from "@/lib/affiliateRef";
 
 interface CompetitorRow {
   name: string;
@@ -39,12 +40,11 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
 
   // アフィリエイター紹介コード（?ref=RH-XXXX で着地時）。監視サブスクの橋URLに伝搬し、
   // 成約を紹介者の報酬にひも付ける。useSearchParams は Suspense 境界が要るため、
-  // client 側で window.location.search から読む（着地時1回・空なら undefined＝RVCHK維持）。
+  // client 側で window.location.search から読む（着地時にlocalStorageへも保存し、
+  // 遷移を挟んでも30日は復元できるようにする。空なら undefined＝RVCHK維持）。
   const [refCode, setRefCode] = useState<string | undefined>(undefined);
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = new URLSearchParams(window.location.search).get("ref")?.trim();
-    if (raw && /^[A-Za-z0-9_-]{1,32}$/.test(raw)) setRefCode(raw);
+    setRefCode(resolveRefCode());
   }, []);
 
   // 現在地からの店舗候補（摩擦ゼロの入口）
