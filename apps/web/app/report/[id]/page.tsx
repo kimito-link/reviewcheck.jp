@@ -4,6 +4,7 @@ import { diagnose, decodeReportId } from "@reviewcheck/core";
 import { SITE } from "@reviewcheck/config";
 import { Container } from "@/components/Container";
 import { ReportView } from "@/components/ReportView";
+import { AffiliateRefCapture } from "@/components/AffiliateRefCapture";
 import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 type Params = { id: string };
+type SearchParams = { ref?: string };
 
 export async function generateMetadata({
   params,
@@ -31,10 +33,13 @@ export async function generateMetadata({
 
 export default async function ReportPage({
   params,
+  searchParams,
 }: {
   params: Promise<Params>;
+  searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
+  const { ref } = await searchParams;
   const input = decodeReportId(id);
 
   if (!input) {
@@ -83,6 +88,7 @@ export default async function ReportPage({
 
   return (
     <Container className="py-12">
+      <AffiliateRefCapture />
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "トップ", path: "/" },
@@ -97,7 +103,7 @@ export default async function ReportPage({
         入力情報をもとにした簡易レポートです（数値は目安）。
       </p>
       <div className="mt-8">
-        <ReportView result={result} shareUrl={shareUrl} />
+        <ReportView result={result} shareUrl={shareUrl} refCode={ref} />
       </div>
     </Container>
   );
