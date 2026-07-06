@@ -17,7 +17,9 @@ export const dynamic = "force-dynamic";
  * metadata.kind === "monitoring" の決済はここでは扱わない（二重通知防止）。
  */
 export async function POST(request: Request) {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  // Stripeはエンドポイントごとに別の署名シークレットを発行するため、
+  // 既存の monitor-webhook（STRIPE_WEBHOOK_SECRET）とは別の環境変数にする。
+  const secret = process.env.STRIPE_WEBHOOK_SECRET_PACKAGE;
   const apiKey = process.env.STRIPE_SECRET_KEY;
   if (!secret || !apiKey) {
     return NextResponse.json({ ok: true, skipped: true });
