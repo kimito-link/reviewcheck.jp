@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { resolveRefCode } from "@/lib/affiliateRef";
 
 /**
  * プランの申し込みボタン。
@@ -41,10 +42,13 @@ export function PlanCheckoutButton({
     setError(null);
     setLoading(true);
     try {
+      // 総合PKGは admin.ts の手動 createContract 運用のため、ref は自動計上せず
+      // 運営者通知に含めるだけに留める（P1-4: 軽実装の範囲。設計書DESIGN-affiliate-program-2026-07-06.md）。
+      const ref = resolveRefCode();
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planKey }),
+        body: JSON.stringify({ plan: planKey, ref }),
       });
       const data = await res.json();
       if (data?.url) {
