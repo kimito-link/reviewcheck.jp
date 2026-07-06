@@ -1,7 +1,10 @@
 import type { SelectabilityBand } from "@reviewcheck/core";
 
+// 「選ばれやすさ：選ばれやすい」のような評価軸名とラベルの同語反復を避ける
+// （石川さんの視認性・可読性の指摘・2026-07-06）。「選ばれやすさ」という軸の
+// 判定結果だと伝わる言葉にする。
 const LABEL: Record<SelectabilityBand, string> = {
-  good: "選ばれやすい",
+  good: "良好",
   fair: "改善余地あり",
   weak: "やや不利",
   poor: "要対策",
