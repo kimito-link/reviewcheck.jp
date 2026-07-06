@@ -10,7 +10,12 @@ interface CheckoutBody {
   plan?: string;
   /** 申し込み元の店舗名・URL（任意・メタデータに保存） */
   store?: string;
+  /** アフィリエイター紹介コード（任意）。P1-4: 総合PKGは手動contract運用のため、
+   *  metadataに記録して運営者通知に載せるだけに留める（自動計上はしない）。 */
+  ref?: string;
 }
+
+const REF_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
 
 /**
  * Stripe Checkout セッションを作成し、決済ページURLを返す。
@@ -87,6 +92,7 @@ export async function POST(request: Request) {
       metadata: {
         plan: plan.key,
         store: (body.store ?? "").slice(0, 200),
+        ...(body.ref && REF_PATTERN.test(body.ref) ? { ref: body.ref } : {}),
       },
       success_url: `${base}/plans/thanks/?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/plans/?canceled=1`,
