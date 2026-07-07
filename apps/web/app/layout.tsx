@@ -5,6 +5,7 @@ import { SITE } from "@reviewcheck/config";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ConsultBar } from "@/components/ConsultBar";
+import { AffiliateRefCapture } from "@/components/AffiliateRefCapture";
 import { JsonLd } from "@/components/JsonLd";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/jsonld";
 
@@ -61,6 +62,11 @@ export default function RootLayout({
     >
       <body>
         <JsonLd data={[organizationJsonLd(), webSiteJsonLd()]} />
+        {/* CPA-2: ?ref を全ページで捕捉する。以前は DiagnoseForm がマウントされる
+            / と /check/ でしか捕捉しておらず、/plans/ 等に ref 付きで着地すると
+            帰属が落ちていた（malwarecheck.site は最初から layout 常駐で対応済み。
+            本家が劣後していた点。DESIGN-funnel-brushup-2026-07-06.md CPA-2）。 */}
+        <AffiliateRefCapture />
         <Header />
         <main>{children}</main>
         <Footer />
