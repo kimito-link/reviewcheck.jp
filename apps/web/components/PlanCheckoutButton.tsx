@@ -70,20 +70,20 @@ export function PlanCheckoutButton({
 
   return (
     <>
+      <a
+        href={contactHref}
+        className={cls}
+      >
+        まず相談する（無料）
+      </a>
       <button
         type="button"
         onClick={() => void startCheckout()}
         disabled={loading}
-        className={cls}
+        className="mt-2 inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-600 transition hover:border-slate-400 hover:text-slate-800 disabled:opacity-60"
       >
-        {loading ? "決済ページへ移動中…" : "カードで申し込む"}
+        {loading ? "決済ページへ移動中…" : "カードでそのまま申し込む"}
       </button>
-      <a
-        href={contactHref}
-        className="mt-2 text-center text-xs font-medium text-slate-500 hover:text-slate-700"
-      >
-        まず相談したい方はこちら
-      </a>
       {error ? (
         <p className="mt-2 text-xs font-medium text-red-600">{error}</p>
       ) : null}
