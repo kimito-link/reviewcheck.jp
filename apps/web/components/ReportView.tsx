@@ -13,6 +13,7 @@ import { SuggestSection } from "./SuggestSection";
 import { ReverseHackPromo } from "./ReverseHackPromo";
 import { CrossSellGrid } from "./CrossSellGrid";
 import { ReviewInsights } from "./ReviewInsights";
+import { FindingCard } from "./FindingCard";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
   high: { label: "最優先", cls: "bg-red-100 text-red-700" },
@@ -295,6 +296,8 @@ export function ReportView({
           </div>
         </div>
       </section>
+
+      <FindingCard result={result} />
 
       {/* 主CTA：LINE相談をスコア直後に主役化。石川氏の指摘対応で、
           「次の一手」セクションより前、スコアと店舗概要の直後に配置する。
