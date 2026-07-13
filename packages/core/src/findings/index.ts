@@ -235,19 +235,17 @@ export function isFindingBannedFree(text: string): boolean {
 export const FINDING_CARD_TEXTS = {
   /** バッジ */
   badge: "所見",
-  badgeSub: "この結果の読み方",
+  badgeSub: "上のスコアの読み方",
   /** 役割宣言（既存の販促文言との話法の棲み分けを宣言する） */
   roleDeclaration:
-    "ここは、いまの数字が来店検討中のお客様にどう見えているかの構造の解説です。測定できた事実の組合せに機械的に名前を付けたもので、未来の予測は含みません。",
-  /** 主所見の見出しラベル */
-  findingLabel: "所見",
+    "この所見は、いまの数字が来店検討中のお客様にどう見えているかの構造の解説です。測定できた事実の組合せに機械的に名前を付けたもので、未来の予測は含みません。",
   /** 事実チップの見出し */
   chipsHeading: "あわせて確認された事実",
   /** 保健指導3段階（nextSummary=折りたたみ閉時の1行・nextHeading=開いた中のリード） */
-  nextSummary: "次の一手を見る（3つ）",
-  nextHeading: "次の一手（3つ。どれも選ばない選択も含めて、選択肢はこの3つです）",
+  nextSummary: "次にできることを見る（3つ）",
+  nextHeading: "次にできること（どれも選ばない選択も含めて、この3つです）",
   step1Label: "① 今日できること（無料）",
-  step2Label: "② 専門家の見立て（無料）",
+  step2Label: "② 専門家の見立てを受け取る（無料）",
   step2Text:
     "この画面のスクショを、すぐ下の緑のボタンからLINEで送ると、この所見について「最初に見るべき1点」の返答が受け取れます。",
   step3Label: "③ 経過観察（毎月）",
@@ -287,6 +285,11 @@ export const THREAD_MAP_TEXTS = {
   stageCompare: "Googleマップで候補を比較",
   stageMaterials: "参照される材料",
   stageOutcome: "候補に残る・外れる",
+  /** 4段それぞれの短い説明（石川さんFB: 枠だけでは仕組みが伝わらない） */
+  stageSeekerNote: "近くの同業種を検索・地図アプリで探す段階",
+  stageCompareNote: "表示された候補を一覧で見比べる段階",
+  stageMaterialsNote: "比較の材料になる、公開されている情報",
+  stageOutcomeNote: "材料を見て、選ばれる・見送られるが決まる段階",
   /** 材料ノードのラベル */
   materialRating: "星評価",
   materialVolume: "口コミ数",
