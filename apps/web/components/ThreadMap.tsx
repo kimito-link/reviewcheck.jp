@@ -26,11 +26,14 @@ const TONE_CLS: Record<string, { box: string; dot: string }> = {
   },
 };
 
-/** 実測不能ステージ（常にニュートラル）の箱。 */
-function NeutralStage({ label }: { label: string }) {
+/** 実測不能ステージ（常にニュートラル）の箱。note があれば1行の補足を添える。 */
+function NeutralStage({ label, note }: { label: string; note?: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs font-medium text-slate-500">
-      {label}
+    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+      <p className="text-xs font-medium text-slate-500">{label}</p>
+      {note ? (
+        <p className="mt-0.5 text-[10px] leading-snug text-slate-400">{note}</p>
+      ) : null}
     </div>
   );
 }
@@ -48,13 +51,16 @@ export function ThreadMap({ factors }: { factors: ScoreFactor[] }) {
 
   return (
     <div className="mt-2">
-      <NeutralStage label={t.stageSeeker} />
+      <NeutralStage label={t.stageSeeker} note={t.stageSeekerNote} />
       <Thread />
-      <NeutralStage label={t.stageCompare} />
+      <NeutralStage label={t.stageCompare} note={t.stageCompareNote} />
       <Thread />
       <div className="rounded-lg border border-slate-200 bg-white p-3">
         <p className="text-center text-xs font-medium text-slate-500">
           {t.stageMaterials}
+        </p>
+        <p className="mt-0.5 text-center text-[10px] leading-snug text-slate-400">
+          {t.stageMaterialsNote}
         </p>
         <div className="mt-2 grid grid-cols-2 gap-1.5">
           {materials.map((m) => {
@@ -80,7 +86,7 @@ export function ThreadMap({ factors }: { factors: ScoreFactor[] }) {
         </div>
       </div>
       <Thread />
-      <NeutralStage label={t.stageOutcome} />
+      <NeutralStage label={t.stageOutcome} note={t.stageOutcomeNote} />
       <p className="mt-2 text-xs leading-relaxed text-slate-500">{t.caption}</p>
     </div>
   );

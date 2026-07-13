@@ -33,7 +33,7 @@ export function FindingCard({ result }: { result: DiagnosisResult }) {
       </p>
 
       <h2 className="mt-3 text-lg font-bold text-slate-900 sm:text-xl">
-        {t.findingLabel}: {primary.name}
+        {primary.name}
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-slate-700">
         {primary.finding} {primary.structure}
