@@ -44,22 +44,31 @@ export function resultingRating(
   return normalizeRating(total / count);
 }
 
-/** 目標評価を決める（任意指定 > 競合平均 > 既定値）。競合平均が現状以下なら少し上を狙う。 */
+/**
+ * 目標評価を決める（任意指定 > 競合平均 > 既定値）。
+ * 目標は常に「現在の星評価以上」になるよう下限で保証する
+ * （石川さんFB2026-07-14: 自店が既に高評価だと目標が現在より低く出て
+ *   「下げることを推奨している」ように見えるバグがあった）。
+ */
 export function resolveTargetRating(
   store: StoreInput,
   competitors: Competitor[],
   custom?: number,
 ): { target: number; basis: RatingSimulation["targetBasis"] } {
   if (typeof custom === "number" && custom > 0) {
-    return { target: normalizeRating(custom), basis: "custom" };
+    const target = Math.max(custom, store.rating);
+    return { target: normalizeRating(target), basis: "custom" };
   }
   if (competitors.length > 0) {
     const avg = competitors.reduce((a, c) => a + c.rating, 0) / competitors.length;
     // 競合平均が自店舗より高ければそれを目標に。低ければ「競合平均 or 既定値の高い方」。
-    const target = Math.max(avg, Math.min(store.rating + 0.3, DEFAULT_TARGET_RATING));
+    // さらに自店の現在値を下回らないよう最終的に下限をかける。
+    const candidate = Math.max(avg, Math.min(store.rating + 0.3, DEFAULT_TARGET_RATING));
+    const target = Math.max(candidate, store.rating);
     return { target: normalizeRating(clamp(target, 0, 5)), basis: "competitor" };
   }
-  return { target: DEFAULT_TARGET_RATING, basis: "preset" };
+  const target = Math.max(DEFAULT_TARGET_RATING, store.rating);
+  return { target: normalizeRating(target), basis: "preset" };
 }
 
 /** 「あと何件で追いつけるか」シミュレーション一式を作る */
@@ -73,13 +82,19 @@ export function buildSimulation(
   const count = store.reviewCount;
 
   const scenarios: SimulationScenario[] = [];
+  // すでに目標に到達している場合、見出しを「改善する場合」から到達済み表現へ差し替える
+  // （石川さんFB2026-07-14: 「改善する場合」という見出しに「すでに到達しています」が
+  //   続くのは問いと答えが噛み合わない、という指摘への対応）。
+  const alreadyReached = rating >= target;
 
   // 星5のみ
   {
     const n = reviewsNeeded(rating, count, target, 5);
     scenarios.push({
       id: "five-only",
-      label: "星5の口コミだけで改善する場合",
+      label: alreadyReached
+        ? "現在の評価をキープする場合"
+        : "星5の口コミだけで改善する場合",
       newReviewStar: 5,
       reviewsNeeded: n,
       resultingRating: n != null ? resultingRating(rating, count, 5, n) : null,
@@ -98,14 +113,18 @@ export function buildSimulation(
     const n = reviewsNeeded(rating, count, target, mixStar);
     scenarios.push({
       id: "mix",
-      label: "星4と星5が混ざる場合（平均4.6想定）",
+      label: alreadyReached
+        ? "星4と星5が混ざる場合（平均4.6想定）でも評価を保てるか"
+        : "星4と星5が混ざる場合（平均4.6想定）",
       newReviewStar: mixStar,
       reviewsNeeded: n,
       resultingRating: n != null ? resultingRating(rating, count, mixStar, n) : null,
       note:
         n == null
           ? "星4が多いと平均評価は上がりにくく、目標到達にはより多くの口コミが必要です。"
-          : `星4が混ざると平均が上がりにくいため、星5のみの場合より多めに必要です（約 ${n} 件）。`,
+          : n === 0
+            ? "この配分でも、すでに目標評価を保てる水準です。"
+            : `星4が混ざると平均が上がりにくいため、星5のみの場合より多めに必要です（約 ${n} 件）。`,
     });
   }
 
@@ -114,14 +133,18 @@ export function buildSimulation(
     const n = reviewsNeeded(rating, count, target, 4);
     scenarios.push({
       id: "four-only",
-      label: "星4中心で集まる場合",
+      label: alreadyReached
+        ? "星4中心で集まる場合でも評価を保てるか"
+        : "星4中心で集まる場合",
       newReviewStar: 4,
       reviewsNeeded: n,
       resultingRating: n != null ? resultingRating(rating, count, 4, n) : null,
       note:
         n == null
           ? `目標 ${target} は星4の口コミだけでは到達できません。星5を中心に獲得する設計が必要です。`
-          : `星4中心でも目標に近づけますが、件数は多めに必要です（約 ${n} 件）。`,
+          : n === 0
+            ? "この配分でも、すでに目標評価を保てる水準です。"
+            : `星4中心でも目標に近づけますが、件数は多めに必要です（約 ${n} 件）。`,
     });
   }
 
