@@ -11,7 +11,8 @@
     "lint": "pnpm --filter @reviewcheck/web lint",
     "typecheck": "pnpm -r typecheck",
     "icons": "node scripts/generate-icons.mjs",
-    "ext:zip": "pnpm --filter @reviewcheck/chrome-extension zip"
+    "ext:zip": "pnpm --filter @reviewcheck/chrome-extension zip",
+    "test": "node --experimental-strip-types --import ./packages/core/test-loader.mjs --test \"packages/core/src/**/*.test.ts\""
   },
   "engines": {
     "node": ">=20"
@@ -21,6 +22,8 @@
     "typescript": "^5.7.2"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["sharp"]
+    "onlyBuiltDependencies": [
+      "sharp"
+    ]
   }
 }
