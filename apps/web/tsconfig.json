@@ -23,6 +23,5 @@
     "**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "//exclude": "★*.test.ts を型チェックから外す(2026-08-17)。このリポは vitest を依存に宣言しておらず(実行は hoist された binary 頼み)、含めると 'Cannot find module vitest' で落ちる。packages/core/src/simulator/simulator.test.ts も同じ理由で既に typecheck を失敗させている(既存の問題・本変更とは無関係)。",
-  "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx"]
+  "exclude": ["node_modules"]
 }

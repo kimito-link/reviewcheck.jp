@@ -3,7 +3,12 @@
   "compilerOptions": {
     "noEmit": true,
     "rootDir": "src",
-    "types": ["node"]
+    "types": ["node"],
+    // ★2026-08-17: テストは `node --test --experimental-strip-types` で動かすため、
+    //   import に .ts 拡張子が要る（Node が実行時に解決する）。tsc 側がこれを禁じており
+    //   typecheck が常に失敗していた（simulator.test.ts で既発生・本変更前からの問題）。
+    //   noEmit:true なので出力への影響は無く、有効化して両者を両立させる。
+    "allowImportingTsExtensions": true
   },
   "include": ["src"]
 }

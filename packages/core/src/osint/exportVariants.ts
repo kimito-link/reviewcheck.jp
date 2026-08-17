@@ -1,4 +1,7 @@
-import { OSINT_DISCLAIMER } from "@reviewcheck/core";
+// ★拡張子を付けない。ここは本番コードで、packages/ui 等の他パッケージからも
+//   参照される（それらは allowImportingTsExtensions を持たない）。
+//   .ts が要るのはテストファイルだけ（node --test が実行時に解決するため）。
+import { OSINT_DISCLAIMER } from "./index";
 
 /**
  * 確認記録の出力区分（2026-08-17 新設）。

@@ -6,9 +6,11 @@ import {
   type OsintPointer,
   buildOsintMonitorUrl,
   OSINT_DISCLAIMER,
+  buildExport,
+  type ExportVariant,
 } from "@reviewcheck/core";
 import { lineChannelForTopic } from "@reviewcheck/config";
-import { buildExport, type ExportVariant } from "../lib/exportVariants";
+
 
 /**
  * 公開情報ビュー（OSINT）の表示（設計 §2）。
