@@ -164,10 +164,16 @@ export function analyzeReviews(reviews: ReviewItem[]): ReviewAnalysis | null {
           aspectMap.set(def.aspect, cur);
         }
       }
-      // 強いネガティブ語の検出（既存辞書を再利用）
-      const ng = detectNegativeKeyword(text);
-      if (ng.keyword && (ng.level === "high" || ng.level === "medium")) {
-        flagged.add(ng.keyword);
+      // 強いネガティブ語の検出（既存辞書を再利用）。
+      // その口コミ自体が negative 判定のときだけ拾う（石川さんFB2026-07-16:
+      // 高評価の口コミ本文に「以前はひどかったが今は良い」等が含まれると、
+      // polarity=positive でも flag され「高評価5件・低評価0件」なのに
+      // 要注意警告が出る不整合があった）。
+      if (polarity === "negative") {
+        const ng = detectNegativeKeyword(text);
+        if (ng.keyword && (ng.level === "high" || ng.level === "medium")) {
+          flagged.add(ng.keyword);
+        }
       }
       // 代表コメント抜粋
       if (polarity === "positive" && !sampleHighlight) sampleHighlight = clip(text);

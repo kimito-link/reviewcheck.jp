@@ -6,8 +6,11 @@ import {
   type OsintPointer,
   buildOsintMonitorUrl,
   OSINT_DISCLAIMER,
+  buildExport,
+  type ExportVariant,
 } from "@reviewcheck/core";
 import { lineChannelForTopic } from "@reviewcheck/config";
+
 
 /**
  * 公開情報ビュー（OSINT）の表示（設計 §2）。
@@ -85,14 +88,22 @@ export function FactView(data: FactViewData) {
   const monitorUrl = buildOsintMonitorUrl({ refCode: urlRef });
   const lineChannel = lineChannelForTopic();
 
-  // ExportBlock 用の確認記録テキスト（免責を必ず含む）。
-  const exportText = [
-    `【公開情報の確認記録】${targetName}`,
-    ...facts.map((f) => `・${f.observation}（出典：${f.source.name}／取得：${f.retrievedAt}）`),
-    ...retrievalFailures.map((r) => `・${r.source}：取得されませんでした（${r.attemptedAt}）`),
-    "",
-    OSINT_DISCLAIMER,
-  ].join("\n");
+  // ★出力区分（2026-08-17）。外部送付用レポートに内部向けの文章が混ざったまま
+  //   送付された事故への対策。従来は出力が1種類しかなく、手元で足した文が
+  //   そのまま外へ出る構造だった。**既定は必ず外部送付用**。
+  const [variant, setVariant] = useState<ExportVariant>("external");
+  const exportInput = {
+    targetName,
+    facts: facts.map((f) => ({
+      observation: f.observation,
+      sourceName: f.source.name,
+      retrievedAt: f.retrievedAt,
+    })),
+    failures: retrievalFailures.map((r) => ({ source: r.source, attemptedAt: r.attemptedAt })),
+    // 基準日。取得日時から起こすのではなく「この記録を出した日」を明示する。
+    baseDate: new Date().toISOString().slice(0, 10),
+  };
+  const exportText = buildExport(variant, exportInput, urlRef);
 
   const onExport = async () => {
     try {
@@ -150,21 +161,51 @@ export function FactView(data: FactViewData) {
         </section>
       ) : null}
 
-      {/* ExportBlock */}
+      {/* ExportBlock: 出力区分を選んでコピーする。★既定は「外部送付用」。 */}
       <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <h2 className="mb-2 text-base font-bold text-slate-900">確認記録の出力</h2>
+        <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="出力の種類">
+          {([
+            { v: "external", label: "外部送付用レポート" },
+            { v: "internal", label: "社内確認用" },
+            { v: "message", label: "送付メッセージ" },
+            { v: "referral", label: "紹介用短文" },
+          ] as const).map((o) => (
+            <button
+              key={o.v}
+              type="button"
+              onClick={() => { setVariant(o.v); setCopied(false); }}
+              aria-pressed={variant === o.v}
+              className={
+                variant === o.v
+                  ? "rounded-full bg-slate-800 px-3 py-1.5 text-xs font-bold text-white"
+                  : "rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50"
+              }
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        {/* ★外部へ出してよいのは1区分だけ、と毎回わかるようにする。
+            事故は「どれが外部用か画面から判断できなかった」ことでも起きる。 */}
+        <p className="mb-3 text-xs text-slate-500">
+          {variant === "external"
+            ? "このまま相手へお送りいただけます。社内向けの記載は含まれません。"
+            : "この文章はレポートには含まれません。相手へ送るのは「外部送付用レポート」です。"}
+        </p>
         <button
           type="button"
           onClick={onExport}
           className="rounded-lg bg-slate-800 px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-900"
         >
-          確認記録をコピー（エクスポート）
+          コピーする
         </button>
-        {copied ? <p className="mt-2 text-xs text-slate-500">確認記録をコピーしました。</p> : null}
+        {copied ? <p className="mt-2 text-xs text-slate-500">コピーしました。</p> : null}
         <textarea
           readOnly
           value={exportText}
           onFocus={(e) => e.currentTarget.select()}
-          rows={4}
+          rows={8}
           className="mt-3 w-full resize-none rounded-md border border-slate-300 bg-slate-50 p-2 text-xs text-slate-700"
         />
       </section>

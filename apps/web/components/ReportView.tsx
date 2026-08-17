@@ -568,16 +568,15 @@ export function ReportView({
           あと何件で目標に近づける？
         </h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-          いまの星評価から
-          <strong className="text-slate-900">「目標の星評価」</strong>
-          に届くには、高評価の口コミがあと何件くらい必要かの目安です。
           目標は
           {simulation.targetBasis === "competitor"
             ? "近隣の競合平均"
             : simulation.targetBasis === "custom"
               ? "あなたが指定した値"
               : "おすすめの基準値"}
-          を採用しています。
+          を採用しています。いまの星評価から
+          <strong className="text-slate-900">「目標の星評価」</strong>
+          に届くには、高評価の口コミがあと何件くらい必要かの目安です。
         </p>
         <p className="mt-2 inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
           <span>
