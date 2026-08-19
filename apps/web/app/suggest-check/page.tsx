@@ -15,9 +15,9 @@ import {
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
-  title: "サジェスト診断｜店名・会社名で検索候補(オートコンプリート)の悪評を無料チェック",
+  title: "サジェスト診断｜店名・会社名・活動ネームで検索候補(オートコンプリート)の悪評を無料チェック",
   description:
-    "店舗名・会社名を入れるだけで、Google検索の予測候補（サジェスト）に『詐欺』『最悪』などのネガティブな言葉が出ていないかを無料診断。来店前のお客様が最初に目にする検索候補の状態を確認し、正当な方法でのサジェスト対策につなげます。",
+    "店舗名・会社名・活動ネーム（配信者・インフルエンサー）を入れるだけで、Google検索の予測候補（サジェスト）に『詐欺』『最悪』などのネガティブな言葉が出ていないかを無料診断。来店前のお客様が最初に目にする検索候補の状態を確認し、正当な方法でのサジェスト対策につなげます。",
   path: "/suggest-check/",
   keywords: [
     "サジェスト 対策",
@@ -50,7 +50,7 @@ const WHY = [
 const STEPS = [
   {
     title: "今の状態を診断",
-    desc: "店名・会社名を入れて、実際に出る検索候補とネガティブ候補の有無を確認します（無料）。",
+    desc: "店名・会社名・活動ネームを入れて、実際に出る検索候補とネガティブ候補の有無を確認します（無料）。",
   },
   {
     title: "リスクを見極め",
@@ -131,9 +131,17 @@ export default async function SuggestCheckPage({
               <span className="text-amber-300">悪い言葉</span>が出ていませんか？
             </h1>
             <p className="mt-4 text-sm leading-relaxed text-slate-200 sm:text-base">
-              店名・会社名を入れるだけ。Google検索の予測候補（サジェスト）に
+              店名・会社名・<span className="font-bold text-amber-300">活動ネーム</span>を入れるだけ。Google検索の予測候補（サジェスト）に
               <br className="hidden sm:block" />
               「最悪」「詐欺」などのネガティブ候補が出ていないかを、無料でチェックします。
+            </p>
+            {/* ★2026-08-19 追加: インフルエンサー・配信者の需要に対応。
+                既存のSEO軸（店名・会社名）は消さずに「活動ネーム」を足す形にする。
+                ★対象は「公に名乗っている活動上の名前」であって本名・素性ではない
+                  （設計 §4-4 探偵業法の線を越えない）。 */}
+            <p className="mt-3 text-xs leading-relaxed text-slate-300 sm:text-sm">
+              配信者・インフルエンサーの方は<span className="font-bold">活動ネーム</span>でどうぞ。
+              名前で検索した人が最初に見る候補を、そのまま確認できます。
             </p>
           </div>
           <div className="mx-auto mt-8 max-w-2xl">
