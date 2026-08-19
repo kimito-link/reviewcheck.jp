@@ -53,13 +53,38 @@ function FactCard({ fact }: { fact: OsintFact }) {
   );
 }
 
+/**
+ * アクセス方法の中の URL だけをリンクにする。
+ * ★2026-08-19: 検索URLを出すようにしたが、素だと文字列のままで押せなかった。
+ *   ★リンク先は自前で組み立てた検索URLのみ（http/https 以外は無視）。
+ *     外部から与えられた文字列をそのまま href にしない。
+ */
+function linkifyAccess(text: string) {
+  const parts = text.split(/(https?:\/\/[^\s（）]+)/g);
+  return parts.map((p, i) =>
+    /^https?:\/\//.test(p) ? (
+      <a
+        key={i}
+        href={p}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-700 underline break-all"
+      >
+        {p}
+      </a>
+    ) : (
+      <span key={i}>{p}</span>
+    ),
+  );
+}
+
 /** PointerCard: 情報の所在1件。 */
 function PointerCard({ pointer }: { pointer: OsintPointer }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
       <p className="text-sm font-medium text-slate-800">{pointer.name}</p>
       <p className="mt-1 text-xs text-slate-600">確認できること：{pointer.whatCanBeConfirmed}</p>
-      <p className="mt-0.5 text-xs text-slate-600">アクセス方法：{pointer.howToAccess}</p>
+      <p className="mt-0.5 text-xs text-slate-600">アクセス方法：{linkifyAccess(pointer.howToAccess)}</p>
     </div>
   );
 }

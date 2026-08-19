@@ -4,7 +4,7 @@ import {
   decodeOsintReportId,
   OSINT_OBSERVATION_TEMPLATES,
   OSINT_POINTER_CATALOG,
-  OSINT_POINTER_CATALOG_HANDLE,
+  osintPointerCatalogHandle,
   isRenderableFact,
   type OsintFact,
 } from "@reviewcheck/core";
@@ -134,7 +134,7 @@ export default async function FactViewPage({
     //     「コンプラ確認」を選ばないため、compliance 条件だと永久に出ない。
     pointers:
       targetType === "brand"
-        ? OSINT_POINTER_CATALOG_HANDLE
+        ? osintPointerCatalogHandle(name)
         : compliance
           ? OSINT_POINTER_CATALOG
           : [],
