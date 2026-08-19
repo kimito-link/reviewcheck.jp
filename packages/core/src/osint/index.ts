@@ -140,29 +140,35 @@ export const OSINT_POINTER_CATALOG: OsintPointer[] = [
  *     出すのは「どこで確認できるか」だけ。確認は利用者が自分の目で行う。
  *   これは反社チェックと同じ構造（判定しない・確認記録は残る）。
  */
-export const OSINT_POINTER_CATALOG_HANDLE: OsintPointer[] = [
-  {
-    name: "匿名掲示板（雑談たぬき）",
-    whatCanBeConfirmed: "活動ネームを含むスレッド・書き込みの有無",
-    howToAccess:
-      'Google で site:b.2ch2.net "活動ネーム" を検索（当ツールは件数を取得していません。掲載サイトが自動取得を拒否しているため）',
-  },
-  {
-    name: "検索候補（オートコンプリート）",
-    whatCanBeConfirmed: "活動ネームに続けて表示される候補語",
-    howToAccess: "各検索エンジンの検索窓に活動ネームを入力（当ツールのサジェスト診断でも取得できます）",
-  },
-  {
-    name: "SNS の検索結果",
-    whatCanBeConfirmed: "活動ネームを含む投稿・引用の有無",
-    howToAccess: "X・YouTube 等の検索窓で活動ネームを検索",
-  },
-  {
-    name: "ニュース・まとめサイト",
-    whatCanBeConfirmed: "活動ネームを含む記事の有無と、その掲載日",
-    howToAccess: "Google ニュース検索で活動ネームを検索",
-  },
-];
+export function osintPointerCatalogHandle(name: string): OsintPointer[] {
+  // ★対象名をそのまま検索クエリに入れる。静的カタログだと「活動ネーム」という
+  //   プレースホルダのまま表示され、利用者が手で置き換える必要があった（2026-08-19 実測で発覚）。
+  const q = (name || "").trim();
+  const quoted = `"${q}"`;
+  const g = (query: string) => `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+  return [
+    {
+      name: "匿名掲示板（雑談たぬき）",
+      whatCanBeConfirmed: `「${q}」を含むスレッド・書き込みの有無`,
+      howToAccess: `${g(`site:b.2ch2.net ${quoted}`)} （当ツールは件数を取得していません。掲載サイトが自動取得を拒否しているため）`,
+    },
+    {
+      name: "検索候補（オートコンプリート）",
+      whatCanBeConfirmed: `「${q}」に続けて表示される候補語`,
+      howToAccess: "各検索エンジンの検索窓に活動ネームを入力（当ツールのサジェスト診断でも取得できます）",
+    },
+    {
+      name: "SNS の検索結果",
+      whatCanBeConfirmed: `「${q}」を含む投稿・引用の有無`,
+      howToAccess: `X: https://x.com/search?q=${encodeURIComponent(q)} ／ YouTube: https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+    },
+    {
+      name: "ニュース・まとめサイト",
+      whatCanBeConfirmed: `「${q}」を含む記事の有無と、その掲載日`,
+      howToAccess: g(`${quoted} ニュース`),
+    },
+  ];
+}
 
 /** 免責の定型文（確認記録エクスポートに必ず含める・設計 §4-3）。 */
 export const OSINT_DISCLAIMER =
