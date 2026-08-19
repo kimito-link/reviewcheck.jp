@@ -4,6 +4,7 @@ import {
   decodeOsintReportId,
   OSINT_OBSERVATION_TEMPLATES,
   OSINT_POINTER_CATALOG,
+  OSINT_POINTER_CATALOG_HANDLE,
   isRenderableFact,
   type OsintFact,
 } from "@reviewcheck/core";
@@ -84,7 +85,7 @@ export default async function FactViewPage({
     );
   }
 
-  const { name, compliance } = input;
+  const { name, targetType, compliance } = input;
   const base = SITE.baseUrl;
   const at = new Date().toISOString().slice(0, 10);
 
@@ -126,7 +127,17 @@ export default async function FactViewPage({
     targetName: name,
     facts: safeFacts,
     retrievalFailures,
-    pointers: compliance ? OSINT_POINTER_CATALOG : [],
+    // ★対象タイプで Pointer Map を出し分ける（2026-08-19）。
+    //   corporation … 官報・法人登記・行政処分など（コンプラ確認カテゴリのみ）
+    //   brand       … 活動ネーム（インフルエンサー・配信者）向け。掲示板/検索候補/SNS
+    //   ★brand 側は compliance フラグに関係なく出す。活動ネームの利用者は
+    //     「コンプラ確認」を選ばないため、compliance 条件だと永久に出ない。
+    pointers:
+      targetType === "brand"
+        ? OSINT_POINTER_CATALOG_HANDLE
+        : compliance
+          ? OSINT_POINTER_CATALOG
+          : [],
   };
 
   return (
