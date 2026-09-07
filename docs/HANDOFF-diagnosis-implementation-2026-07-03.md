@@ -59,7 +59,7 @@
 ---
 
 ## 4. FABLE-3STEP の回し方（次チャットが新お題を回すとき）
-- 手順1: `COUNCIL-HOWTO.md` を読み `tsuioku-no-kirameki.com/scripts/meeting.mjs` を `COUNCIL_CRITICS=2 COUNCIL_SYNTH=1` で回す（バックグラウンド・ログはscratchpadに退避）。**Groqの日次トークン上限(TPD 10万)に注意** — 会議を何度も回すと llama-3.3-70b が429で脱落する（4/5成功でも統合は成立）。
+- 手順1: `../web-ios-android/docs/ai-workflows/COUNCIL-HOWTO.md` を読み `tsuioku-no-kirameki.com/scripts/meeting.mjs` を `COUNCIL_CRITICS=2 COUNCIL_SYNTH=1` で回す（バックグラウンド・ログはscratchpadに退避）。**Groqの日次トークン上限(TPD 10万)に注意** — 会議を何度も回すと llama-3.3-70b が429で脱落する（4/5成功でも統合は成立）。
 - 手順2: 統合素材＋既存設計書＋実コードを Fable(model:"fable")サブエージェントに渡す。**必ず既存コードの実在をFableに裏取りさせ、司令塔も幻覚(架空のDB連携・実績数値・判例)を除去する**。
 - 手順3: 実装は別チャット（この引き継ぎと同じ流儀）。
 
