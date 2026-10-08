@@ -77,14 +77,10 @@ export default function RootLayout({
   );
 }
 
-/** PWA: サービスワーカー登録（クライアント） */
+/** PWA: サービスワーカー登録（クライアント）。
+ * CSP対応(2026-10-08): インラインscript(dangerouslySetInnerHTML)から
+ * public/sw-register.js への外部ファイル参照に変更。script-src 'self'のみで
+ * 厳格化するため(このリポジトリには認証ライブラリ等のインラインscript制約が無い)。 */
 function ServiceWorkerRegister() {
-  return (
-    <script
-      // eslint-disable-next-line react/no-danger
-      dangerouslySetInnerHTML={{
-        __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}`,
-      }}
-    />
-  );
+  return <script src="/sw-register.js" />;
 }
