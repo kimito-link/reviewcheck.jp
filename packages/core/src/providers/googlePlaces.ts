@@ -1,6 +1,11 @@
 import type { Competitor, StoreInput } from "../types/index";
 import type { ReviewItem } from "../reviews/index";
-import { parseMapsUrl, isShortMapsUrl, looksLikeUrl } from "../utils/mapsUrl";
+import {
+  parseMapsUrl,
+  isShortMapsUrl,
+  looksLikeUrl,
+  isAllowedMapsHost,
+} from "../utils/mapsUrl";
 import { normalizeRating, toCount } from "../utils/number";
 import type { StoreDataProvider, StoreQuery } from "./types";
 
@@ -218,8 +223,11 @@ export class GooglePlacesProvider implements StoreDataProvider {
 
     // 短縮URL（share.google / maps.app.goo.gl 等）や、名前・place_id を
     // 取り出せないURLは、リダイレクトを追って展開してから再解析する。
+    // SSRF対策: Googleマップ系URLと確認できた場合（isMapsUrl）のみ展開する。
+    // 任意ホストへのfetchを避けるため、Maps系と判定できないURLは展開しない。
     if (
       query.mapsUrl &&
+      parsed?.isMapsUrl &&
       (isShortMapsUrl(query.mapsUrl) || !parsed?.placeId) &&
       !parsed?.nameGuess
     ) {
@@ -285,18 +293,32 @@ export class GooglePlacesProvider implements StoreDataProvider {
   private async expandUrl(
     raw: string,
   ): Promise<{ url: string; body: string } | null> {
+    // SSRF対策: 各ホップでGoogleマップ系ホストであることを再確認しながら
+    // リダイレクトを手動追跡する（redirect: "follow" は転送先を検証できないため使わない）。
+    const MAX_REDIRECTS = 5;
+    let currentUrl = raw;
     try {
-      const res = await fetch(raw, {
-        redirect: "follow",
-        headers: {
-          // 一部の短縮リンクはUAなしだと簡易ページを返すため明示する
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-          "Accept-Language": "ja",
-        },
-      });
-      const body = await res.text().catch(() => "");
-      return { url: res.url || raw, body };
+      for (let i = 0; i < MAX_REDIRECTS; i++) {
+        if (!isAllowedMapsHost(currentUrl)) return null;
+        const res = await fetch(currentUrl, {
+          redirect: "manual",
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+            "Accept-Language": "ja",
+          },
+        });
+        if (res.status >= 300 && res.status < 400) {
+          const location = res.headers.get("location");
+          if (!location) return null;
+          currentUrl = new URL(location, currentUrl).toString();
+          continue;
+        }
+        if (!res.ok) return null;
+        const body = await res.text().catch(() => "");
+        return { url: res.url || currentUrl, body };
+      }
+      return null;
     } catch {
       return null;
     }

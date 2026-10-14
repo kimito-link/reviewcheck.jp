@@ -98,3 +98,19 @@ export function parseMapsUrl(raw: string): ParsedMapsUrl {
 export function looksLikeUrl(raw: string): boolean {
   return /^https?:\/\//i.test((raw ?? "").trim());
 }
+
+/**
+ * SSRF対策: URLがGoogleマップ系ホスト（許可リスト）かつhttps/httpのみかを検証する。
+ * リダイレクト追跡の各ホップで呼び出し、任意ホスト・内部IPへのfetchを防ぐ。
+ */
+export function isAllowedMapsHost(raw: string): boolean {
+  let url: URL;
+  try {
+    url = new URL((raw ?? "").trim());
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+  const host = url.hostname.replace(/^www\./, "").toLowerCase();
+  return MAPS_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+}
