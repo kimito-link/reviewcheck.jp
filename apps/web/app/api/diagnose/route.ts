@@ -4,28 +4,39 @@ import {
   diagnose,
   fetchCompetitors,
   fetchStore,
+  getEnabledProviders,
+  guardMessage,
   InvalidInputError,
+  MockStoreProvider,
+  normalizeStoreQueryKey,
+  cacheGet,
+  cacheSet,
+  PLACES_COST_YEN,
+  type FetchStoreResult,
   type Competitor,
   type ReviewItem,
   type StoreContext,
   type StoreInput,
 } from "@reviewcheck/core";
 import { incrementDiagnosisCount } from "@/lib/diagnosisCounter";
+import { corsHeaders, getCacheStore, guardPlacesCall } from "@/lib/costGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-const CORS_HEADERS = {
-  // 公開診断API。Chrome拡張(chrome-extension://...)・Web双方から利用するため許可。
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+// 公開診断API。CORS は自社ドメインだけ（Chrome拡張は host_permissions で CORS の外から呼ぶ）。
+const CORS_METHODS = "GET, POST, OPTIONS";
 
-export function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+export function OPTIONS(request: Request) {
+  return new NextResponse(null, { status: 204, headers: corsHeaders(request, CORS_METHODS) });
 }
+
+// 永続キャッシュ（L3）。星評価・口コミ数は日次でほぼ変わらない。
+const STORE_CACHE_TTL_SEC = 24 * 60 * 60;
+// 「見つからなかった」も覚える（同じ打ち間違いで二度払わない）。
+const NOT_FOUND_CACHE_TTL_SEC = 6 * 60 * 60;
+type CachedStore = { notFound: true } | { notFound?: false; result: FetchStoreResult };
 
 interface DiagnoseBody {
   query?: { text?: string; mapsUrl?: string; placeId?: string };
@@ -39,7 +50,8 @@ interface DiagnoseBody {
   noAutoCompetitors?: boolean;
 }
 
-async function handle(body: DiagnoseBody) {
+async function handle(request: Request, body: DiagnoseBody) {
+  const CORS_HEADERS = corsHeaders(request, CORS_METHODS);
   const demo = body.demo === true;
   const query = body.query ?? {};
   const hasQuery = Boolean(
@@ -52,22 +64,78 @@ async function handle(body: DiagnoseBody) {
   let providers: string[] = [];
   let context: StoreContext | undefined;
   let reviews: ReviewItem[] = [];
+  // 原価の守りで取得しなかった理由（利用者に正直に見せる。L6）。
+  let storeGuardReason: Parameters<typeof guardMessage>[0] | null = null;
+  const notices: string[] = [];
+  // Places の鍵が無い環境（開発・mock）は費用が出ないので関所を通さない。
+  const placesEnabled = getEnabledProviders().length > 0;
+  const cache = getCacheStore();
 
   // 1) クエリがあれば実プロバイダで店舗データを取得。
   //    実データが取れず手入力もない場合、デモ指定のときだけ mock を許可する。
   if (hasQuery) {
-    const fetched = await fetchStore(
+    const storeQuery = {
+      text: query.text,
+      mapsUrl: query.mapsUrl,
+      placeId: query.placeId,
+    };
+    const normKey = normalizeStoreQueryKey(storeQuery);
+    const cacheKey = normKey ? `rc:store:v1:${normKey}` : null;
+    const cached =
+      placesEnabled && cacheKey ? await cacheGet<CachedStore>(cache, cacheKey) : null;
+
+    let fetched: FetchStoreResult | null = null;
+    if (cached && !cached.notFound) {
+      fetched = cached.result;
+    } else if (cached?.notFound) {
+      fetched = { store: null, providers: [], isMock: false };
+    } else {
+      const guard = placesEnabled
+        ? await guardPlacesCall(request, "diagnose", PLACES_COST_YEN.store)
+        : ({ ok: true } as const);
+      if (guard.ok) {
+        fetched = await fetchStore(storeQuery, { allowMock: demo });
+        if (placesEnabled && cacheKey && !fetched.isMock) {
+          const value: CachedStore = fetched.store
+            ? { result: fetched }
+            : { notFound: true };
+          await cacheSet(
+            cache,
+            cacheKey,
+            value,
+            fetched.store ? STORE_CACHE_TTL_SEC : NOT_FOUND_CACHE_TTL_SEC,
+          );
+        }
+      } else {
+        storeGuardReason = guard.reason;
+        if (demo) {
+          // デモは架空の値と明示した体験なので、Places を呼ばずに mock で見せる。
+          const store = await new MockStoreProvider().fetchStore(storeQuery);
+          fetched = { store, providers: [], isMock: true };
+        }
+      }
+    }
+    if (fetched) {
+      base = fetched.store;
+      providers = fetched.providers;
+      context = fetched.context;
+      reviews = fetched.reviews ?? [];
+    }
+  }
+
+  // 1.5) 予算切れ等で取得しなかった。手入力が無ければ、取れなかったことを正直に伝えて手入力へ。
+  //      （「見つかりません」とも「良好」とも言わない。）
+  if (storeGuardReason && !base && !hasManualRating) {
+    return NextResponse.json(
       {
-        text: query.text,
-        mapsUrl: query.mapsUrl,
-        placeId: query.placeId,
+        needsManualInput: true,
+        reason: storeGuardReason,
+        message: guardMessage(storeGuardReason, "store"),
+        storeNameGuess: query.text?.trim() || null,
+        mapsUrl: query.mapsUrl?.trim() || null,
       },
-      { allowMock: demo },
+      { status: 200, headers: CORS_HEADERS },
     );
-    base = fetched.store;
-    providers = fetched.providers;
-    context = fetched.context;
-    reviews = fetched.reviews ?? [];
   }
 
   // 2) 実データが取得できず、手入力の星評価もない
@@ -109,10 +177,27 @@ async function handle(body: DiagnoseBody) {
     !demo &&
     context
   ) {
-    try {
-      competitors = await fetchCompetitors(context, { limit: 5 });
-    } catch {
-      competitors = [];
+    const compKey = context.placeId ? `rc:comp:v1:${context.placeId}:5` : null;
+    const cachedComp = compKey ? await cacheGet<Competitor[]>(cache, compKey) : null;
+    if (cachedComp) {
+      competitors = cachedComp;
+    } else {
+      const guard = await guardPlacesCall(request, "diagnose", PLACES_COST_YEN.competitors);
+      if (guard.ok) {
+        try {
+          competitors = await fetchCompetitors(context, { limit: 5 });
+          if (compKey && competitors.length > 0) {
+            await cacheSet(cache, compKey, competitors, STORE_CACHE_TTL_SEC);
+          }
+        } catch {
+          competitors = [];
+        }
+      } else {
+        // 取得しなかった。競合比較は「無し」ではなく「未取得」と伝える。
+        notices.push(
+          "本日の自動取得の上限に達したため、周辺競合との比較は取得していません（未取得）。",
+        );
+      }
     }
   }
 
@@ -133,7 +218,10 @@ async function handle(body: DiagnoseBody) {
     if (!demo) {
       incrementDiagnosisCount().catch(() => {});
     }
-    return NextResponse.json(result, { headers: CORS_HEADERS });
+    return NextResponse.json(
+      notices.length > 0 ? { ...result, notices } : result,
+      { headers: CORS_HEADERS },
+    );
   } catch (e) {
     if (e instanceof InvalidInputError) {
       return NextResponse.json(
@@ -172,7 +260,7 @@ export async function POST(request: Request) {
   } catch {
     body = {};
   }
-  return handle(body);
+  return handle(request, body);
 }
 
 export async function GET(request: Request) {
@@ -182,7 +270,7 @@ export async function GET(request: Request) {
   const placeId = params.get("placeId") ?? undefined;
   const rating = params.get("rating");
   const reviewCount = params.get("reviewCount");
-  return handle({
+  return handle(request, {
     query: { text: text ?? undefined, mapsUrl: mapsUrl ?? undefined, placeId },
     store: {
       ...(rating ? { rating: Number(rating) } : {}),

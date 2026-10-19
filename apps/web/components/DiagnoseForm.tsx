@@ -96,7 +96,10 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
             : [];
           setNearby(stores);
           setAreaHint(typeof data?.areaHint === "string" ? data.areaHint : null);
-          if (stores.length === 0) {
+          if (stores.length === 0 && typeof data?.message === "string") {
+            // 予算切れ等で取得しなかった（「候補なし」ではない）。
+            setGeoError(data.message);
+          } else if (stores.length === 0) {
             setGeoError(
               "周辺の店舗候補が見つかりませんでした。店舗名やGoogleマップURLで検索してください。",
             );
@@ -200,6 +203,10 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
         setError(data.error ?? "診断に失敗しました。");
       } else {
         setResult(data as DiagnosisResult);
+        // 予算切れ等で取得しなかった項目（例: 競合比較）を「未取得」と伝える。
+        if (Array.isArray(data?.notices) && data.notices.length > 0) {
+          setNotice(data.notices.join(" "));
+        }
       }
     } catch {
       setError("通信エラーが発生しました。時間をおいて再度お試しください。");

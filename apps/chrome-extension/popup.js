@@ -86,6 +86,11 @@ async function scan() {
       showError(data.error || "診断に失敗しました。");
       return;
     }
+    // 店舗を特定できない／本日の自動取得の上限で取得しなかった → 結果は出さず理由を見せる。
+    if (data.needsManualInput) {
+      showError(data.message || "店舗データを取得できませんでした。");
+      return;
+    }
     render(data);
   } catch (e) {
     showError("通信エラーが発生しました。時間をおいて再度お試しください。");
