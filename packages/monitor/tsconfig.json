@@ -3,7 +3,10 @@
   "compilerOptions": {
     "noEmit": true,
     "rootDir": "src",
-    "types": ["node"]
+    "types": ["node"],
+    // テストは `node --test --experimental-strip-types` で動かすため import に .ts 拡張子が要る
+    // （packages/core/tsconfig.json と同じ理由）。noEmit:true なので出力への影響は無い。
+    "allowImportingTsExtensions": true
   },
   "include": ["src"]
 }

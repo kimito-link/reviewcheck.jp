@@ -1,6 +1,6 @@
 export * from "./types";
 export { stableTargetId } from "./snapshot";
-export { diffSnapshots } from "./diff";
+export { diffSnapshots, isUnverifiedSnapshot, UNVERIFIED_MESSAGE } from "./diff";
 export {
   type MonitorStore,
   InMemoryMonitorStore,

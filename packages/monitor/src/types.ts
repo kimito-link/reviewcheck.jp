@@ -2,8 +2,17 @@
  * 監視の総合判定（安全←→危険）。malwarecheck の core と同じ語彙だが、
  * monitor をドメイン非依存に保つため core には依存せず、ここで定義する。
  * 各ブランドの診断結果は、この語彙に正規化して MonitorSnapshot に載せる。
+ *
+ * unknown = 取得できず判定していない（未取得）。良い判定にも悪い判定にも使わない。
+ * 旧データでは未取得でも "clean" が入っていることがあるため、未取得かどうかは
+ * isUnverifiedSnapshot（unreachable も見る）で判定する。
  */
-export type VerdictLevel = "clean" | "vulnerable" | "suspected" | "infected";
+export type VerdictLevel =
+  | "clean"
+  | "vulnerable"
+  | "suspected"
+  | "infected"
+  | "unknown";
 
 /**
  * 監視対象（顧客のサイト1件）。
@@ -65,7 +74,8 @@ export type MonitorEventType =
   | "went-unreachable" // 到達不可になった
   | "score-dropped" // スコアが大きく下落
   | "recovered" // 問題が解消・改善した
-  | "no-change" // 変化なし
+  | "no-change" // 変化なし（今回・前回とも取得できたときだけ）
+  | "unverified" // 今回は取得できず、状態を確認できなかった
   | "insight"; // 予防型インサイト（月次・severe=false。apps/web の withInsight が追記）
 
 /** 監視で検知した1イベント。通知文面の素材になる。 */

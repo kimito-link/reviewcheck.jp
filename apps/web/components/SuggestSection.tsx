@@ -48,8 +48,6 @@ export function SuggestSection({
     };
   }, [storeName]);
 
-  if (failed) return null;
-
   const suggestHref = storeQuery
     ? `${CTAS.suggest.href}&store=${encodeURIComponent(storeQuery)}`
     : CTAS.suggest.href;
@@ -59,6 +57,8 @@ export function SuggestSection({
 
   const negatives = data?.negatives ?? [];
   const hasNegatives = negatives.length > 0;
+  // 取得失敗（未取得）や一部未取得は「良い状態」と言わず「確認できませんでした」と出す。
+  const unverified = !hasNegatives && (failed || data?.risk !== "safe");
 
   return (
     <section
@@ -77,7 +77,7 @@ export function SuggestSection({
         </div>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
           口コミと並んで第一印象を左右するのが、検索したときの「見られ方」です。
-          検索窓に店名を入れたとき、Googleが自動表示する候補（オートコンプリート）を確認しました。
+          検索窓に店名を入れたとき、Googleが自動表示する候補（オートコンプリート）の確認結果です。
           来店前のお客様の多くが、口コミを見る前にこの候補を目にします。
         </p>
 
@@ -125,6 +125,15 @@ export function SuggestSection({
                 {CTAS.suggest.label}
               </Link>
             </div>
+          </div>
+        ) : unverified ? (
+          <div className="mt-4">
+            <p className="text-sm font-bold text-amber-700">
+              検索候補を確認できませんでした
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-600">
+              今回は検索候補を取得できなかったため、良し悪しを判定していません。時間をおいて診断し直すと確認できることがあります。
+            </p>
           </div>
         ) : (
           <div className="mt-4">

@@ -5,9 +5,17 @@
  * 方針（誇張・誤表示を避ける）:
  *   - 表示・判定は「実際に取得できた候補」のみを対象にする。
  *   - 中立文脈（例: 「迷惑メール対策」）は誤検知として除外する。
+ *   - 取得失敗（未取得）と「取得できたが候補が無い（不存在）」を区別する。
+ *     未取得は良い判定に使わない（ネガ候補が見つからなくても safe にしない）。
  */
 
-export type SuggestRiskLevel = "high" | "medium" | "low" | "safe";
+/** unknown = 取得できなかった分があり、良し悪しを判定できていない。 */
+export type SuggestRiskLevel = "high" | "medium" | "low" | "safe" | "unknown";
+
+/**
+ * 取得状況。ok = 全クエリ取得成功 / partial = 一部のみ取得 / unavailable = 全クエリ取得失敗。
+ */
+export type SuggestFetchStatus = "ok" | "partial" | "unavailable";
 
 export interface AnalyzedSuggest {
   text: string;
@@ -20,6 +28,7 @@ export interface SuggestAnalysis {
   suggestions: AnalyzedSuggest[];
   negatives: AnalyzedSuggest[];
   risk: SuggestRiskLevel;
+  status: SuggestFetchStatus;
   source: "google";
 }
 
@@ -96,21 +105,28 @@ export function detectNegativeKeyword(text: string): {
   return { level: null, keyword: null };
 }
 
-function overallRisk(items: AnalyzedSuggest[]): SuggestRiskLevel {
+function overallRisk(
+  items: AnalyzedSuggest[],
+  status: SuggestFetchStatus,
+): SuggestRiskLevel {
   if (items.some((s) => s.level === "high")) return "high";
   if (items.some((s) => s.level === "medium")) return "medium";
   if (items.some((s) => s.level === "low")) return "low";
-  return "safe";
+  // ネガ候補が見つからなくても、取得できなかった分があれば「良好」とは言えない。
+  return status === "ok" ? "safe" : "unknown";
 }
 
-/** Google complete から候補語を取得（実際に表示される候補のみ） */
+/**
+ * Google complete から候補語を取得（実際に表示される候補のみ）。
+ * 取得失敗（通信エラー・HTTPエラー・形式不正）は null、取得成功で候補0件は []。
+ */
 export async function fetchGoogleSuggest(
   query: string,
   lang = "ja",
   timeoutMs = 5000,
-): Promise<string[]> {
+): Promise<string[] | null> {
   const q = query.trim();
-  if (!q || q.length > 200) return [];
+  if (!q || q.length > 200) return null;
   // 注: client=firefox は ie/oe を指定しないと charset=Shift_JIS で返るため、
   // res.json()（UTF-8前提）で文字化けする。ie=UTF-8&oe=UTF-8 を必ず付ける。
   const url = `https://suggestqueries.google.com/complete/search?client=firefox&ie=UTF-8&oe=UTF-8&q=${encodeURIComponent(
@@ -121,11 +137,11 @@ export async function fetchGoogleSuggest(
       headers: { "Accept-Language": lang },
       signal: AbortSignal.timeout(timeoutMs),
     });
-    if (!res.ok) return [];
+    if (!res.ok) return null;
     const body = (await res.json()) as [string, string[]];
-    return Array.isArray(body?.[1]) ? body[1] : [];
+    return Array.isArray(body?.[1]) ? body[1] : null;
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -145,9 +161,13 @@ export async function analyzeStoreSuggest(
     fetchGoogleSuggest(`${name} `, lang),
   ]);
 
+  const fetched = [a, b].filter((x): x is string[] => x !== null);
+  const status: SuggestFetchStatus =
+    fetched.length === 2 ? "ok" : fetched.length === 0 ? "unavailable" : "partial";
+
   const seen = new Set<string>();
   const merged: string[] = [];
-  for (const s of [...a, ...b]) {
+  for (const s of fetched.flat()) {
     const t = s.trim();
     if (!t || t.toLowerCase() === name.toLowerCase() || seen.has(t)) continue;
     seen.add(t);
@@ -164,7 +184,8 @@ export async function analyzeStoreSuggest(
     query: name,
     suggestions,
     negatives,
-    risk: overallRisk(suggestions),
+    risk: overallRisk(suggestions, status),
+    status,
     source: "google",
   };
 }

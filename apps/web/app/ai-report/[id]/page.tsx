@@ -63,7 +63,9 @@ async function fetchSuggest(
     u.searchParams.set("q", store);
     const res = await fetch(u.toString(), { next: { revalidate: 86400 } });
     if (!res.ok) return null;
-    const data = (await res.json()) as { negatives?: unknown[] };
+    const data = (await res.json()) as { negatives?: unknown[]; risk?: string };
+    // 一部未取得でネガ候補が見つからなかった場合は判定できていない＝未取得扱い。
+    if (data.risk === "unknown") return null;
     return { negativeCount: Array.isArray(data.negatives) ? data.negatives.length : 0 };
   } catch {
     return null;
