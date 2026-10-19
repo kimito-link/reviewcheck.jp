@@ -1,0 +1,8 @@
+{
+  "guarded": {
+    "packages/core/src/providers/googlePlaces.ts": "匿名の入口（apps/web/app/api/diagnose・nearby）は apps/web/lib/costGuard.ts guardPlacesCall（キルスイッチ→IP上限→reserveDailyBudget、fail-closed）を通してから呼ぶ。監視スキャン（apps/web/lib/monitorScanner.ts）は CRON_SECRET 必須（未設定なら拒否）の cron からだけ呼ばれ、対象は有料契約の店舗だけ。設計: docs/COST-GUARD.md"
+  },
+  "exempt": {
+    "apps/web/app/api/ai-probe/route.ts": "Groq の無料枠モデル（llama-3.3-70b-versatile）。原価ではなく可用性の問題。PAID_CALLS_DISABLED で停止可・24h の CDN キャッシュあり。★Groq 側で課金を有効にしたら予算の予約を付けること（docs/COST-GUARD.md）"
+  }
+}

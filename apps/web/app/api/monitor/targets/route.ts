@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isBearerAuthorized } from "@reviewcheck/core";
 import { stableTargetId, type MonitorTarget } from "@reviewcheck/monitor";
 import { getMonitorStore, hasPersistentStore } from "@/lib/monitorStore";
 import { normalizePlaceId } from "@/lib/monitorTarget";
@@ -10,13 +11,14 @@ export const dynamic = "force-dynamic";
  * 監視対象（店舗）の管理エンドポイント（登録 / 一覧 / 解除）。
  * 監視対象は Google placeId。スキャンは cron 経由の /api/monitor/run が担う。
  *
- * 認可: ADMIN_SECRET（無ければ CRON_SECRET）の Bearer。未設定ならスキップ。
+ * 認可: ADMIN_SECRET（無ければ CRON_SECRET）の Bearer。★どちらも未設定なら拒否（fail-closed）。
  */
 function isAuthorized(request: Request): boolean {
-  const secret = process.env.ADMIN_SECRET ?? process.env.CRON_SECRET;
-  if (!secret) return true;
-  const auth = request.headers.get("authorization");
-  return auth === `Bearer ${secret}`;
+  // ★secret 未設定なら拒否（fail-closed）。以前は未設定だと誰でも通れた。
+  return isBearerAuthorized(
+    request.headers.get("authorization"),
+    process.env.ADMIN_SECRET ?? process.env.CRON_SECRET,
+  );
 }
 
 function unauthorized() {

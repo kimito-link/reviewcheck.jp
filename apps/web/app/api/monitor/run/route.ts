@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isBearerAuthorized } from "@reviewcheck/core";
 import { runAllMonitors } from "@reviewcheck/monitor";
 import { getMonitorStore, hasPersistentStore } from "@/lib/monitorStore";
 import { getMonitorNotifier, hasRealNotifier } from "@/lib/monitorNotifier";
@@ -11,14 +12,15 @@ export const maxDuration = 60;
 /**
  * 評判の定期監視 実行エンドポイント（Vercel Cron 想定）。
  *
- * 認可: CRON_SECRET の Bearer。未設定の環境ではスキップ。
+ * 認可: CRON_SECRET の Bearer。★未設定なら拒否（fail-closed。店舗ごとに Places を呼ぶため）。
  * 永続ストア未接続のうちは差分の基準が保持されない（本番は KV 接続が前提）。
  */
 function isAuthorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return true;
-  const auth = request.headers.get("authorization");
-  return auth === `Bearer ${secret}`;
+  // ★secret 未設定なら拒否（fail-closed）。以前は未設定だと誰でも通れた。
+  return isBearerAuthorized(
+    request.headers.get("authorization"),
+    process.env.CRON_SECRET,
+  );
 }
 
 async function handle(request: Request) {

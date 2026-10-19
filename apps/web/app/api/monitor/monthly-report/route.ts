@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isBearerAuthorized } from "@reviewcheck/core";
 import { runAllMonitors } from "@reviewcheck/monitor";
 import { getMonitorStore, hasPersistentStore } from "@/lib/monitorStore";
 import { getMonitorNotifier, hasRealNotifier } from "@/lib/monitorNotifier";
@@ -21,10 +22,11 @@ export const maxDuration = 60;
  * スケジュールすること（同日に走ると片方の差分がもう片方に吸われる）。
  */
 function isAuthorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return true;
-  const auth = request.headers.get("authorization");
-  return auth === `Bearer ${secret}`;
+  // ★secret 未設定なら拒否（fail-closed）。以前は未設定だと誰でも通れた。
+  return isBearerAuthorized(
+    request.headers.get("authorization"),
+    process.env.CRON_SECRET,
+  );
 }
 
 async function handle(request: Request) {

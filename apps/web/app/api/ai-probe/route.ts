@@ -5,6 +5,7 @@ import {
   composeAiVisibilityScore,
   sanitizeStoreName,
   isKanbanCategory,
+  isPaidCallsDisabled,
 } from "@reviewcheck/core";
 
 /**
@@ -28,6 +29,8 @@ const TIMEOUT_MS = 9000;
 async function askLlm(prompt: string): Promise<string | null> {
   const key = process.env.GROQ_API_KEY;
   if (!key) return null;
+  // キルスイッチ（L1）。止めたときは score:null（按分）になり、良好とは表示されない。
+  if (isPaidCallsDisabled(process.env.PAID_CALLS_DISABLED)) return null;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {

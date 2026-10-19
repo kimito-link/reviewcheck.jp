@@ -12,3 +12,4 @@ export * from "./osint/index";
 export * from "./osint/exportVariants";
 export * from "./insight/index";
 export * from "./findings/index";
+export * from "./costguard/index";
