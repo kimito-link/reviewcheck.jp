@@ -35,6 +35,12 @@ const RISK_SUMMARY: Record<
     cls: "border-emerald-200 bg-emerald-50",
     lead: "現在は良い状態です。ただしサジェストは、悪い口コミやネットの話題である日突然変わります。月次モニタリングで備えておくと安心です。",
   },
+  // 一部の検索候補を取得できなかった（未取得）。ネガ候補が無くても良好とは言わない。
+  unknown: {
+    title: "確認できませんでした：検索候補の一部を取得できませんでした",
+    cls: "border-amber-200 bg-amber-50",
+    lead: "今回は検索候補を最後まで取得できなかったため、良し悪しを判定していません。時間をおいて、もう一度お試しください。",
+  },
 };
 
 export function SuggestCheckApp({
@@ -58,12 +64,13 @@ export function SuggestCheckApp({
       const r = await fetch(`/api/suggest?q=${encodeURIComponent(term)}`, {
         cache: "no-store",
       });
+      // 503 = 取得に全て失敗（未取得）。候補0件（良好）とは区別してエラー表示にする。
       if (!r.ok) throw new Error("failed");
       const j = (await r.json()) as SuggestAnalysis;
       setData(j);
     } catch {
       setError(
-        "検索候補を取得できませんでした。時間をおいて、もう一度お試しください。",
+        "検索候補を取得できず、確認できませんでした。時間をおいて、もう一度お試しください。",
       );
       setData(null);
     } finally {
@@ -73,8 +80,14 @@ export function SuggestCheckApp({
 
   const negatives = data?.negatives ?? [];
   const hasNegatives = negatives.length > 0;
-  const risk = data?.risk ?? "safe";
-  const summary = RISK_SUMMARY[risk] ?? RISK_SUMMARY.safe!;
+  const risk = data?.risk ?? "unknown";
+  const unverified = !hasNegatives && risk !== "safe";
+  // ネガ候補なし＝良好と言えるのは、全クエリの取得に成功したとき（risk === "safe"）だけ。
+  const summary = hasNegatives
+    ? (RISK_SUMMARY[risk] ?? RISK_SUMMARY.high!)
+    : unverified
+      ? RISK_SUMMARY.unknown!
+      : RISK_SUMMARY.safe!;
   const consultHref = query.trim()
     ? `${CTAS.suggest.href}&store=${encodeURIComponent(query.trim())}`
     : CTAS.suggest.href;
@@ -137,12 +150,10 @@ export function SuggestCheckApp({
           <section className={`overflow-hidden rounded-2xl border ${summary.cls}`}>
             <div className="p-5 sm:p-6">
               <h2 className="text-base font-bold text-slate-900 sm:text-lg">
-                {hasNegatives
-                  ? summary.title
-                  : RISK_SUMMARY.safe!.title}
+                {summary.title}
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                {hasNegatives ? summary.lead : RISK_SUMMARY.safe!.lead}
+                {summary.lead}
               </p>
 
               {hasNegatives ? (
@@ -171,7 +182,7 @@ export function SuggestCheckApp({
               ) : null}
 
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                {hasNegatives ? (
+                {unverified ? null : hasNegatives ? (
                   <Link
                     href={consultHref}
                     className="inline-flex items-center justify-center rounded-xl bg-cta px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-cta-strong"
@@ -211,9 +222,9 @@ export function SuggestCheckApp({
                 ))}
               </div>
             </section>
-          ) : (
+          ) : unverified ? null : (
             <p className="text-sm text-slate-500">
-              この語ではGoogleの検索候補が取得できませんでした。別名・店舗名＋地名でもお試しください。
+              この語ではGoogleの検索候補は表示されませんでした。別名・店舗名＋地名でもお試しください。
             </p>
           )}
         </div>

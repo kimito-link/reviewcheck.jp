@@ -12,7 +12,7 @@
     "typecheck": "pnpm -r typecheck",
     "icons": "node scripts/generate-icons.mjs",
     "ext:zip": "pnpm --filter @reviewcheck/chrome-extension zip",
-    "test": "node --experimental-strip-types --import ./packages/core/test-loader.mjs --test \"packages/core/src/**/*.test.ts\""
+    "test": "node --experimental-strip-types --import ./packages/core/test-loader.mjs --test \"packages/{core,monitor}/src/**/*.test.ts\""
   },
   "engines": {
     "node": ">=20"

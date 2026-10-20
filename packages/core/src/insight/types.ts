@@ -62,8 +62,11 @@ export interface MonthlyInsightInput {
   hadSevereEvent: boolean;
   /** snapshot.unreachable */
   unreachable: boolean;
-  /** 監視の総合判定。"clean" のときだけ「無事の可視化」の2〜3文目を出す */
-  verdictLevel: "clean" | "vulnerable" | "suspected" | "infected";
+  /**
+   * 監視の総合判定。"clean" のときだけ「無事の可視化」の2〜3文目を出す。
+   * "unknown" は取得できず判定していない月（インサイトを出さない）。
+   */
+  verdictLevel: "clean" | "vulnerable" | "suspected" | "infected" | "unknown";
 }
 
 /**

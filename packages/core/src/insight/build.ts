@@ -119,13 +119,13 @@ export function assertInsightTextSafe(scenario: RiskScenario): {
  * 返り値は monitor 非依存の InsightItem[]（アダプタが MonitorEvent へ詰め替える）。
  *
  * 規則:
- *  0. unreachable の月はインサイトを出さない（幻の示唆を避ける）。
+ *  0. unreachable / unknown（未取得）の月はインサイトを出さない（幻の示唆・確認していない無事を言わない）。
  *  1. trigger 一致を最優先で最大1件（problemIds 前方一致・辞書順先勝ち）。
  *  2. 季節/通年シナリオを最大1件（trigger 選出分は除外・店×月で決定的ローテーション）。
  *  3. 先頭に「無事の可視化」（severe なし かつ clean の月のみ）。
  */
 export function buildMonthlyInsight(input: MonthlyInsightInput): InsightItem[] {
-  if (input.unreachable) return [];
+  if (input.unreachable || input.verdictLevel === "unknown") return [];
 
   const items: InsightItem[] = [];
 

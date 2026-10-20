@@ -1,3 +1,4 @@
+import { isUnverifiedSnapshot } from "./diff";
 import type { MonitorRunResult } from "./types";
 
 /**
@@ -19,15 +20,23 @@ export function buildNotification(result: MonitorRunResult): {
   const { target, events, snapshot } = result;
   const name = target.label || target.url;
   const severe = events.some((e) => e.severe);
+  // 未取得の回は判定・スコアを表示しない（旧データの "clean" / 0点を良否として見せない）。
+  const unverified = isUnverifiedSnapshot(snapshot);
 
   const subject = severe
     ? `【要確認】${name} に重要な変化を検出しました`
-    : `${name} の監視レポート`;
+    : unverified
+      ? `${name} の監視レポート（今回は確認できませんでした）`
+      : `${name} の監視レポート`;
 
   const lines: string[] = [];
   lines.push(`監視対象: ${target.url}`);
   lines.push(`診断日時: ${snapshot.scannedAt}`);
-  lines.push(`総合判定: ${snapshot.verdictLevel} / 安全スコア: ${snapshot.score}`);
+  lines.push(
+    unverified
+      ? "総合判定: 確認できませんでした（データを取得できなかったため判定していません）"
+      : `総合判定: ${snapshot.verdictLevel} / 安全スコア: ${snapshot.score}`,
+  );
   lines.push("");
   lines.push("― 検出した変化 ―");
   for (const e of events) {
@@ -242,7 +251,7 @@ export class WebhookNotifier implements Notifier {
         url: target.url,
         label: target.label ?? null,
         scannedAt: snapshot.scannedAt,
-        verdictLevel: snapshot.verdictLevel,
+        verdictLevel: isUnverifiedSnapshot(snapshot) ? "unknown" : snapshot.verdictLevel,
         score: snapshot.score,
         severe: events.some((e) => e.severe),
         events: events.map((e) => ({

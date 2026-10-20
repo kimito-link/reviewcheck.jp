@@ -59,7 +59,9 @@ async function fetchSuggest(base: string, name: string): Promise<{ count: number
     u.searchParams.set("q", name);
     const res = await fetch(u.toString(), { next: { revalidate: 86400 } });
     if (!res.ok) return null;
-    const data = (await res.json()) as { suggestions?: unknown[] };
+    const data = (await res.json()) as { suggestions?: unknown[]; status?: string };
+    // 一部しか取得できていない件数は実際より少ないため、観測事実として出さない。
+    if (data.status !== "ok") return null;
     return { count: Array.isArray(data.suggestions) ? data.suggestions.length : 0 };
   } catch {
     return null;

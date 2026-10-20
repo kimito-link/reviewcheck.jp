@@ -83,11 +83,12 @@ export function createReviewcheckScanner(): Scanner<DiagnosisResult | null> {
 
     if (!fetched.store) {
       // 取得不可。空の診断は作らず、到達不可スナップショットだけ返す。
+      // 判定していないので verdict は unknown（clean にすると「良好」と表示されてしまう）。
       const snapshot: MonitorSnapshot = {
         targetId: target.id,
         url: placeId,
         scannedAt: new Date().toISOString(),
-        verdictLevel: "clean",
+        verdictLevel: "unknown",
         score: 0,
         malwareNames: [],
         exposureIds: [],

@@ -27,7 +27,16 @@ export async function GET(request: Request) {
   }
   try {
     const result = await analyzeStoreSuggest(q);
-    return NextResponse.json(result ?? { query: q, suggestions: [], negatives: [], risk: "safe", source: "google" }, {
+    if (!result) {
+      return NextResponse.json(
+        { error: "q is required" },
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+    // 取得に全て失敗した場合は「候補0件（良好）」と区別できるよう 503 で返す。
+    // 呼び出し側は !res.ok を「未取得」として扱う（良い判定に使わない）。
+    return NextResponse.json(result, {
+      status: result.status === "unavailable" ? 503 : 200,
       headers: CORS_HEADERS,
     });
   } catch {

@@ -154,21 +154,49 @@ export const REVIEW_FINDING_DEFS: ReviewFindingDef[] = [
 /**
  * K6「現状維持の構造」（K1〜K5 すべて不成立かつ band === "good" のときだけ主所見になる）。
  * 副チップには決してならない（chip: null）。
+ *
+ * 返信・鮮度・周辺比較は未取得（undefined / null）があり得る。未取得の項目は
+ * 「測定した範囲」に含めず、確認できていないことを明記する（測っていない項目を測ったと言わない）。
+ * 未取得が1つでもあれば名前も「良好な状態」とは言わない。
  */
 export const REVIEW_FINDING_GOOD_DEF: ReviewFindingDef = {
   key: "K6",
   matches: (r) => r.band === "good",
-  build: () => ({
-    key: "K6",
-    name: "良好な状態",
-    finding:
-      "今回測定した範囲（星評価・口コミ数・返信・鮮度）では、来店検討の場面で不利に働きやすい大きな注目点は確認されませんでした。",
-    structure:
-      "いまの星評価・口コミ数は、周辺のお店と比べても見劣りしない水準です。ただしこの数字は、周辺のお店の数字との相対的な位置づけなので、周辺が動けば来月は順位が変わることもあります。",
-    selfCare:
-      "月に一度、自分のお店をGoogleマップで「お客様として」検索して開き、星・件数・最新口コミの3点を見る習慣で、この状態の変化に自分で気づけます。",
-    chip: null,
-  }),
+  build: (r) => {
+    const store = r.input.store;
+    // 星評価・口コミ数は表示前ゲート（reviewCount >= 1）を通った時点で取得済み。
+    const measured = ["星評価", "口コミ数"];
+    const unmeasured: string[] = [];
+    (typeof store.hasOwnerReplies === "boolean" ? measured : unmeasured).push("返信");
+    (typeof store.daysSinceLastReview === "number" ? measured : unmeasured).push("鮮度");
+    const hasComparison = r.comparison != null;
+    const complete = unmeasured.length === 0 && hasComparison;
+
+    const notes: string[] = [];
+    if (unmeasured.length > 0) {
+      notes.push(`${unmeasured.join("・")}は今回確認できていないため、この見立てには含めていません。`);
+    }
+    if (!hasComparison) {
+      notes.push("周辺のお店との比較は今回確認できていないため、この見立てには含めていません。");
+    }
+
+    return {
+      key: "K6",
+      name: complete ? "良好な状態" : "確認できた範囲での状態",
+      finding: [
+        complete
+          ? `今回測定した範囲（${measured.join("・")}）では、来店検討の場面で不利に働きやすい大きな注目点は確認されませんでした。`
+          : `今回確認できた範囲（${measured.join("・")}）では、来店検討の場面で不利に働きやすい大きな注目点は確認されませんでした。`,
+        ...notes,
+      ].join(""),
+      structure: hasComparison
+        ? "いまの星評価・口コミ数は、周辺のお店と比べても見劣りしない水準です。ただしこの数字は、周辺のお店の数字との相対的な位置づけなので、周辺が動けば来月は順位が変わることもあります。"
+        : "いまの星評価・口コミ数は、今回の採点の目安では高い水準です。周辺のお店の数字は今回確認できていないため、周辺と比べた位置づけはこの画面には含まれていません。",
+      selfCare:
+        "月に一度、自分のお店をGoogleマップで「お客様として」検索して開き、星・件数・最新口コミの3点を見る習慣で、この状態の変化に自分で気づけます。",
+      chip: null,
+    };
+  },
 };
 
 /**
