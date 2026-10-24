@@ -7,6 +7,7 @@ import { SITE, POLICY_NOTE } from "@reviewcheck/config";
 import { ReportView } from "./ReportView";
 import { Disclaimer } from "./Disclaimer";
 import { resolveRefCode } from "@/lib/affiliateRef";
+import { parseCohortPublic, type CohortPublic } from "@/lib/cohort/public";
 
 interface CompetitorRow {
   name: string;
@@ -37,6 +38,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [result, setResult] = useState<DiagnosisResult | null>(null);
+  const [cohort, setCohort] = useState<CohortPublic | null>(null);
 
   // アフィリエイター紹介コード（?ref=RH-XXXX で着地時）。監視サブスクの橋URLに伝搬し、
   // 成約を紹介者の報酬にひも付ける。useSearchParams は Suspense 境界が要るため、
@@ -178,6 +180,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
     setError(null);
     setNotice(null);
     setResult(null);
+    setCohort(null);
     if (!demo && !place && !query.trim() && rating.trim() === "") {
       setError("店舗名またはGoogleマップURLを入力してください（または「デモで試す」）。");
       return;
@@ -203,6 +206,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
         setError(data.error ?? "診断に失敗しました。");
       } else {
         setResult(data as DiagnosisResult);
+        setCohort(parseCohortPublic(data?.cohort));
         // 予算切れ等で取得しなかった項目（例: 競合比較）を「未取得」と伝える。
         if (Array.isArray(data?.notices) && data.notices.length > 0) {
           setNotice(data.notices.join(" "));
@@ -524,7 +528,14 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
       </form>
 
       {loading ? <LoadingCard /> : null}
-      {result ? <ReportView result={result} shareUrl={shareUrl} refCode={refCode} /> : null}
+      {result ? (
+        <ReportView
+          result={result}
+          shareUrl={shareUrl}
+          refCode={refCode}
+          cohort={cohort}
+        />
+      ) : null}
 
       {/* 結果表示時は ReportView 内の Disclaimer に一本化（二重表示を防ぐ）。
           フォームのみのときだけ、ここで免責文を出す。 */}

@@ -11,6 +11,9 @@ import {
   formatDiagnosedAtJst,
   leftAloneParagraphs,
 } from "@/lib/resultCopy";
+import type { CohortPublic } from "@/lib/cohort/public";
+import { CohortCompareNote } from "./result/CohortCompareNote";
+import { DiagnosisPerks } from "./result/DiagnosisPerks";
 import { OtherMenus } from "./result/OtherMenus";
 import { ResultActionProvider } from "./result/ResultActionContext";
 import { ResultNextCta } from "./result/ResultNextCta";
@@ -50,6 +53,7 @@ export function ReportView({
   shareUrl,
   refCode,
   shareContext,
+  cohort = null,
 }: {
   result: DiagnosisResult;
   shareUrl?: string;
@@ -60,6 +64,8 @@ export function ReportView({
    * その場の診断では渡さない（注記を出さない）。
    */
   shareContext?: ReportShareContext;
+  /** 業種×地域の集計。しきい値未満は null または show:false。 */
+  cohort?: CohortPublic | null;
 }) {
   const { input, comparison, simulation } = result;
   const store = input.store;
@@ -175,6 +181,7 @@ export function ReportView({
                 diagnosedAt={result.diagnosedAt}
                 enabled={fetchedAtRecorded}
               />
+              <CohortCompareNote cohort={cohort} />
             </div>
           </div>
         </section>
@@ -185,6 +192,8 @@ export function ReportView({
         >
           <ResultNextCta {...ctaProps} shopToggle />
         </section>
+
+        <DiagnosisPerks result={result} cohort={cohort} />
 
         <section data-result-section="findings" className="space-y-4">
           <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
