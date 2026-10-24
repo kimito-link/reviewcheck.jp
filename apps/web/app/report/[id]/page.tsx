@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { diagnose, decodeReportId } from "@reviewcheck/core";
+import {
+  diagnose,
+  decodeReportId,
+  SCORE_RULE_VERSION,
+} from "@reviewcheck/core";
 import { SITE } from "@reviewcheck/config";
 import { Container } from "@/components/Container";
 import { ReportView } from "@/components/ReportView";
@@ -22,12 +26,35 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const input = decodeReportId(id);
-  const name = input?.store.name ? `（${input.store.name}）` : "";
+  if (!input) {
+    return buildMetadata({
+      title: "Google口コミ診断結果",
+      description:
+        "Googleマップの公開情報から計算した選ばれやすさの目安です。",
+      path: `/report/${id}/`,
+      ogType: "article",
+      omitOgImage: true,
+    });
+  }
+  let title = "Google口コミ診断結果";
+  let description =
+    "Googleマップの公開情報（星・口コミ数・返信・新しさ・プロフィール）を、決まった採点ルールで計算した目安です。";
+  try {
+    const result = diagnose(input, {
+      providers: input.store.source === "places" ? ["google-places"] : [],
+    });
+    const name = result.input.store.name ? `｜${result.input.store.name}` : "";
+    title = `選ばれやすさ ${result.score}点（目安）${name}`;
+    description = `選ばれやすさ ${result.score}点（目安）。採点ルール v${SCORE_RULE_VERSION}。Googleマップの公開情報から計算した目安で、断定ではありません。`;
+  } catch {
+    /* タイトルは汎用のまま */
+  }
   return buildMetadata({
-    title: "Google口コミ診断結果｜選ばれやすさ・競合比較レポート",
-    description: `店舗${name}のGoogle口コミ診断結果（星評価・口コミ数・競合との差・選ばれやすさスコア・あと何件で追いつけるか）の簡易レポートです。`,
+    title,
+    description,
     path: `/report/${id}/`,
     ogType: "article",
+    omitOgImage: true,
   });
 }
 
@@ -64,8 +91,9 @@ export default async function ReportPage({
   let result;
   let failed = false;
   try {
-    // レポートはステートレス。入力から診断ロジックを再実行して描画する。
-    result = diagnose(input, { providers: input.store.source === "places" ? ["google-places"] : [] });
+    result = diagnose(input, {
+      providers: input.store.source === "places" ? ["google-places"] : [],
+    });
   } catch {
     failed = true;
   }
@@ -85,9 +113,12 @@ export default async function ReportPage({
   }
 
   const shareUrl = `${SITE.baseUrl}/report/${id}/`;
+  const fetchedAtRecorded =
+    typeof input.diagnosedAt === "string" &&
+    !Number.isNaN(Date.parse(input.diagnosedAt));
 
   return (
-    <Container className="py-12">
+    <Container className="pb-12 pt-4 sm:pt-6">
       <AffiliateRefCapture />
       <JsonLd
         data={breadcrumbJsonLd([
@@ -96,15 +127,19 @@ export default async function ReportPage({
           { name: "診断結果", path: `/report/${id}/` },
         ])}
       />
-      <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
-        Google口コミ診断結果
+      <h1 className="sr-only">
+        選ばれやすさ {result.score}点（目安）
+        {result.input.store.name ? `｜${result.input.store.name}` : ""}
       </h1>
-      <p className="mt-2 text-slate-600">
-        入力情報をもとにした簡易レポートです（数値は目安）。
-      </p>
-      <div className="mt-8">
-        <ReportView result={result} shareUrl={shareUrl} refCode={ref} />
-      </div>
+      <ReportView
+        result={result}
+        shareUrl={shareUrl}
+        refCode={ref}
+        shareContext={{
+          loadedRuleVersion: input.ruleVersion,
+          fetchedAtRecorded,
+        }}
+      />
     </Container>
   );
 }

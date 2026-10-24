@@ -58,6 +58,16 @@ export interface DiagnosisInput {
   competitors: Competitor[];
   /** 任意の目標評価（未指定なら競合平均、なければ既定値を使う） */
   targetRating?: number;
+  /**
+   * 共有URLに記録する採点ルールの版。
+   * 無いURLは、版を記録する前のものとして扱う。
+   */
+  ruleVersion?: string;
+  /**
+   * 診断を実行した時刻（ISO 8601）。
+   * 共有URLに含め、/report で再計算しても取得時刻を保つ。
+   */
+  diagnosedAt?: string;
 }
 
 /** 選ばれやすさスコアの個別要素 */
@@ -133,6 +143,8 @@ export interface DiagnosisResult {
   input: DiagnosisInput;
   /** ISO日時 */
   diagnosedAt: string;
+  /** この点数の計算に使った採点ルールの版（SCORE_RULE_VERSION） */
+  ruleVersion: string;
   /** 0〜100。高いほど選ばれやすい。 */
   score: number;
   band: SelectabilityBand;

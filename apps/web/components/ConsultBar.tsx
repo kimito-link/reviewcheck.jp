@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { LineCtaButton } from "./LineCtaButton";
 
 /**
@@ -8,14 +9,27 @@ import { LineCtaButton } from "./LineCtaButton";
  * 少しスクロールしたら出現し、離脱前に必ずLINE相談へ到達させる。
  */
 export function ConsultBar() {
+  const pathname = usePathname() ?? "";
   const [visible, setVisible] = useState(false);
+  const [hasResult, setHasResult] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 480);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const checkResult = () =>
+      setHasResult(Boolean(document.getElementById("result-score")));
+    checkResult();
+    const obs = new MutationObserver(checkResult);
+    obs.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      obs.disconnect();
+    };
   }, []);
+
+  // 診断結果は専用の追従CTAを持つ。サイト共通バー（「無料」を含む）は重ねない。
+  if (pathname.startsWith("/report") || hasResult) return null;
 
   return (
     <div

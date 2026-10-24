@@ -10,6 +10,8 @@ interface LineConsultCtaProps {
   message: string;
   /** 相談トピック（未指定＝風評・口コミ窓口）。窓口の出し分けは lineChannelForTopic に委譲。 */
   topic?: string;
+  /** 指定時はそのURLを開く（AIヒアリング先の上書き用）。 */
+  href?: string;
   fullWidth?: boolean;
   size?: "default" | "lg";
   className?: string;
@@ -30,11 +32,13 @@ export function LineConsultCta({
   text,
   message,
   topic,
+  href,
   fullWidth = false,
   size = "default",
   className = "",
 }: LineConsultCtaProps) {
   const channel = lineChannelForTopic(topic);
+  const destination = href || channel.url;
   // "idle" | "copied" | "failed"
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
@@ -59,7 +63,7 @@ export function LineConsultCta({
     }
     // コピー成否に関わらず LINE を開く（遷移はブロックしない）。
     if (typeof window !== "undefined") {
-      window.open(channel.url, "_blank", "noopener,noreferrer");
+      window.open(destination, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -68,6 +72,7 @@ export function LineConsultCta({
       <button
         type="button"
         onClick={handleClick}
+        data-destination={destination}
         className={`inline-flex items-center justify-center gap-2 rounded-lg bg-[#06C755] font-bold text-white shadow-sm transition hover:bg-[#05b34d] ${sizeCls} ${
           fullWidth ? "w-full" : ""
         } ${className}`}
@@ -80,13 +85,15 @@ export function LineConsultCta({
 
       {copyState === "copied" ? (
         <p className="mt-2 text-xs text-slate-500" role="status">
-          相談文をコピーしました。LINEのトークに貼り付けて送ってください。
+          メッセージをコピーしました。LINEのトークに貼り付けて送ってください。
         </p>
       ) : null}
 
       {copyState === "failed" ? (
         <div className="mt-2 text-xs text-slate-600">
-          <p className="mb-1">以下の文をコピーして、LINEのトークに貼り付けて送ってください。</p>
+          <p className="mb-1">
+            以下の文をコピーして、LINEのトークに貼り付けて送ってください。
+          </p>
           <textarea
             readOnly
             value={message}

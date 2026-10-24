@@ -1,5 +1,6 @@
 export * from "./site";
 export * from "./cta";
+export * from "./resultCta";
 export * from "./pricing";
 export * from "./plans";
 export * from "./navigation";

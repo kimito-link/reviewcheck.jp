@@ -3,7 +3,9 @@ import type { DiagnosisInput } from "../types/index";
 /**
  * 診断結果ページ /report/[id]/ の id を、診断入力からステートレスに生成・復元する。
  * DB不要・共有URL可。id は base64url(JSON(診断入力))。
- * （結果そのものはレポートページ側で診断ロジックを再実行して描画する設計）
+ * 入力には採点ルールの版（ruleVersion）と取得時刻（diagnosedAt）を含める。
+ * 無いURLは版を記録する前のもの。結果画面はいまのルールで計算し直し、その旨を注記する。
+ * （点数そのものはレポートページ側で診断ロジックを再実行して描画する設計）
  */
 export function encodeReportId(input: DiagnosisInput): string {
   const json = JSON.stringify(compact(input));

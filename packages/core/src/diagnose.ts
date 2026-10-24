@@ -3,6 +3,7 @@ import { analyzeCompetitors, MAX_COMPETITORS } from "./competitor/index";
 import {
   BAND_LABEL,
   computeSelectabilityScore,
+  SCORE_RULE_VERSION,
   summaryFromBand,
 } from "./scoring/index";
 import { buildSimulation } from "./simulator/index";
@@ -50,9 +51,21 @@ export function diagnose(
     simulation,
   );
 
+  const diagnosedAt = readDiagnosedAt(input.diagnosedAt) ?? new Date().toISOString();
+  const loadedRuleVersion = readRuleVersion(input.ruleVersion);
+
   return {
-    input: { store, competitors, targetRating: input.targetRating },
-    diagnosedAt: new Date().toISOString(),
+    input: {
+      store,
+      competitors,
+      targetRating: input.targetRating,
+      // 共有URLには、そのURLが作られたときの版を残す。
+      // 無い入力（その場の新規診断）だけ、いまの版を書く。
+      ruleVersion: loadedRuleVersion ?? SCORE_RULE_VERSION,
+      diagnosedAt,
+    },
+    diagnosedAt,
+    ruleVersion: SCORE_RULE_VERSION,
     score,
     band,
     summary: `${BAND_LABEL[band]}。${summaryFromBand(band)}`,
@@ -63,6 +76,19 @@ export function diagnose(
     disclaimer: DISCLAIMER,
     providers: options.providers ?? [],
   };
+}
+
+function readDiagnosedAt(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const time = Date.parse(value);
+  if (Number.isNaN(time)) return null;
+  return new Date(time).toISOString();
+}
+
+function readRuleVersion(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
 }
 
 function sanitizeStore(store: StoreInput): StoreInput {

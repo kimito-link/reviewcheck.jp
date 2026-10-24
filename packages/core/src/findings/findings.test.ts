@@ -24,6 +24,7 @@ function makeResult(
   return {
     input: { store: s, competitors: [] },
     diagnosedAt: "2026-10-01T00:00:00.000Z",
+    ruleVersion: "1.0",
     score: 90,
     band: "good",
     summary: "",
