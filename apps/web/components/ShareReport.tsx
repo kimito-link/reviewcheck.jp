@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { SCORE_RULE_VERSION } from "@reviewcheck/core";
+import { buildShareText } from "@/lib/resultCopy";
 
 /**
  * 診断結果の共有 + SNSシェア。
@@ -11,10 +13,12 @@ export function ShareReport({
   url,
   storeName,
   score,
+  ruleVersion = SCORE_RULE_VERSION,
 }: {
   url: string;
   storeName?: string;
   score?: number;
+  ruleVersion?: string;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -28,11 +32,7 @@ export function ShareReport({
     }
   }
 
-  // ポジティブな自己開示のシェア文（不安の拡散にしない）。
-  const name = storeName ? `「${storeName}」` : "うちのお店";
-  const scorePart =
-    typeof score === "number" ? `選ばれやすさスコアは${score}点でした。` : "";
-  const shareText = `${name}のGoogle口コミを無料でチェックしてみました。${scorePart}あなたのお店もどうぞ→`;
+  const shareText = buildShareText({ score, storeName, ruleVersion });
 
   const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     shareText,

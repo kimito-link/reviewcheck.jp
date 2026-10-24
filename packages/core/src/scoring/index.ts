@@ -16,6 +16,7 @@ import {
 } from "./weights";
 
 export * from "./weights";
+export * from "./version";
 
 export interface ScoreResult {
   score: number;

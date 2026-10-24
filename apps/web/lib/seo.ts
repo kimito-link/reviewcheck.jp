@@ -9,6 +9,11 @@ interface PageSeo {
   ogType?: "website" | "article";
   /** ページ固有キーワード（未指定時はサイト共通キーワードを使用） */
   keywords?: readonly string[];
+  /**
+   * true のとき静的なサイトアイコンを OGP に載せない。
+   * opengraph-image.tsx があるルートで、ファイル側の画像を使う。
+   */
+  omitOgImage?: boolean;
 }
 
 /** ページ共通のメタデータ（OGP/Twitter/canonical含む）を生成 */
@@ -18,8 +23,10 @@ export function buildMetadata({
   path,
   ogType = "website",
   keywords,
+  omitOgImage = false,
 }: PageSeo): Metadata {
   const url = `${SITE.baseUrl}${path}`;
+  const images = omitOgImage ? undefined : [{ url: SITE.ogImage }];
   return {
     title,
     description,
@@ -32,13 +39,13 @@ export function buildMetadata({
       title,
       description,
       locale: SITE.locale,
-      images: [{ url: SITE.ogImage }],
+      ...(images ? { images } : {}),
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [SITE.ogImage],
+      ...(images ? { images: [SITE.ogImage] } : {}),
     },
   };
 }

@@ -68,7 +68,7 @@ export function Header() {
             className="inline-flex items-center rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-bold text-white transition hover:bg-blue-500"
             onClick={() => setOpen(false)}
           >
-            無料診断
+            口コミ診断
           </Link>
 
           {/* モバイル/タブレット: ハンバーガー */}
@@ -117,7 +117,7 @@ export function Header() {
                 onClick={() => setOpen(false)}
                 className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-500"
               >
-                ★ 無料で診断する
+                ★ 口コミを診断する
               </Link>
               <a
                 href={SITE.line.url}

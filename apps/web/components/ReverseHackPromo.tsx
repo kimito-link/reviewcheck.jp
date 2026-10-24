@@ -61,7 +61,7 @@ export function ReverseHackPromo() {
           に加え、検索の悪評
           <span className="whitespace-nowrap">（サジェスト）</span>
           ・SSL・メールなりすまし対策・情報漏えいリスクまで
-          <strong className="text-slate-900">まとめて無料診断</strong>。
+          <strong className="text-slate-900">まとめて確認</strong>。
           口コミ改善と並行して「サイトと検索での見られ方」も守れます。
         </p>
         <p className="mt-1 text-xs text-slate-500">
@@ -76,7 +76,7 @@ export function ReverseHackPromo() {
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center rounded-xl bg-slate-800 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-900"
           >
-            ブラウザで無料診断（1分・登録不要）→
+            ブラウザで診断する（1分・登録不要）→
           </a>
           {/* 副次：常時監視（デバイス別） */}
           {secondary ? (

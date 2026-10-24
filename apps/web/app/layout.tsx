@@ -82,5 +82,5 @@ export default function RootLayout({
  * public/sw-register.js への外部ファイル参照に変更。script-src 'self'のみで
  * 厳格化するため(このリポジトリには認証ライブラリ等のインラインscript制約が無い)。 */
 function ServiceWorkerRegister() {
-  return <script src="/sw-register.js" />;
+  return <script src="/sw-register.js" defer />;
 }
