@@ -19,6 +19,8 @@ import {
   type StoreInput,
 } from "@reviewcheck/core";
 import { incrementDiagnosisCount } from "@/lib/diagnosisCounter";
+import { publishCohort, shouldRecordCohort } from "@/lib/cohort/service";
+import type { CohortPublic } from "@/lib/cohort/public";
 import { corsHeaders, getCacheStore, guardPlacesCall } from "@/lib/costGuard";
 
 export const runtime = "nodejs";
@@ -218,8 +220,36 @@ async function handle(request: Request, body: DiagnoseBody) {
     if (!demo) {
       incrementDiagnosisCount().catch(() => {});
     }
+    let cohort: CohortPublic = { show: false };
+    if (!demo && store.source !== "mock") {
+      const touched =
+        typeof override.rating === "number" ||
+        typeof override.reviewCount === "number" ||
+        typeof override.hasOwnerReplies === "boolean" ||
+        typeof override.category === "string" ||
+        typeof override.address === "string" ||
+        typeof override.name === "string";
+      cohort = await publishCohort({
+        category: store.category,
+        address: store.address,
+        score: result.score,
+        rating: store.rating,
+        reviewCount: store.reviewCount,
+        hasOwnerReplies: store.hasOwnerReplies,
+        ruleVersion: result.ruleVersion,
+        record: shouldRecordCohort({
+          demo,
+          source: store.source,
+          manualTouch: touched,
+        }),
+      });
+    }
     return NextResponse.json(
-      notices.length > 0 ? { ...result, notices } : result,
+      {
+        ...result,
+        ...(notices.length > 0 ? { notices } : {}),
+        cohort,
+      },
       { headers: CORS_HEADERS },
     );
   } catch (e) {

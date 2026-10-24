@@ -1,6 +1,6 @@
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, test, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { diagnose } from "@reviewcheck/core";
 import { RESULT_ESTIMATE_SENTENCE } from "@reviewcheck/config";
 import { ReportView } from "./ReportView";
@@ -25,6 +25,7 @@ const RESULT_SECTION_ORDER = [
   "score",
   "estimate",
   "cta",
+  "perks",
   "findings",
   "causes",
   "if-left-alone",
@@ -115,5 +116,66 @@ describe("診断結果の並び", () => {
       screen.getByText(/採点ルールの版を記録する前/),
     ).toBeInTheDocument();
     expect(screen.getByText(/取得：記録なし/)).toBeInTheDocument();
+  });
+});
+
+describe("特典と比較", () => {
+  test("しきい値未満の比較は出さず、特典は16px以上で「無料」が無い", () => {
+    const { container } = render(<ReportView result={fixture} cohort={{ show: false }} />);
+    const estimate = container.querySelector('[data-result-section="estimate"]');
+    expect(container.querySelector("[data-cohort-compare]")).toBeNull();
+    expect(estimate?.textContent ?? "").not.toContain("上位");
+    expect(estimate?.textContent ?? "").not.toContain("同業種の平均");
+
+    const perks = container.querySelector('[data-result-section="perks"]');
+    expect(perks).toBeTruthy();
+    expect(perks?.innerHTML ?? "").not.toMatch(/text-(xs|sm)\b/);
+    expect(perks?.innerHTML ?? "").toContain("text-base");
+    expect(perks?.textContent ?? "").not.toContain("無料");
+    expect(perks?.textContent ?? "").not.toMatch(/円/);
+    expect(perks?.innerHTML ?? "").not.toContain("#06C755");
+  });
+
+  test("しきい値以上の比較だけ、点数のそばに出す", () => {
+    const { container } = render(
+      <ReportView
+        result={fixture}
+        cohort={{
+          show: true,
+          topPercent: 12,
+          averageScore: 70,
+          averageRating: 4.2,
+          averageReviewCount: 120,
+          replyShare: 0.4,
+          regionLabel: "長野県岡谷市",
+          categoryLabel: "食堂",
+          sampleCount: 32,
+        }}
+      />,
+    );
+    const note = container.querySelector("[data-cohort-compare]");
+    expect(note?.textContent).toContain("近所の同じ業種（食堂・長野県岡谷市）の中で上位12%");
+    expect(note?.textContent).toContain("同業種の平均70点");
+    expect(note?.textContent).toContain("星の平均 4.2");
+    expect(note?.textContent).toContain("返信ありの割合 40%");
+    expect(note?.innerHTML ?? "").not.toMatch(/text-(xs|sm)\b/);
+    expect(note?.textContent ?? "").not.toContain("無料");
+    expect(note?.textContent ?? "").not.toMatch(/優良|認定|安全です/);
+  });
+
+  test("印刷プレビューは推定である旨から始まり、16px以上", () => {
+    render(<ReportView result={fixture} />);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "レポートを表示して印刷" })[0]!,
+    );
+    const preview = document.querySelector("[data-report-preview]");
+    expect(preview?.textContent).toContain("これは診断時点の推定で、断定ではありません。");
+    expect(preview?.textContent).toContain("SCORE_RULE_VERSION：1.0");
+    expect(preview?.textContent).toContain("2026-10-24 17:41");
+    expect(preview?.textContent).toContain("データの取得元：手入力");
+    expect(preview?.textContent ?? "").not.toContain("無料");
+    expect(preview?.textContent ?? "").not.toContain("柴宮");
+    expect(preview?.innerHTML ?? "").not.toMatch(/text-(xs|sm)\b/);
+    expect(preview?.innerHTML ?? "").toContain("text-base");
   });
 });

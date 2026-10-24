@@ -12,6 +12,7 @@ import { AffiliateRefCapture } from "@/components/AffiliateRefCapture";
 import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
+import { publishCohort } from "@/lib/cohort/service";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -116,6 +117,16 @@ export default async function ReportPage({
   const fetchedAtRecorded =
     typeof input.diagnosedAt === "string" &&
     !Number.isNaN(Date.parse(input.diagnosedAt));
+  const cohort = await publishCohort({
+    category: result.input.store.category,
+    address: result.input.store.address,
+    score: result.score,
+    rating: result.input.store.rating,
+    reviewCount: result.input.store.reviewCount,
+    hasOwnerReplies: result.input.store.hasOwnerReplies,
+    ruleVersion: result.ruleVersion,
+    record: false,
+  });
 
   return (
     <Container className="pb-12 pt-4 sm:pt-6">
@@ -139,6 +150,7 @@ export default async function ReportPage({
           loadedRuleVersion: input.ruleVersion,
           fetchedAtRecorded,
         }}
+        cohort={cohort}
       />
     </Container>
   );
