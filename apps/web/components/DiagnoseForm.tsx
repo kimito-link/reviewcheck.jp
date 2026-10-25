@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Competitor, DiagnosisResult, NearbyStore } from "@reviewcheck/core";
+import type { SiteCheckJson } from "site-check";
 import { encodeReportId } from "@reviewcheck/core";
 import { SITE, POLICY_NOTE } from "@reviewcheck/config";
 import { ReportView } from "./ReportView";
@@ -26,6 +27,7 @@ const emptyRow = (): CompetitorRow => ({ name: "", rating: "", reviewCount: "" }
 
 export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery);
+  const [website, setWebsite] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [rating, setRating] = useState("");
   const [reviewCount, setReviewCount] = useState("");
@@ -36,7 +38,9 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [result, setResult] = useState<DiagnosisResult | null>(null);
+  const [result, setResult] = useState<
+    (DiagnosisResult & { siteCheck?: SiteCheckJson | null }) | null
+  >(null);
 
   // アフィリエイター紹介コード（?ref=RH-XXXX で着地時）。監視サブスクの橋URLに伝搬し、
   // 成約を紹介者の報酬にひも付ける。useSearchParams は Suspense 境界が要るため、
@@ -158,6 +162,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
     if (reviewCount.trim() !== "") storeOverride.reviewCount = Number(reviewCount);
     if (ownerReplies === "yes") storeOverride.hasOwnerReplies = true;
     if (ownerReplies === "no") storeOverride.hasOwnerReplies = false;
+    if (website.trim()) storeOverride.website = website.trim();
 
     const q = query.trim();
     const isUrl = /^https?:\/\//i.test(q);
@@ -249,6 +254,23 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
             {loading ? "診断中…" : "無料で診断する"}
           </button>
         </div>
+        <label htmlFor="store-website" className="mt-4 block text-sm font-bold text-slate-900">
+          お店のウェブサイト（任意）
+        </label>
+        <input
+          id="store-website"
+          type="text"
+          inputMode="url"
+          autoComplete="url"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+          disabled={loading}
+          placeholder="例：https://example.com/"
+          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-base text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+        />
+        <p className="mt-1 text-xs leading-relaxed text-slate-600">
+          Googleマップにお店のウェブサイトがある場合は、空欄でもその住所を確認します。
+        </p>
 
         {/* 摩擦ゼロの入口：入力せず現在地からワンタップで診断 */}
         {!result ? (
@@ -524,7 +546,14 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
       </form>
 
       {loading ? <LoadingCard /> : null}
-      {result ? <ReportView result={result} shareUrl={shareUrl} refCode={refCode} /> : null}
+      {result ? (
+        <ReportView
+          result={result}
+          siteCheck={result.siteCheck}
+          shareUrl={shareUrl}
+          refCode={refCode}
+        />
+      ) : null}
 
       {/* 結果表示時は ReportView 内の Disclaimer に一本化（二重表示を防ぐ）。
           フォームのみのときだけ、ここで免責文を出す。 */}
@@ -549,8 +578,8 @@ function LoadingCard() {
       <p className="text-sm font-medium text-slate-600">
         口コミの状態を診断しています…
       </p>
-      <p className="text-xs text-slate-500">
-        星評価・口コミ数・競合との差・選ばれやすさスコアを計算中
+      <p className="text-xs leading-relaxed text-slate-500">
+        星評価・口コミ数・競合との差を計算しています。ウェブサイトがあるときは、外から見える設定も一緒に見ます。
       </p>
     </div>
   );

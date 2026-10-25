@@ -13,6 +13,9 @@ coverage/
 .turbo/
 .vercel/
 *.tsbuildinfo
+test-results/
+playwright-report/
+blob-report/
 next-env.d.ts
 
 # 会議ハーネスの一時生成物

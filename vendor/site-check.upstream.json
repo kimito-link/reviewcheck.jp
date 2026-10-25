@@ -1,0 +1,20 @@
+{
+  "repository": "kimito-link/malwarecheck.site",
+  "path": "packages/site-check",
+  "branch": "cursor/site-security-check-44c5",
+  "commit": "d9226b10d897002fc80446130361aac88e9987a0",
+  "rubric": "site-check v1.0",
+  "files": {
+    "README.md": "680765fc51653247c90465ef0c2fc3ce2e1b3a5db854b3915e15a7f3d22e86cb",
+    "package.json": "4b5dcedb7fcdac6e7fe5b7960fc87ba59d6dd6684fcff9c6d0e490ed659aad37",
+    "src/card.ts": "cc13a6b8fa6b5821ad365fb21fb2d01a85462ce2dad7e561e1e0a2555b5ce169",
+    "src/grade.test.ts": "e2d1506d1de3262b3776de0874043e58bb805ce0a6b5f48a076c41b45a6524b8",
+    "src/grade.ts": "fbdfbcb7bd00817407c3f366b7622c7a6b48e351bc7913b99f6286ecdc3afc6d",
+    "src/index.ts": "04141395a5f7196625b4d9a34c471719d447807cd946e68ba3006568133f0ea6",
+    "src/rubric.ts": "54c694cabf62f28cef2afa31768f6417b3741cdeba274fe9903034037070070f",
+    "src/run.test.ts": "9e1707a027d03524fc5732006e03235d54726a9193cab2a2ee0b0e016df55f56",
+    "src/run.ts": "120b503781946f44882dbd9257eb19fa57cb0890038608d7a56f1521a21b394a",
+    "src/types.ts": "7b7a063439e03a325b256a7a032e925143568ba3cb8ec09a133cad951eacd612",
+    "tsconfig.json": "9e1713fe9c0761ea2cdea76644012ba9ec03245212b4b0ef2f92ab6f4990f9d5"
+  }
+}
