@@ -1,7 +1,11 @@
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, test, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { diagnose } from "@reviewcheck/core";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  DIAGNOSIS_PROGRESS_STORAGE_KEY,
+  diagnose,
+  rankNextDiagnoses,
+} from "@reviewcheck/core";
 import { RESULT_ESTIMATE_SENTENCE } from "@reviewcheck/config";
 import { ReportView } from "./ReportView";
 import { scoreHistoryKey } from "@/lib/scoreHistory";
@@ -25,6 +29,7 @@ const RESULT_SECTION_ORDER = [
   "score",
   "estimate",
   "cta",
+  "next-diagnoses",
   "perks",
   "findings",
   "causes",
@@ -57,6 +62,8 @@ const fixture = diagnose({
 
 describe("診断結果の並び", () => {
   test("点数から免責まで、指定の順で並ぶ", async () => {
+    window.history.pushState(null, "", "/report/abc/");
+    window.localStorage.removeItem(DIAGNOSIS_PROGRESS_STORAGE_KEY);
     window.localStorage.setItem(
       scoreHistoryKey("テスト食堂"),
       JSON.stringify({
@@ -94,9 +101,43 @@ describe("診断結果の並び", () => {
         ?.textContent ?? "",
     ).not.toMatch(/円/);
 
+    const history = await screen.findByText("前回（10/1）62点 → 今回45点（-17）");
+    expect(history).toBeInTheDocument();
     expect(
-      await screen.findByText("前回（10/1）62点 → 今回45点（-17）"),
+      container.querySelector('[data-result-section="score"]'),
+    ).toContainElement(history);
+    expect(
+      await screen.findByText("6つのうち1つを確かめました"),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "1か月後の再点検を保存" })).toBeInTheDocument();
+
+    const next = container.querySelector('[data-result-section="next-diagnoses"]');
+    expect(next?.textContent).toContain("次に試すとよい診断");
+    const behindPeers = fixture.comparison
+      ? fixture.comparison.ratingDiff < 0 || fixture.comparison.reviewCountDiff < 0
+      : false;
+    const expected = rankNextDiagnoses({
+      surface: "review",
+      score: fixture.score,
+      hasWebsite: false,
+      behindPeers,
+    });
+    const names = [...(next?.querySelectorAll("a") ?? [])].map(
+      (anchor) => anchor.textContent,
+    );
+    expect(names).toEqual(expected.map((app) => app.name));
+    expect(names).not.toContain("口コミチェック.jp");
+    const nextText = next?.textContent ?? "";
+    expect(nextText).not.toContain("無料");
+    expect(nextText).not.toContain("必ず");
+    expect(nextText).not.toContain("保証");
+    expect(nextText).not.toContain("安全です");
+    expect(next?.innerHTML ?? "").toContain("underline");
+    expect(next?.innerHTML ?? "").not.toContain("#06C755");
+
+    const progress = window.localStorage.getItem(DIAGNOSIS_PROGRESS_STORAGE_KEY);
+    expect(progress).toBe(JSON.stringify(["review"]));
+    expect(progress ?? "").not.toContain("テスト食堂");
 
     const saved = window.localStorage.getItem(scoreHistoryKey("テスト食堂"));
     expect(saved).toBeTruthy();
@@ -177,5 +218,16 @@ describe("特典と比較", () => {
     expect(preview?.textContent ?? "").not.toContain("柴宮");
     expect(preview?.innerHTML ?? "").not.toMatch(/text-(xs|sm)\b/);
     expect(preview?.innerHTML ?? "").toContain("text-base");
+  });
+
+  test("embed=1 では次の診断と進捗を出さない", async () => {
+    window.history.pushState(null, "", "/report/embed/?embed=1");
+    render(<ReportView result={fixture} shareUrl="https://reviewcheck.jp/report/embed/" />);
+    await waitFor(() => {
+      expect(screen.queryByText("次に試すとよい診断")).not.toBeInTheDocument();
+      expect(document.querySelector("[data-diagnosis-progress]")).toBeNull();
+    });
+    expect(screen.getByText(RESULT_ESTIMATE_SENTENCE)).toBeInTheDocument();
+    window.history.pushState(null, "", "/report/embed/");
   });
 });

@@ -1,4 +1,5 @@
 export * from "./types/index";
+export * from "./diagnosisApps";
 export * from "./utils/index";
 export * from "./scoring/index";
 export * from "./simulator/index";

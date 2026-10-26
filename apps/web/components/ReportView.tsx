@@ -14,6 +14,8 @@ import {
 import type { CohortPublic } from "@/lib/cohort/public";
 import { CohortCompareNote } from "./result/CohortCompareNote";
 import { DiagnosisPerks } from "./result/DiagnosisPerks";
+import { DiagnosisProgressNote } from "./result/DiagnosisProgressNote";
+import { NextDiagnoses } from "./result/NextDiagnoses";
 import { OtherMenus } from "./result/OtherMenus";
 import { ResultActionProvider } from "./result/ResultActionContext";
 import { ResultNextCta } from "./result/ResultNextCta";
@@ -114,6 +116,9 @@ export function ReportView({
     address: store.address,
     monitoringHref,
   };
+  const behindPeers = comparison
+    ? comparison.ratingDiff < 0 || comparison.reviewCountDiff < 0
+    : false;
 
   return (
     <ResultActionProvider>
@@ -139,6 +144,18 @@ export function ReportView({
               <div className="mt-3">
                 <ScoreBadge band={result.band} />
               </div>
+              <ScoreHistoryNote
+                shopName={store.name || ""}
+                score={result.score}
+                ruleVersion={result.ruleVersion}
+                diagnosedAt={result.diagnosedAt}
+                enabled={fetchedAtRecorded}
+                className="text-center lg:text-left"
+              />
+              <DiagnosisProgressNote
+                appId="review"
+                className="text-center lg:text-left"
+              />
             </div>
 
             <div data-result-section="estimate" className="min-w-0 flex-1">
@@ -174,13 +191,6 @@ export function ReportView({
                   {ruleNote}
                 </p>
               ) : null}
-              <ScoreHistoryNote
-                shopName={store.name || ""}
-                score={result.score}
-                ruleVersion={result.ruleVersion}
-                diagnosedAt={result.diagnosedAt}
-                enabled={fetchedAtRecorded}
-              />
               <CohortCompareNote cohort={cohort} />
             </div>
           </div>
@@ -192,6 +202,15 @@ export function ReportView({
         >
           <ResultNextCta {...ctaProps} shopToggle />
         </section>
+
+        <NextDiagnoses
+          context={{
+            surface: "review",
+            score: result.score,
+            hasWebsite: Boolean(store.website),
+            behindPeers,
+          }}
+        />
 
         <DiagnosisPerks result={result} cohort={cohort} />
 
