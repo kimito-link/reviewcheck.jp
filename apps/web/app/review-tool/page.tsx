@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/Container";
 import { ReviewToolApp } from "@/components/ReviewToolApp";
+import { ReviewToolCustomOffer } from "@/components/ReviewToolCustomOffer";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
@@ -50,6 +51,8 @@ export default async function ReviewToolPage({
         initialReviewUrl={url}
         lockConfig={locked}
       />
+
+      {!locked ? <ReviewToolCustomOffer /> : null}
 
       {!locked ? (
         <div className="mx-auto mt-12 max-w-2xl rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center">
