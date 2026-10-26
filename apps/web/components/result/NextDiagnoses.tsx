@@ -41,6 +41,9 @@ export function NextDiagnoses({ context }: { context: DiagnosisRankContext }) {
               {app.name}
             </DiagnosisLink>
             <p className="mt-1 text-sm leading-relaxed text-slate-800">{app.value}</p>
+            {app.patentNote ? (
+              <p className="mt-1 text-sm leading-relaxed text-slate-700">{app.patentNote}</p>
+            ) : null}
           </li>
         ))}
       </ol>

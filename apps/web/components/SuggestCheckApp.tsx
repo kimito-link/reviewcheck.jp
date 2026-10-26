@@ -157,7 +157,7 @@ export function SuggestCheckApp({
               <p className="mt-2 text-sm leading-relaxed text-slate-700">
                 {summary.lead}
               </p>
-              <DiagnosisProgressNote appId="suggest" className="text-left" />
+              <DiagnosisProgressNote appId="suggest-check" className="text-left" />
 
               {hasNegatives ? (
                 <ul className="mt-4 space-y-2">

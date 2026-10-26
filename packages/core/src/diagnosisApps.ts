@@ -12,7 +12,15 @@ export type DiagnosisAppId =
   | "reverse-web"
   | "malware"
   | "review"
-  | "suggest";
+  | "suggest"
+  | "check"
+  | "suggest-check"
+  | "ai-check"
+  | "kanban-check"
+  | "fact-check";
+
+/** network は他サイトとストア。reviewcheck はこのサイトの診断ページ。 */
+export type DiagnosisAppGroup = "network" | "reviewcheck";
 
 export type DiagnosisStoreKind = "appStore" | "googlePlay" | "chrome";
 
@@ -31,6 +39,9 @@ export interface DiagnosisApp {
   webUrl: string;
   stores: readonly DiagnosisStoreLink[];
   verifiedAt: typeof DIAGNOSIS_APPS_VERIFIED_AT;
+  group: DiagnosisAppGroup;
+  /** 出願中である旨。付ける診断だけ。 */
+  patentNote?: string;
 }
 
 export const DIAGNOSIS_APPS: readonly DiagnosisApp[] = [
@@ -41,6 +52,7 @@ export const DIAGNOSIS_APPS: readonly DiagnosisApp[] = [
     webUrl: "https://app.ai-health-check.link/",
     stores: [],
     verifiedAt: DIAGNOSIS_APPS_VERIFIED_AT,
+    group: "network",
   },
   {
     id: "web-health",
@@ -65,6 +77,8 @@ export const DIAGNOSIS_APPS: readonly DiagnosisApp[] = [
       },
     ],
     verifiedAt: DIAGNOSIS_APPS_VERIFIED_AT,
+    group: "network",
+    patentNote: "特許出願中（特願2026-223098・特願2026-227149）",
   },
   {
     id: "reverse-web",
@@ -84,6 +98,8 @@ export const DIAGNOSIS_APPS: readonly DiagnosisApp[] = [
       },
     ],
     verifiedAt: DIAGNOSIS_APPS_VERIFIED_AT,
+    group: "network",
+    patentNote: "特許出願中（特願2026-223098）",
   },
   {
     id: "malware",
@@ -103,6 +119,7 @@ export const DIAGNOSIS_APPS: readonly DiagnosisApp[] = [
       },
     ],
     verifiedAt: DIAGNOSIS_APPS_VERIFIED_AT,
+    group: "network",
   },
   {
     id: "review",
@@ -117,6 +134,7 @@ export const DIAGNOSIS_APPS: readonly DiagnosisApp[] = [
       },
     ],
     verifiedAt: DIAGNOSIS_APPS_VERIFIED_AT,
+    group: "network",
   },
   {
     id: "suggest",
@@ -131,6 +149,52 @@ export const DIAGNOSIS_APPS: readonly DiagnosisApp[] = [
       },
     ],
     verifiedAt: DIAGNOSIS_APPS_VERIFIED_AT,
+    group: "network",
+  },
+  {
+    id: "check",
+    name: "口コミ診断",
+    value: "店名から、Googleの口コミと星の並びを見られます。",
+    webUrl: "https://reviewcheck.jp/check/",
+    stores: [],
+    verifiedAt: DIAGNOSIS_APPS_VERIFIED_AT,
+    group: "reviewcheck",
+  },
+  {
+    id: "suggest-check",
+    name: "サジェスト診断",
+    value: "店名と一緒に出る検索候補を、見られます。",
+    webUrl: "https://reviewcheck.jp/suggest-check/",
+    stores: [],
+    verifiedAt: DIAGNOSIS_APPS_VERIFIED_AT,
+    group: "reviewcheck",
+  },
+  {
+    id: "ai-check",
+    name: "AIチェック",
+    value: "店名から、AIにどう説明されるかを見られます。",
+    webUrl: "https://reviewcheck.jp/ai-check/",
+    stores: [],
+    verifiedAt: DIAGNOSIS_APPS_VERIFIED_AT,
+    group: "reviewcheck",
+  },
+  {
+    id: "kanban-check",
+    name: "AI第一印象診断",
+    value: "院名・屋号・芸名が、AIからどう読まれるかを見られます。",
+    webUrl: "https://reviewcheck.jp/kanban-check/",
+    stores: [],
+    verifiedAt: DIAGNOSIS_APPS_VERIFIED_AT,
+    group: "reviewcheck",
+  },
+  {
+    id: "fact-check",
+    name: "公開情報ビュー",
+    value: "公開情報の所在を、判定せずに見られます。",
+    webUrl: "https://reviewcheck.jp/fact-check/",
+    stores: [],
+    verifiedAt: DIAGNOSIS_APPS_VERIFIED_AT,
+    group: "reviewcheck",
   },
 ] as const;
 
@@ -161,7 +225,7 @@ export function progressLabel(
 ): string {
   const safeTotal = Math.max(0, Math.floor(total));
   const n = Math.max(0, Math.min(safeTotal, Math.floor(checkedCount)));
-  return `${safeTotal}つのうち${n}つを確かめました`;
+  return `${safeTotal}のうち${n}つを確かめました`;
 }
 
 export type SuggestRankRisk = "high" | "medium" | "low" | "safe" | "unknown";
@@ -181,14 +245,43 @@ export type DiagnosisRankContext =
 
 /**
  * いまの結果から、次に開くと近い診断の順。
- * 今見ている診断自身は含めない。点数が高いほど先。
+ * 今開いているページと、同じページを指す診断は含めない。
+ * 同じパスが残るときは、このサイトの診断ページを1件だけ残す。
  */
 export function rankNextDiagnoses(ctx: DiagnosisRankContext): DiagnosisApp[] {
-  const current: DiagnosisAppId = ctx.surface === "review" ? "review" : "suggest";
-  return DIAGNOSIS_APPS.filter((app) => app.id !== current)
+  const excluded = excludedIds(ctx);
+  const ranked = DIAGNOSIS_APPS.filter((app) => !excluded.has(app.id))
     .map((app, index) => ({ app, index, score: relevanceScore(app.id, ctx) }))
     .sort((a, b) => b.score - a.score || a.index - b.index)
     .map((row) => row.app);
+  return preferSitePage(ranked);
+}
+
+function excludedIds(ctx: DiagnosisRankContext): Set<DiagnosisAppId> {
+  if (ctx.surface === "review") return new Set(["review", "check"]);
+  return new Set(["review", "suggest", "suggest-check"]);
+}
+
+/** 同じ画面へのリンクは、サイト内の診断名を先に出た位置へ置く。 */
+function preferSitePage(ranked: readonly DiagnosisApp[]): DiagnosisApp[] {
+  const winnerByPath = new Map<string, DiagnosisApp>();
+  for (const app of ranked) {
+    const key = toSitePath(app.webUrl);
+    const prev = winnerByPath.get(key);
+    if (!prev || (app.group === "reviewcheck" && prev.group === "network")) {
+      winnerByPath.set(key, app);
+    }
+  }
+  const seen = new Set<string>();
+  const out: DiagnosisApp[] = [];
+  for (const app of ranked) {
+    const key = toSitePath(app.webUrl);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const winner = winnerByPath.get(key);
+    if (winner) out.push(winner);
+  }
+  return out;
 }
 
 function relevanceScore(id: DiagnosisAppId, ctx: DiagnosisRankContext): number {
@@ -199,6 +292,7 @@ function relevanceScore(id: DiagnosisAppId, ctx: DiagnosisRankContext): number {
     const behind = ctx.behindPeers;
     switch (id) {
       case "suggest":
+      case "suggest-check":
         return 100 + (early ? 30 : 0) + (behind ? 15 : 0) - (steady ? 40 : 0);
       case "web-health":
         return 70 + (site ? 25 : 0) + (steady ? 20 : 0);
@@ -206,16 +300,27 @@ function relevanceScore(id: DiagnosisAppId, ctx: DiagnosisRankContext): number {
         return 55 + (site ? 20 : 0) + (steady ? 10 : 0);
       case "reverse-web":
         return 45 + (site ? 10 : 0);
+      case "ai-check":
+        return 38 + (steady ? 8 : 0);
       case "ai-health":
         return 35 + (steady ? 5 : 0);
-      default:
+      case "kanban-check":
+        return 28;
+      case "fact-check":
+        return 22;
+      case "review":
+      case "check":
         return 0;
+      default: {
+        const neverId: never = id;
+        return neverId;
+      }
     }
   }
   const risky = ctx.risk === "high" || ctx.risk === "medium";
   const calm = ctx.risk === "safe";
   switch (id) {
-    case "review":
+    case "check":
       return 100 + (risky ? 20 : 0);
     case "web-health":
       return 60 + (calm ? 25 : 0);
@@ -223,10 +328,22 @@ function relevanceScore(id: DiagnosisAppId, ctx: DiagnosisRankContext): number {
       return 50 + (risky ? 20 : 0);
     case "reverse-web":
       return 40;
+    case "ai-check":
+      return 32 + (calm ? 4 : 0);
     case "ai-health":
       return 30 + (calm ? 5 : 0);
-    default:
+    case "kanban-check":
+      return 24;
+    case "fact-check":
+      return 18;
+    case "review":
+    case "suggest":
+    case "suggest-check":
       return 0;
+    default: {
+      const neverId: never = id;
+      return neverId;
+    }
   }
 }
 

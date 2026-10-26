@@ -26,11 +26,8 @@ export function DiagnosisAppsFooter() {
   const hidden = useEmbedHidden();
   if (hidden) return null;
   return (
-    <section
-      data-diagnosis-apps=""
-      aria-labelledby="diagnosis-apps-heading"
-      className="mt-10 border-t border-white/10 pt-8"
-    >
+    <div data-diagnosis-apps="" className="mt-10 border-t border-white/10 pt-8">
+    <section aria-labelledby="diagnosis-apps-heading">
       <h3 id="diagnosis-apps-heading" className="text-sm font-bold text-white">
         公開中の診断
       </h3>
@@ -38,7 +35,7 @@ export function DiagnosisAppsFooter() {
         同じ運営の診断です。公開中の場所から開けます。
       </p>
       <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {DIAGNOSIS_APPS.map((app) => (
+        {DIAGNOSIS_APPS.filter((app) => app.group === "network").map((app) => (
           <li
             key={app.id}
             className="rounded-xl border border-white/15 bg-white/5 p-4"
@@ -51,6 +48,9 @@ export function DiagnosisAppsFooter() {
               {app.name}
             </DiagnosisLink>
             <p className="mt-1 text-sm leading-relaxed text-slate-200">{app.value}</p>
+            {app.patentNote ? (
+              <p className="mt-1 text-sm leading-relaxed text-slate-200">{app.patentNote}</p>
+            ) : null}
             <ul className="mt-3 flex flex-wrap gap-2">
               {badges(app).map((badge) => (
                 <li key={badge.key}>
@@ -68,5 +68,32 @@ export function DiagnosisAppsFooter() {
         ))}
       </ul>
     </section>
+
+    <section aria-labelledby="diagnosis-site-heading" className="mt-8">
+      <h3 id="diagnosis-site-heading" className="text-sm font-bold text-white">
+        口コミチェック.jpの診断
+      </h3>
+      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-200">
+        このサイトの中で開ける診断です。
+      </p>
+      <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {DIAGNOSIS_APPS.filter((app) => app.group === "reviewcheck").map((app) => (
+          <li
+            key={app.id}
+            className="rounded-xl border border-white/15 bg-white/5 p-4"
+          >
+            <DiagnosisLink
+              url={app.webUrl}
+              className="text-base font-bold text-slate-100 decoration-slate-100 hover:text-white focus-visible:outline-amber-200"
+              onOpen={() => rememberDiagnosis(app.id)}
+            >
+              {app.name}
+            </DiagnosisLink>
+            <p className="mt-1 text-sm leading-relaxed text-slate-200">{app.value}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+    </div>
   );
 }

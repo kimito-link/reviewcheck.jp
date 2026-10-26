@@ -11,7 +11,7 @@ import {
 import { useEmbedHidden } from "../diagnosis/useEmbedHidden";
 
 /**
- * 6つの診断のうち、この端末で確かめた数。サーバには送らない。
+ * レジストリの診断のうち、この端末で確かめた数。サーバには送らない。
  */
 export function DiagnosisProgressNote({
   appId,

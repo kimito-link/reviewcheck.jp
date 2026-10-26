@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, test } from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   DIAGNOSIS_APPS,
   DIAGNOSIS_APPS_VERIFIED_AT,
@@ -9,6 +12,7 @@ import {
   normalizeCheckedIds,
   progressLabel,
   rankNextDiagnoses,
+  toSitePath,
   withLineExternalParam,
 } from "./diagnosisApps.ts";
 
@@ -19,11 +23,24 @@ const LINE_UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Line/14.0.0";
 
 describe("診断アプリのレジストリ", () => {
-  test("6件、確認日、公開中のURLだけ", () => {
-    assert.equal(DIAGNOSIS_APP_COUNT, 6);
+  test("11件、確認日、公開中のURLだけ", () => {
+    assert.equal(DIAGNOSIS_APP_COUNT, 11);
+    assert.equal(DIAGNOSIS_APP_COUNT, DIAGNOSIS_APPS.length);
     assert.deepEqual(
       DIAGNOSIS_APPS.map((app) => app.id),
-      ["ai-health", "web-health", "reverse-web", "malware", "review", "suggest"],
+      [
+        "ai-health",
+        "web-health",
+        "reverse-web",
+        "malware",
+        "review",
+        "suggest",
+        "check",
+        "suggest-check",
+        "ai-check",
+        "kanban-check",
+        "fact-check",
+      ],
     );
     for (const app of DIAGNOSIS_APPS) {
       assert.equal(app.verifiedAt, "2026-10-27");
@@ -64,11 +81,52 @@ describe("診断アプリのレジストリ", () => {
       byId["suggest"]?.stores.map((store) => store.url),
       ["https://chromewebstore.google.com/detail/befoihdhopfaaodibepoblcejekffnhk"],
     );
+    assert.equal(byId["check"]?.webUrl, "https://reviewcheck.jp/check/");
+    assert.equal(byId["suggest-check"]?.webUrl, "https://reviewcheck.jp/suggest-check/");
+    assert.equal(byId["ai-check"]?.webUrl, "https://reviewcheck.jp/ai-check/");
+    assert.equal(byId["kanban-check"]?.webUrl, "https://reviewcheck.jp/kanban-check/");
+    assert.equal(byId["fact-check"]?.webUrl, "https://reviewcheck.jp/fact-check/");
+    for (const app of DIAGNOSIS_APPS) {
+      if (app.group === "reviewcheck") assert.deepEqual(app.stores, []);
+    }
+  });
+
+  test("特許表記は2件だけで、取得済み等の語はソースに無い", () => {
+    const noted = DIAGNOSIS_APPS.filter((app) => app.patentNote);
+    assert.deepEqual(
+      noted.map((app) => [app.id, app.patentNote]),
+      [
+        ["web-health", "特許出願中（特願2026-223098・特願2026-227149）"],
+        ["reverse-web", "特許出願中（特願2026-223098）"],
+      ],
+    );
+    for (const app of DIAGNOSIS_APPS) {
+      if (app.id === "web-health" || app.id === "reverse-web") continue;
+      assert.equal(app.patentNote, undefined, app.id);
+    }
+    const suggest = DIAGNOSIS_APPS.find((app) => app.id === "suggest");
+    assert.equal(`${suggest?.name}${suggest?.value}`.includes("®"), false);
+    assert.equal(`${suggest?.name}${suggest?.value}`.includes("商標登録"), false);
+
+    const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+    const sources = [
+      "packages/core/src/diagnosisApps.ts",
+      "apps/web/components/DiagnosisAppsFooter.tsx",
+      "apps/web/components/result/NextDiagnoses.tsx",
+      "apps/chrome-extension/popup.html",
+    ];
+    const banned = ["特許取得", "特許技術", "特許済み", "®", "商標登録"];
+    for (const rel of sources) {
+      const text = readFileSync(path.join(root, rel), "utf8");
+      for (const phrase of banned) {
+        assert.equal(text.includes(phrase), false, `${rel} ${phrase}`);
+      }
+    }
   });
 
   test("新しい文面に禁止語と不安をあおる語が無い", () => {
     for (const app of DIAGNOSIS_APPS) {
-      const text = `${app.name}${app.value}${app.stores.map((store) => store.label).join("")}`;
+      const text = `${app.name}${app.value}${app.patentNote ?? ""}${app.stores.map((store) => store.label).join("")}`;
       for (const word of BANNED) assert.equal(text.includes(word), false, word);
       for (const word of FEAR) assert.equal(app.value.includes(word), false, word);
     }
@@ -85,8 +143,19 @@ describe("結果に対する並び", () => {
     });
     assert.deepEqual(
       next.map((app) => app.id),
-      ["suggest", "web-health", "malware", "reverse-web", "ai-health"],
+      [
+        "suggest-check",
+        "web-health",
+        "malware",
+        "reverse-web",
+        "ai-check",
+        "ai-health",
+        "kanban-check",
+        "fact-check",
+      ],
     );
+    assert.equal(next.some((app) => app.id === "check" || app.id === "review"), false);
+    assert.equal(new Set(next.map((app) => toSitePath(app.webUrl))).size, next.length);
   });
 
   test("口コミが高くサイトがあるときはサイト診断を先にする", () => {
@@ -98,7 +167,16 @@ describe("結果に対する並び", () => {
     });
     assert.deepEqual(
       next.map((app) => app.id),
-      ["web-health", "malware", "suggest", "reverse-web", "ai-health"],
+      [
+        "web-health",
+        "malware",
+        "suggest-check",
+        "reverse-web",
+        "ai-check",
+        "ai-health",
+        "kanban-check",
+        "fact-check",
+      ],
     );
   });
 
@@ -106,23 +184,33 @@ describe("結果に対する並び", () => {
     const risky = rankNextDiagnoses({ surface: "suggest", risk: "high" });
     assert.deepEqual(
       risky.map((app) => app.id),
-      ["review", "malware", "web-health", "reverse-web", "ai-health"],
+      [
+        "check",
+        "malware",
+        "web-health",
+        "reverse-web",
+        "ai-check",
+        "ai-health",
+        "kanban-check",
+        "fact-check",
+      ],
     );
     const calm = rankNextDiagnoses({ surface: "suggest", risk: "safe" });
-    assert.equal(calm[0]?.id, "review");
+    assert.equal(calm[0]?.id, "check");
     assert.equal(calm[1]?.id, "web-health");
     assert.equal(
-      calm.some((app) => app.id === "suggest"),
+      calm.some((app) => app.id === "suggest" || app.id === "suggest-check"),
       false,
     );
   });
 });
 
 describe("進捗の文言とLINEの外部ブラウザ", () => {
-  test("6つのうちnつ、と未知のIDは数えない", () => {
-    assert.equal(progressLabel(2), "6つのうち2つを確かめました");
-    assert.equal(progressLabel(0), "6つのうち0つを確かめました");
-    assert.equal(progressLabel(9), "6つのうち6つを確かめました");
+  test("レジストリの件数のうちnつ、と未知のIDは数えない", () => {
+    assert.equal(progressLabel(2), "11のうち2つを確かめました");
+    assert.equal(progressLabel(0), "11のうち0つを確かめました");
+    assert.equal(progressLabel(99), "11のうち11つを確かめました");
+    assert.equal(progressLabel(2), `${DIAGNOSIS_APP_COUNT}のうち2つを確かめました`);
     assert.deepEqual(
       normalizeCheckedIds(["review", "nope", "review", "suggest", 1]),
       ["review", "suggest"],

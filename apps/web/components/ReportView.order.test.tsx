@@ -107,7 +107,7 @@ describe("診断結果の並び", () => {
       container.querySelector('[data-result-section="score"]'),
     ).toContainElement(history);
     expect(
-      await screen.findByText("6つのうち1つを確かめました"),
+      await screen.findByText("11のうち1つを確かめました"),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "1か月後の再点検を保存" })).toBeInTheDocument();
 
@@ -127,7 +127,21 @@ describe("診断結果の並び", () => {
     );
     expect(names).toEqual(expected.map((app) => app.name));
     expect(names).not.toContain("口コミチェック.jp");
+    expect(names).not.toContain("口コミ診断");
+    expect(names).toContain("サジェスト診断");
     const nextText = next?.textContent ?? "";
+    expect(nextText).toContain("特許出願中（特願2026-223098・特願2026-227149）");
+    expect(nextText).not.toMatch(/特許取得|特許技術|特許済み|®|商標登録/);
+    for (const card of next?.querySelectorAll("li") ?? []) {
+      const name = card.querySelector("a")?.textContent ?? "";
+      if (name === "リバースハック WEB健康診断") {
+        expect(card.textContent ?? "").toContain("特許出願中（特願2026-223098）");
+        expect(card.textContent ?? "").not.toContain("227149");
+      }
+      if (name !== "WEBサイト健康診断" && name !== "リバースハック WEB健康診断") {
+        expect(card.textContent ?? "").not.toContain("特許");
+      }
+    }
     expect(nextText).not.toContain("無料");
     expect(nextText).not.toContain("必ず");
     expect(nextText).not.toContain("保証");
@@ -136,7 +150,7 @@ describe("診断結果の並び", () => {
     expect(next?.innerHTML ?? "").not.toContain("#06C755");
 
     const progress = window.localStorage.getItem(DIAGNOSIS_PROGRESS_STORAGE_KEY);
-    expect(progress).toBe(JSON.stringify(["review"]));
+    expect(progress).toBe(JSON.stringify(["check"]));
     expect(progress ?? "").not.toContain("テスト食堂");
 
     const saved = window.localStorage.getItem(scoreHistoryKey("テスト食堂"));

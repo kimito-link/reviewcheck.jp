@@ -61,12 +61,13 @@ describe("サジェスト診断の次の診断", () => {
     const expected = rankNextDiagnoses({ surface: "suggest", risk: "high" });
     const names = [...(next?.querySelectorAll("ol a") ?? [])].map((anchor) => anchor.textContent);
     expect(names).toEqual(expected.map((app) => app.name));
-    expect(names[0]).toBe("口コミチェック.jp");
+    expect(names[0]).toBe("口コミ診断");
     expect(names).not.toContain("サジェスト汚染チェッカー");
-    expect(next?.textContent ?? "").not.toMatch(/無料|必ず|保証|安全です/);
-    expect(await screen.findByText("6つのうち1つを確かめました")).toBeInTheDocument();
+    expect(names).not.toContain("サジェスト診断");
+    expect(next?.textContent ?? "").not.toMatch(/無料|必ず|保証|安全です|特許取得|特許技術|特許済み/);
+    expect(await screen.findByText("11のうち1つを確かめました")).toBeInTheDocument();
     expect(window.localStorage.getItem(DIAGNOSIS_PROGRESS_STORAGE_KEY)).toBe(
-      JSON.stringify(["suggest"]),
+      JSON.stringify(["suggest-check"]),
     );
   });
 

@@ -153,7 +153,7 @@ export function ReportView({
                 className="text-center lg:text-left"
               />
               <DiagnosisProgressNote
-                appId="review"
+                appId="check"
                 className="text-center lg:text-left"
               />
             </div>

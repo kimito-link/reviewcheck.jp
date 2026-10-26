@@ -23,10 +23,14 @@ describe("Chrome拡張のほかの診断", () => {
     expect(section).toBeTruthy();
     expect(section).toContain("ほかの診断");
     expect(section ?? "").not.toMatch(/無料|必ず|保証|安全です/);
+    expect(section ?? "").not.toMatch(/特許取得|特許技術|特許済み|特許出願中|®|商標登録/);
     for (const app of DIAGNOSIS_APPS) {
-      if (app.id === "review") {
-        expect(section).not.toContain(`href="${app.webUrl}"`);
-        expect(section).not.toContain(app.stores[0]?.url);
+      if (app.group !== "network" || app.id === "review") {
+        if (app.id === "review") {
+          expect(section).not.toContain(`href="${app.webUrl}"`);
+          expect(section).not.toContain(app.stores[0]?.url);
+        }
+        if (app.patentNote) expect(section).not.toContain(app.patentNote);
         continue;
       }
       expect(section).toContain(`href="${app.webUrl}"`);

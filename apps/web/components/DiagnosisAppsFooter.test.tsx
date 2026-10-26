@@ -60,8 +60,15 @@ describe("フッターの公開中診断", () => {
     expect(hrefs).toContain(
       "https://chromewebstore.google.com/detail/befoihdhopfaaodibepoblcejekffnhk",
     );
+    expect(text).toContain("口コミチェック.jpの診断");
+    expect(text).toContain("特許出願中（特願2026-223098・特願2026-227149）");
+    expect(text).not.toMatch(/特許取得|特許技術|特許済み|®|商標登録/);
     expect(hrefs).toContain("/");
+    expect(hrefs).toContain("/check/");
     expect(hrefs).toContain("/suggest-check/");
+    expect(hrefs).toContain("/ai-check/");
+    expect(hrefs).toContain("/kanban-check/");
+    expect(hrefs).toContain("/fact-check/");
     expect(hrefs.some((href) => href?.includes("utm_") || href?.includes("ref="))).toBe(false);
     for (const anchor of block?.querySelectorAll("a") ?? []) {
       expect(anchor.className).toContain("underline");
