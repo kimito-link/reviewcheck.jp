@@ -17,6 +17,7 @@ export function ScoreHistoryNote({
   ruleVersion,
   diagnosedAt,
   enabled,
+  className = "",
 }: {
   shopName: string;
   score: number;
@@ -24,6 +25,7 @@ export function ScoreHistoryNote({
   diagnosedAt: string;
   /** 取得時刻が共有URLに無いときは保存しない（見るたびに時刻が変わるため） */
   enabled: boolean;
+  className?: string;
 }) {
   const [message, setMessage] = useState<string | null>(null);
 
@@ -57,7 +59,7 @@ export function ScoreHistoryNote({
   if (!message) return null;
   return (
     <p
-      className="mt-3 text-sm font-medium leading-relaxed text-slate-800"
+      className={`mt-3 text-sm font-medium leading-relaxed text-slate-800 ${className}`.trim()}
       data-score-history=""
     >
       {message}

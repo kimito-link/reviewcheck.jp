@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import type { SuggestAnalysis, AnalyzedSuggest } from "@reviewcheck/core";
 import { CTAS } from "@reviewcheck/config";
+import { DiagnosisProgressNote } from "./result/DiagnosisProgressNote";
+import { NextDiagnoses } from "./result/NextDiagnoses";
 
 const LEVEL_BADGE: Record<string, { label: string; cls: string }> = {
   high: { label: "高リスク", cls: "bg-red-100 text-red-700" },
@@ -155,6 +157,7 @@ export function SuggestCheckApp({
               <p className="mt-2 text-sm leading-relaxed text-slate-700">
                 {summary.lead}
               </p>
+              <DiagnosisProgressNote appId="suggest-check" className="text-left" />
 
               {hasNegatives ? (
                 <ul className="mt-4 space-y-2">
@@ -181,7 +184,10 @@ export function SuggestCheckApp({
                 </ul>
               ) : null}
 
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <div
+                data-suggest-cta=""
+                className="mt-4 flex flex-col gap-2 sm:flex-row"
+              >
                 {unverified ? null : hasNegatives ? (
                   <Link
                     href={consultHref}
@@ -197,6 +203,9 @@ export function SuggestCheckApp({
                     検索候補を月次モニタリングする
                   </Link>
                 )}
+              </div>
+              <div className="mt-4 empty:mt-0 empty:hidden">
+                <NextDiagnoses context={{ surface: "suggest", risk }} />
               </div>
             </div>
           </section>

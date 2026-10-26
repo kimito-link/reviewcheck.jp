@@ -41,6 +41,8 @@ describe("結果CTAのしきい値", () => {
       const cta = selectResultCta(score);
       const text = `${cta.label}${cta.headline}${cta.body}`;
       expect(text).not.toContain("無料");
+      expect(text).not.toContain("必ず");
+      expect(text).not.toContain("保証");
       expect(text).not.toContain("/contact/");
       expect(text).not.toContain("15分");
     }
@@ -122,6 +124,8 @@ describe("結果のコピー", () => {
     expect(text.startsWith("選ばれやすさ 68点（目安）｜")).toBe(true);
     expect(text).toContain("テスト食堂");
     expect(text).not.toContain("無料");
+    expect(text).not.toContain("必ず");
+    expect(text).not.toContain("保証");
   });
 
   test("このままにした場合は金額を出さない", () => {
