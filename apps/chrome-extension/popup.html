@@ -7,84 +7,106 @@
     <title>口コミチェック.jp</title>
   </head>
   <body>
-    <header class="header">
-      <div class="logo">口</div>
-      <div>
-        <div class="title">口コミチェック.jp</div>
-        <div class="subtitle">この店舗のGoogle口コミを簡易チェック</div>
-      </div>
-    </header>
+    <div class="shell">
+      <header class="header">
+        <div class="logo" aria-hidden="true">口</div>
+        <div>
+          <div class="title">口コミチェック.jp</div>
+          <div class="subtitle">今のタブの口コミを簡易チェック</div>
+        </div>
+      </header>
 
-    <main class="main">
-      <p class="target-label">診断対象</p>
-      <p id="targetUrl" class="target-url">取得中…</p>
-
-      <button id="scanBtn" class="btn btn-primary">この店舗を診断</button>
-
-      <div id="loading" class="loading hidden">
-        <div class="spinner"></div>
-        <span>診断中…</span>
-      </div>
-
-      <div id="error" class="error hidden"></div>
-
-      <section id="result" class="result hidden">
-        <div class="score-row">
-          <div id="scoreCircle" class="score-circle">
-            <span id="scoreValue">0</span><small>/100</small>
+      <main class="main">
+        <section id="result" class="result hidden" aria-live="polite">
+          <div class="score-row">
+            <div id="scoreCircle" class="score-circle">
+              <span id="scoreValue">0</span><small>点 / 100</small>
+            </div>
+            <div>
+              <p id="bandBadge" class="badge">選ばれやすさ: -</p>
+              <p id="storeName" class="store-name"></p>
+              <p id="storeStats" class="store-stats"></p>
+            </div>
           </div>
-          <div>
-            <span id="bandBadge" class="badge">選ばれやすさ: -</span>
-            <p id="storeName" class="store-name"></p>
-            <p id="storeStats" class="store-stats"></p>
+
+          <h2 class="points-title">要点</h2>
+          <ul id="points" class="points"></ul>
+
+          <div id="recheck" class="recheck hidden">
+            <p id="recheckPrevious"></p>
+            <p id="recheckNext"></p>
           </div>
+
+          <div class="share-row">
+            <button id="copySummary" class="btn btn-ghost" type="button">要約をコピー</button>
+            <button id="copyUrl" class="btn btn-ghost" type="button">結果URLをコピー</button>
+            <button id="webShare" class="btn btn-ghost hidden" type="button">共有する</button>
+          </div>
+          <p id="shareStatus" class="share-status" role="status"></p>
+          <textarea id="shareFallback" class="share-fallback hidden" readonly rows="4"></textarea>
+
+          <button id="detailBtn" class="btn btn-dark" type="button">Web版で詳しく見る</button>
+        </section>
+
+        <div id="loading" class="loading hidden">
+          <div class="spinner" aria-hidden="true"></div>
+          <span>診断中…</span>
         </div>
 
-        <p id="summary" class="summary"></p>
+        <div id="error" class="error hidden" role="alert"></div>
 
-        <div class="sim-box">
-          <p class="sim-label">目標に近づくには</p>
-          <p id="simText" class="sim-text"></p>
-        </div>
+        <section class="manual" aria-labelledby="manual-title">
+          <h2 id="manual-title">手入力でも診断できます</h2>
+          <p class="target-label">今のタブ</p>
+          <p id="targetUrl" class="target-url">取得中…</p>
+          <form id="manualForm">
+            <label class="field" for="manualQuery">店舗名またはGoogleマップURL</label>
+            <input id="manualQuery" name="query" type="text" autocomplete="off" spellcheck="false" />
+            <div class="manual-grid">
+              <div>
+                <label class="field" for="manualRating">星評価（任意）</label>
+                <input id="manualRating" name="rating" type="text" inputmode="decimal" autocomplete="off" placeholder="例：4.2" />
+              </div>
+              <div>
+                <label class="field" for="manualCount">口コミ数（任意）</label>
+                <input id="manualCount" name="reviewCount" type="text" inputmode="numeric" autocomplete="off" placeholder="例：45" />
+              </div>
+            </div>
+            <button id="scanBtn" class="btn btn-primary" type="submit">この条件で診断する</button>
+          </form>
+        </section>
 
-        <button id="detailBtn" class="btn btn-dark">詳しい診断結果を見る</button>
+        <section class="other-dx" data-other-diagnoses aria-labelledby="other-dx-title">
+          <h2 id="other-dx-title">ほかの診断</h2>
+          <ul>
+            <li>
+              <a href="https://app.ai-health-check.link/">AIの健康診断</a>
+              <p>AIが公開情報から読む印象を、そのまま見られます。</p>
+            </li>
+            <li>
+              <a href="https://web-health-check.link/">WEBサイト健康診断</a>
+              <p>表示の速さと基本設定を、URLから見られます。</p>
+            </li>
+            <li>
+              <a href="https://app.reverse-re-birth-hack.com/">リバースハック WEB健康診断</a>
+              <p>公式サイトの状態を、別の点検で見られます。</p>
+            </li>
+            <li>
+              <a href="https://malwarecheck.site/">マルウェアチェック.site</a>
+              <p>公開ページが意図せず変わっていないかを、URLで見られます。</p>
+            </li>
+            <li>
+              <a href="https://reviewcheck.jp/suggest-check/">サジェスト汚染チェッカー</a>
+              <p>検索窓に名前と一緒に出る候補を、見られます。</p>
+            </li>
+          </ul>
+        </section>
 
-        <div class="cta-group">
-          <a id="ctaImprove" class="btn btn-outline" target="_blank" rel="noopener">口コミ改善を相談する</a>
-          <a id="ctaMeo" class="btn btn-outline" target="_blank" rel="noopener">MEO対策を相談する</a>
-        </div>
-      </section>
-
-      <section class="other-dx" data-other-diagnoses aria-labelledby="other-dx-title">
-        <h2 id="other-dx-title">ほかの診断</h2>
-        <ul>
-          <li>
-            <a href="https://app.ai-health-check.link/">AIの健康診断</a>
-            <p>AIが公開情報から読む印象を、そのまま見られます。</p>
-          </li>
-          <li>
-            <a href="https://web-health-check.link/">WEBサイト健康診断</a>
-            <p>表示の速さと基本設定を、URLから見られます。</p>
-          </li>
-          <li>
-            <a href="https://app.reverse-re-birth-hack.com/">リバースハック WEB健康診断</a>
-            <p>公式サイトの状態を、別の点検で見られます。</p>
-          </li>
-          <li>
-            <a href="https://malwarecheck.site/">マルウェアチェック.site</a>
-            <p>公開ページが意図せず変わっていないかを、URLで見られます。</p>
-          </li>
-          <li>
-            <a href="https://reviewcheck.jp/suggest-check/">サジェスト汚染チェッカー</a>
-            <p>検索窓に名前と一緒に出る候補を、見られます。</p>
-          </li>
-        </ul>
-      </section>
-
-      <p class="disclaimer">
-        この診断は公開情報や入力情報をもとにした簡易診断です。星評価・口コミ増加・順位を保証するものではありません。口コミ購入・やらせ・競合への低評価工作は行いません。診断ボタンを押したページのみを処理し、閲覧履歴の収集は行いません。
-      </p>
-    </main>
+        <p class="disclaimer">
+          この診断は公開情報や入力情報をもとにした簡易診断です。星の数・口コミの件数・表示順が上がることを約束するものではありません。口コミ購入・やらせ・競合への低評価工作は行いません。ポップアップを開いたページと、手入力した対象だけを処理し、閲覧履歴の収集は行いません。前回の点検はこの端末だけに残します。
+        </p>
+      </main>
+    </div>
 
     <script type="module" src="popup.js"></script>
   </body>

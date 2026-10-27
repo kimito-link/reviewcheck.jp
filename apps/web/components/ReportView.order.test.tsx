@@ -1,6 +1,6 @@
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, test, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import {
   DIAGNOSIS_PROGRESS_STORAGE_KEY,
   diagnose,
@@ -9,6 +9,7 @@ import {
 import { RESULT_ESTIMATE_SENTENCE } from "@reviewcheck/config";
 import { ReportView } from "./ReportView";
 import { scoreHistoryKey } from "@/lib/scoreHistory";
+import { SHARER_LINE_STORAGE_KEY } from "@/lib/refLine";
 
 vi.mock("next/link", () => ({
   default: ({
@@ -234,14 +235,109 @@ describe("特典と比較", () => {
     expect(preview?.innerHTML ?? "").toContain("text-base");
   });
 
-  test("embed=1 では次の診断と進捗を出さない", async () => {
-    window.history.pushState(null, "", "/report/embed/?embed=1");
-    render(<ReportView result={fixture} shareUrl="https://reviewcheck.jp/report/embed/" />);
+  test("embed=1 では次の診断と進捗と、共有した人の連絡先を出さない", async () => {
+    window.history.pushState(
+      null,
+      "",
+      "/report/embed/?embed=1&ref_line=https%3A%2F%2Flin.ee%2Fabc",
+    );
+    render(
+      <ReportView
+        result={fixture}
+        shareUrl="https://reviewcheck.jp/report/embed/"
+        refLine="https://lin.ee/abc"
+      />,
+    );
     await waitFor(() => {
       expect(screen.queryByText("次に試すとよい診断")).not.toBeInTheDocument();
       expect(document.querySelector("[data-diagnosis-progress]")).toBeNull();
+      expect(
+        screen.queryByRole("link", { name: "共有した人に相談する（LINE）" }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("自分の公式LINEのURL")).not.toBeInTheDocument();
     });
     expect(screen.getByText(RESULT_ESTIMATE_SENTENCE)).toBeInTheDocument();
     window.history.pushState(null, "", "/report/embed/");
+  });
+});
+
+describe("共有した人の公式LINE", () => {
+  test("許可したURLだけボタンにし、共有URLに載せる", async () => {
+    window.history.pushState(null, "", "/report/abc/");
+    window.localStorage.removeItem(SHARER_LINE_STORAGE_KEY);
+    render(
+      <ReportView
+        result={fixture}
+        shareUrl="https://reviewcheck.jp/report/abc/"
+        refLine="https://evil.example/phish"
+      />,
+    );
+    expect(
+      screen.queryByRole("link", { name: "共有した人に相談する（LINE）" }),
+    ).not.toBeInTheDocument();
+
+    cleanup();
+    render(
+      <ReportView
+        result={fixture}
+        shareUrl="https://reviewcheck.jp/report/abc/"
+        refLine="https://lin.ee/from-friend"
+      />,
+    );
+    const link = screen.getByRole("link", { name: "共有した人に相談する（LINE）" });
+    expect(link).toHaveAttribute("href", "https://lin.ee/from-friend");
+    expect(link.closest("[data-result-section='cta']")).toBeNull();
+    const shareUrl = screen.getByLabelText("共有URL") as HTMLInputElement;
+    expect(shareUrl.value).toContain("ref_line=");
+    expect(decodeURIComponent(shareUrl.value)).toContain("https://lin.ee/from-friend");
+    const added = [
+      document.querySelector("[data-sharer-line-consult]")?.textContent ?? "",
+      document.querySelector("[data-sharer-line-setting]")?.textContent ?? "",
+    ].join("\n");
+    expect(added).not.toMatch(/無料|必ず|保証/);
+
+    fireEvent.change(screen.getByLabelText("自分の公式LINEのURL"), {
+      target: { value: "https://evil.example/phish" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "このURLを共有に使う" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("https://lin.ee/");
+    expect(window.localStorage.getItem(SHARER_LINE_STORAGE_KEY)).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("自分の公式LINEのURL"), {
+      target: { value: "https://line.me/R/ti/p/@example" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "このURLを共有に使う" }));
+    await waitFor(() => {
+      expect(window.localStorage.getItem(SHARER_LINE_STORAGE_KEY)).toContain(
+        "https://line.me/",
+      );
+    });
+    expect(decodeURIComponent(shareUrl.value)).toContain("https://line.me/");
+    expect(shareUrl.value).not.toContain("evil.example");
+  });
+
+  test("LINEアプリ内ブラウザでは openExternalBrowser=1 を足す", async () => {
+    const original = window.navigator.userAgent;
+    Object.defineProperty(window.navigator, "userAgent", {
+      value: "Mozilla/5.0 Line/14.0.0",
+      configurable: true,
+    });
+    window.history.pushState(null, "", "/report/abc/?ref_line=https%3A%2F%2Flin.ee%2Fabc");
+    render(
+      <ReportView
+        result={fixture}
+        shareUrl="https://reviewcheck.jp/report/abc/"
+        refLine="https://lin.ee/abc"
+      />,
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByRole("link", { name: "共有した人に相談する（LINE）" }),
+      ).toHaveAttribute("href", "https://lin.ee/abc?openExternalBrowser=1");
+    });
+    Object.defineProperty(window.navigator, "userAgent", {
+      value: original,
+      configurable: true,
+    });
   });
 });

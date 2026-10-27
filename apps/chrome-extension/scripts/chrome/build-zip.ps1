@@ -39,7 +39,7 @@ $version = $manifest.version
 $name = "reviewcheck-extension"
 
 # Files (top level) and folders (recursed) to include. Source/scripts excluded.
-$files = @('manifest.json', 'popup.html', 'popup.css', 'popup.js', 'config.js', 'background.js')
+$files = @('manifest.json', 'popup.html', 'popup.css', 'popup.js', 'personal.js', 'config.js', 'background.js')
 $folders = @('icons', '_locales')
 
 $outDir = "dist"
