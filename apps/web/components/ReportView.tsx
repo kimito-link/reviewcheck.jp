@@ -21,6 +21,7 @@ import { ResultActionProvider } from "./result/ResultActionContext";
 import { ResultNextCta } from "./result/ResultNextCta";
 import { ScoreHistoryNote } from "./result/ScoreHistoryNote";
 import { ScrollToResultScore } from "./result/ScrollToResultScore";
+import { SharerLineConsult } from "./SharerLineConsult";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
   high: { label: "最優先", cls: "bg-red-100 text-red-700" },
@@ -54,6 +55,7 @@ export function ReportView({
   result,
   shareUrl,
   refCode,
+  refLine,
   shareContext,
   cohort = null,
 }: {
@@ -61,6 +63,8 @@ export function ReportView({
   shareUrl?: string;
   /** アフィリエイター紹介コード（?ref=RH-XXXX で着地時）。monitor 橋URLに伝搬する。 */
   refCode?: string;
+  /** 共有した人の公式LINE（?ref_line=）。許可リスト外は表示しない。 */
+  refLine?: string;
   /**
    * 共有URLを開いたときだけ渡す。
    * その場の診断では渡さない（注記を出さない）。
@@ -202,6 +206,8 @@ export function ReportView({
         >
           <ResultNextCta {...ctaProps} shopToggle />
         </section>
+
+        <SharerLineConsult refLine={refLine} />
 
         <NextDiagnoses
           context={{
@@ -454,6 +460,7 @@ export function ReportView({
               storeName={store.name}
               score={result.score}
               ruleVersion={result.ruleVersion}
+              refLine={refLine}
             />
           </div>
         ) : null}

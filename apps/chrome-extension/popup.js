@@ -1,14 +1,32 @@
 import { CONFIG } from "./config.js";
+import {
+  CHECKS_STORAGE_KEY,
+  buildExtensionShareText,
+  domainOf,
+  encodeReportId,
+  isDiagnosablePage,
+  isMapsUrl,
+  mergeCheckEntry,
+  pickHighlights,
+  queryFromManual,
+  queryFromTab,
+  recheckCopy,
+  storageTargetKey,
+} from "./personal.js";
 
 const BAND = {
-  good: { label: "選ばれやすい", color: "#15803d", badgeBg: "#dcfce7", badgeFg: "#166534" },
-  fair: { label: "改善余地あり", color: "#d97706", badgeBg: "#fef3c7", badgeFg: "#92400e" },
-  weak: { label: "やや不利", color: "#ea580c", badgeBg: "#ffedd5", badgeFg: "#9a3412" },
-  poor: { label: "要対策", color: "#dc2626", badgeBg: "#fee2e2", badgeFg: "#991b1b" },
+  good: { label: "選ばれやすい", border: "#166534", badgeBg: "#dcfce7", badgeFg: "#166534" },
+  fair: { label: "改善余地あり", border: "#92400e", badgeBg: "#fef3c7", badgeFg: "#92400e" },
+  weak: { label: "やや不利", border: "#9a3412", badgeBg: "#ffedd5", badgeFg: "#9a3412" },
+  poor: { label: "要対策", border: "#991b1b", badgeBg: "#fee2e2", badgeFg: "#991b1b" },
 };
 
 const els = {
   targetUrl: document.getElementById("targetUrl"),
+  manualForm: document.getElementById("manualForm"),
+  manualQuery: document.getElementById("manualQuery"),
+  manualRating: document.getElementById("manualRating"),
+  manualCount: document.getElementById("manualCount"),
   scanBtn: document.getElementById("scanBtn"),
   loading: document.getElementById("loading"),
   error: document.getElementById("error"),
@@ -18,122 +36,282 @@ const els = {
   bandBadge: document.getElementById("bandBadge"),
   storeName: document.getElementById("storeName"),
   storeStats: document.getElementById("storeStats"),
-  summary: document.getElementById("summary"),
-  simText: document.getElementById("simText"),
+  points: document.getElementById("points"),
+  recheck: document.getElementById("recheck"),
+  recheckPrevious: document.getElementById("recheckPrevious"),
+  recheckNext: document.getElementById("recheckNext"),
+  copySummary: document.getElementById("copySummary"),
+  copyUrl: document.getElementById("copyUrl"),
+  webShare: document.getElementById("webShare"),
+  shareStatus: document.getElementById("shareStatus"),
+  shareFallback: document.getElementById("shareFallback"),
   detailBtn: document.getElementById("detailBtn"),
-  ctaImprove: document.getElementById("ctaImprove"),
-  ctaMeo: document.getElementById("ctaMeo"),
 };
 
-let currentUrl = "";
+let currentTabUrl = "";
+let currentView = null;
+
+function hasChromeTabs() {
+  return Boolean(globalThis.chrome?.tabs?.query);
+}
 
 async function getActiveTabUrl() {
+  if (!hasChromeTabs()) return "";
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab && tab.url ? tab.url : "";
 }
 
-function isMapsUrl(url) {
-  return /https?:\/\/([^/]*\.)?(google\.[a-z.]+\/maps|maps\.google\.|maps\.app\.goo\.gl|g\.page)/i.test(
-    url,
-  );
+async function loadChecks() {
+  if (!globalThis.chrome?.storage?.local) return {};
+  try {
+    const data = await chrome.storage.local.get(CHECKS_STORAGE_KEY);
+    const value = data?.[CHECKS_STORAGE_KEY];
+    return value && typeof value === "object" ? value : {};
+  } catch {
+    return {};
+  }
 }
 
-// core の encodeReportId(JSON) と互換のレポートID生成
-function encodeReportId(input) {
-  const json = JSON.stringify(input);
-  const bytes = new TextEncoder().encode(json);
-  let bin = "";
-  for (const b of bytes) bin += String.fromCharCode(b);
-  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+async function saveCheck(key, entry) {
+  if (!key || !globalThis.chrome?.storage?.local) return;
+  try {
+    const existing = await loadChecks();
+    const next = mergeCheckEntry(existing, key, entry);
+    await chrome.storage.local.set({ [CHECKS_STORAGE_KEY]: next });
+  } catch {
+    /* 保存できなくても、今回の結果は画面に出す */
+  }
 }
 
-function setupCtaLinks() {
-  els.ctaImprove.href = `${CONFIG.API_BASE}/contact/?topic=improvement`;
-  els.ctaMeo.href = `${CONFIG.API_BASE}/contact/?topic=meo`;
-}
-
-async function init() {
-  setupCtaLinks();
-  currentUrl = await getActiveTabUrl();
-  if (!currentUrl || !/^https?:\/\//i.test(currentUrl)) {
-    els.targetUrl.textContent =
-      "このページは診断できません（Googleマップの店舗ページを開いてください）";
-    els.scanBtn.disabled = true;
+function showTarget(url) {
+  if (!url || !isDiagnosablePage(url)) {
+    els.targetUrl.textContent = "このページは診断できません。下の欄に店舗名かURLを入力してください。";
     return;
   }
-  if (isMapsUrl(currentUrl)) {
-    els.targetUrl.textContent = currentUrl;
-  } else {
-    els.targetUrl.textContent =
-      "Googleマップの店舗ページではないようです。店舗ページで使うと精度が上がります。";
-  }
+  const domain = domainOf(url);
+  els.targetUrl.textContent = isMapsUrl(url)
+    ? `${domain}（Googleマップの店舗ページ）`
+    : domain;
 }
 
-async function scan() {
-  els.error.classList.add("hidden");
-  els.result.classList.add("hidden");
-  els.loading.classList.remove("hidden");
-  els.scanBtn.disabled = true;
+function prefillFromTab(url) {
+  if (!url || !isDiagnosablePage(url)) return;
+  els.manualQuery.value = isMapsUrl(url) ? url : domainOf(url);
+}
 
+function setBusy(busy) {
+  els.scanBtn.disabled = busy;
+  els.manualQuery.disabled = busy;
+  els.manualRating.disabled = busy;
+  els.manualCount.disabled = busy;
+  els.loading.classList.toggle("hidden", !busy);
+}
+
+function showError(message) {
+  els.error.textContent = message;
+  els.error.classList.remove("hidden");
+}
+
+function clearError() {
+  els.error.textContent = "";
+  els.error.classList.add("hidden");
+}
+
+function showRecheck(iso) {
+  const copy = recheckCopy(iso);
+  if (!copy) {
+    els.recheck.classList.add("hidden");
+    return;
+  }
+  els.recheckPrevious.textContent = copy.previous;
+  els.recheckNext.textContent = copy.next;
+  els.recheck.classList.remove("hidden");
+}
+
+function showResult(view) {
+  currentView = view;
+  const band = BAND[view.band] || BAND.fair;
+  els.scoreValue.textContent = String(Math.round(Number(view.score)));
+  els.scoreCircle.style.borderColor = band.border;
+  els.bandBadge.textContent = `選ばれやすさ: ${band.label}`;
+  els.bandBadge.style.background = band.badgeBg;
+  els.bandBadge.style.color = band.badgeFg;
+  els.storeName.textContent = view.storeName || "店舗";
+  const rating = Number(view.rating);
+  const count = Number(view.reviewCount);
+  els.storeStats.textContent =
+    Number.isFinite(rating) && Number.isFinite(count)
+      ? `星 ${rating.toFixed(1)}／口コミ ${count}件`
+      : "";
+
+  els.points.replaceChildren();
+  for (const point of view.points ?? []) {
+    const item = document.createElement("li");
+    item.textContent = point;
+    els.points.append(item);
+  }
+  showRecheck(view.diagnosedAt);
+  els.detailBtn.dataset.url = view.reportUrl || "";
+  els.shareStatus.textContent = "";
+  els.shareFallback.classList.add("hidden");
+  els.result.classList.remove("hidden");
+}
+
+function viewFromApi(result) {
+  const store = result?.input?.store ?? {};
+  return {
+    score: result.score,
+    band: result.band,
+    storeName: store.name || "店舗",
+    rating: store.rating,
+    reviewCount: store.reviewCount,
+    points: pickHighlights(result),
+    diagnosedAt: result.diagnosedAt,
+    reportUrl: `${CONFIG.API_BASE}/report/${encodeReportId(result.input)}/`,
+  };
+}
+
+function manualNumbers() {
+  const ratingRaw = els.manualRating.value.trim();
+  const countRaw = els.manualCount.value.trim();
+  const store = {};
+  if (ratingRaw !== "") {
+    const rating = Number(ratingRaw);
+    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+      return { error: "星評価は 1.0 から 5.0 で入力してください。" };
+    }
+    store.rating = rating;
+  }
+  if (countRaw !== "") {
+    const reviewCount = Number(countRaw);
+    if (!Number.isFinite(reviewCount) || reviewCount < 0) {
+      return { error: "口コミ数は 0 以上の数で入力してください。" };
+    }
+    store.reviewCount = reviewCount;
+  }
+  return { store };
+}
+
+async function diagnose(query, key, manualStore) {
+  clearError();
+  setBusy(true);
   try {
+    const body = { query };
+    if (manualStore && Object.keys(manualStore).length > 0) body.store = manualStore;
     const res = await fetch(`${CONFIG.API_BASE}/api/diagnose`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: { mapsUrl: currentUrl } }),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
     if (!res.ok) {
       showError(data.error || "診断に失敗しました。");
       return;
     }
-    // 店舗を特定できない／本日の自動取得の上限で取得しなかった → 結果は出さず理由を見せる。
     if (data.needsManualInput) {
-      showError(data.message || "店舗データを取得できませんでした。");
+      showError(data.message || "店舗データを取得できませんでした。星評価と口コミ数を入力してください。");
       return;
     }
-    render(data);
-  } catch (e) {
+    const view = viewFromApi(data);
+    showResult(view);
+    await saveCheck(key, view);
+  } catch {
     showError("通信エラーが発生しました。時間をおいて再度お試しください。");
   } finally {
-    els.loading.classList.add("hidden");
-    els.scanBtn.disabled = false;
+    setBusy(false);
   }
 }
 
-function showError(msg) {
-  els.error.textContent = msg;
-  els.error.classList.remove("hidden");
-}
-
-function render(result) {
-  const band = BAND[result.band] || BAND.fair;
-  const store = result.input.store;
-
-  els.scoreValue.textContent = String(result.score);
-  els.scoreCircle.style.background = band.color;
-
-  els.bandBadge.textContent = `選ばれやすさ: ${band.label}`;
-  els.bandBadge.style.background = band.badgeBg;
-  els.bandBadge.style.color = band.badgeFg;
-
-  els.storeName.textContent = store.name || "店舗";
-  els.storeStats.textContent = `星 ${store.rating.toFixed(1)}／口コミ ${store.reviewCount}件`;
-
-  els.summary.textContent = result.summary;
-
-  const five = (result.simulation.scenarios || []).find((s) => s.id === "five-only");
-  if (five) {
-    els.simText.textContent =
-      five.reviewsNeeded == null || five.reviewsNeeded === 0
-        ? `目標 星${result.simulation.targetRating} はすでに到達圏内です。`
-        : `目標 星${result.simulation.targetRating} に近づくには、あと約 ${five.reviewsNeeded} 件の星5口コミが目安です（目安）。`;
+async function copyText(text, success) {
+  els.shareFallback.classList.add("hidden");
+  try {
+    await navigator.clipboard.writeText(text);
+    els.shareStatus.textContent = success;
+  } catch {
+    els.shareStatus.textContent = "コピーできませんでした。下の文字を選択してコピーしてください。";
+    els.shareFallback.value = text;
+    els.shareFallback.classList.remove("hidden");
+    els.shareFallback.focus();
+    els.shareFallback.select();
   }
-
-  const reportUrl = `${CONFIG.API_BASE}/report/${encodeReportId(result.input)}/`;
-  els.detailBtn.onclick = () => chrome.tabs.create({ url: reportUrl });
-
-  els.result.classList.remove("hidden");
 }
 
-els.scanBtn.addEventListener("click", scan);
-init();
+async function init() {
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    els.webShare.classList.remove("hidden");
+  }
+  currentTabUrl = await getActiveTabUrl();
+  showTarget(currentTabUrl);
+  prefillFromTab(currentTabUrl);
+
+  const key = storageTargetKey(currentTabUrl, "");
+  const saved = key ? (await loadChecks())[key] : null;
+  if (saved?.diagnosedAt && Array.isArray(saved.points)) showResult(saved);
+
+  const query = queryFromTab(currentTabUrl);
+  if (!query) {
+    if (!saved) {
+      showError("このページは診断できません。店舗名かGoogleマップのURLを入力してください。");
+    }
+    return;
+  }
+  await diagnose(query, key);
+}
+
+els.manualForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const query = queryFromManual(els.manualQuery.value);
+  if (!query) {
+    showError("店舗名またはGoogleマップURLを入力してください。");
+    return;
+  }
+  const numbers = manualNumbers();
+  if (numbers.error) {
+    showError(numbers.error);
+    return;
+  }
+  const key = storageTargetKey(currentTabUrl, els.manualQuery.value);
+  void diagnose(query, key, numbers.store);
+});
+
+els.copySummary.addEventListener("click", () => {
+  if (!currentView) return;
+  const text = buildExtensionShareText(currentView);
+  void copyText(text, "要約をコピーしました");
+});
+
+els.copyUrl.addEventListener("click", () => {
+  if (!currentView?.reportUrl) return;
+  void copyText(currentView.reportUrl, "結果URLをコピーしました");
+});
+
+els.webShare.addEventListener("click", async () => {
+  if (!currentView || typeof navigator.share !== "function") return;
+  const text = buildExtensionShareText(currentView);
+  try {
+    await navigator.share({
+      title: "口コミチェック.jp",
+      text,
+      url: currentView.reportUrl,
+    });
+    els.shareStatus.textContent = "共有しました";
+  } catch (error) {
+    if (error && error.name === "AbortError") {
+      els.shareStatus.textContent = "共有を取り消しました";
+      return;
+    }
+    await copyText(`${text}\n${currentView.reportUrl}`, "共有できないため、要約と結果URLをコピーしました");
+  }
+});
+
+els.detailBtn.addEventListener("click", () => {
+  const url = els.detailBtn.dataset.url;
+  if (!url) return;
+  if (globalThis.chrome?.tabs?.create) {
+    chrome.tabs.create({ url });
+    return;
+  }
+  window.open(url, "_blank", "noopener");
+});
+
+void init();

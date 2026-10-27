@@ -73,7 +73,7 @@ export function LineConsultCta({
         type="button"
         onClick={handleClick}
         data-destination={destination}
-        className={`inline-flex items-center justify-center gap-2 rounded-lg bg-[#06C755] font-bold text-white shadow-sm transition hover:bg-[#05b34d] ${sizeCls} ${
+        className={`inline-flex items-center justify-center gap-2 rounded-lg bg-[#06C755] font-bold text-slate-950 shadow-sm transition hover:brightness-95 ${sizeCls} ${
           fullWidth ? "w-full" : ""
         } ${className}`}
       >
