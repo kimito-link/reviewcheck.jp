@@ -48,9 +48,8 @@ export function Footer() {
         {/* 運営会社ブロック：石川氏の指摘対応。特商法表記への導線とあわせて明示する。 */}
         <div className="mt-10 rounded-lg border border-white/10 bg-white/5 p-4 text-xs leading-relaxed text-slate-400">
           <h3 className="text-sm font-bold text-white">運営会社</h3>
-          <p className="mt-2">
-            {COMMERCE.seller}（運営統括責任者：{COMMERCE.manager}）
-          </p>
+          <p className="mt-2">{COMMERCE.seller}</p>
+          <p className="mt-1">運営統括責任者：{COMMERCE.manager}</p>
           <p className="mt-1">{COMMERCE.address}</p>
           <Link
             href="/commerce-disclosure/"
