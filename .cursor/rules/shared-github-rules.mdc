@@ -1,0 +1,11 @@
+---
+description: すべてのAI共通の「作業はすべてGitHubに残す」ルール（正本は AGENTS.md）
+alwaysApply: true
+---
+
+すべてのAI共通のルールは AGENTS.md が正本です。作業の前に必ず読み、そのとおりに動いてください。
+
+@AGENTS.md
+
+要点（くわしくは AGENTS.md）: ブランチは `cursor/〇〇`。変更は下書きPRにして、マージ・本番反映はしない。
+PR本文の最初に「担当AI / 目的 / 状態 / 次にすること」の4行。ほかのAIのブランチやPRは書き換えない。

@@ -1,0 +1,59 @@
+# AIのPRが共有ルール（AGENTS.md）を守っているかの見張り（2026-10-27 新設）
+#
+# なぜ要るか: 「PR本文の最初に4行」「ラベル ai-task と担当AI名」は文章だけだと
+# 忘れられる（規約ではなく検査で守る）。
+# - AIのブランチ（claude/ codex/ grok/ cursor/ antigravity/ で始まる）のPRだけを見る。
+#   人が作ったブランチのPRは止めない。
+# - 4行（担当AI / 目的 / 状態 / 次にすること）がそろっていなければ赤にする。
+# - 使うラベル（ai-task と各AI名）が無ければ作る（何度走っても同じ結果）。
+# 正本のルール本文は AGENTS.md。ここに本文を写さない。
+
+name: ai-pr-rules
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ラベルを用意する
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          create() { gh label create "$1" --repo "$REPO" --color "$2" --description "$3" --force >/dev/null || echo "::warning::ラベル $1 を作れませんでした"; }
+          create ai-task     0E8A16 "AIに任せる作業（思いつき・不具合・相談）"
+          create claude      D97757 "担当AI: Claude"
+          create codex       1F2328 "担当AI: Codex"
+          create grok        6E7781 "担当AI: Grok"
+          create cursor      0969DA "担当AI: Cursor"
+          create antigravity 8250DF "担当AI: Antigravity"
+
+      - name: PR本文の4行を確かめる
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          case "$HEAD_REF" in
+            claude/*|codex/*|grok/*|cursor/*|antigravity/*) ;;
+            *) echo "AIのブランチではないので確認しません: $HEAD_REF"; exit 0 ;;
+          esac
+          missing=0
+          for key in 担当AI 目的 状態 次にすること; do
+            if ! printf '%s\n' "$PR_BODY" | grep -Eq "^${key}[:：][[:space:]]*[^[:space:]]"; then
+              echo "::error::PR本文に「${key}: 」の行が無いか、中身が空です（AGENTS.md の共有ルール3）"
+              missing=1
+            fi
+          done
+          if ! printf '%s\n' "$PR_BODY" | grep -Eq "^状態[:：][[:space:]]*(作業中|確認待ち|完了)"; then
+            echo "::error::「状態:」は 作業中 / 確認待ち / 完了 のどれかにしてください"
+            missing=1
+          fi
+          exit $missing
