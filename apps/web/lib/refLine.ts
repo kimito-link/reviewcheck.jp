@@ -42,7 +42,10 @@ export function sanitizeRefLine(value: string | null | undefined): string | null
 
 /**
  * 共有URLへ公式LINEを載せる。無効な値は載せない。
- * TODO: エックスサーバーの取次店コード（紹介コード）は、返事が来てから別パラメータで足す。この関数では扱わない。
+ * 共有リンクに出すのは、共有した人の公式LINEだけ。
+ * 取次店コード（紹介コード）は載せない。2026-10-28 にエックスサーバーから、
+ * 共有した人の取次店コードを表示する仕組みは不可との返事があった。
+ * Chrome拡張にも紹介コードの欄は置かない。
  */
 export function withRefLine(pageUrl: string, lineUrl: string | null | undefined): string {
   let url: URL;

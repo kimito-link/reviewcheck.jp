@@ -27,17 +27,20 @@ vi.mock("next/link", () => ({
 }));
 
 const RESULT_SECTION_ORDER = [
+  "result",
   "score",
   "estimate",
-  "cta",
-  "next-diagnoses",
-  "perks",
   "findings",
   "causes",
+  "gains",
   "if-left-alone",
-  "fixes",
-  "cta-repeat",
+  "cta",
+  "perks",
   "share",
+  "cta-repeat",
+  "next-diagnoses",
+  "unconfirmed",
+  "method",
   "disclaimer",
 ] as const;
 
@@ -85,6 +88,22 @@ describe("診断結果の並び", () => {
       (el) => el.getAttribute("data-result-section"),
     );
     expect(ids).toEqual([...RESULT_SECTION_ORDER]);
+    expect(ids[0]).toBe("result");
+    const method = container.querySelector("details[data-result-section='method']");
+    expect(method).toBeTruthy();
+    expect(method?.hasAttribute("open")).toBe(false);
+    expect(method?.textContent).toContain("この診断の確かめ方");
+    expect(method?.textContent).toContain(RESULT_ESTIMATE_SENTENCE);
+    const resultBlock = container.querySelector("[data-result-section='result']");
+    expect(resultBlock?.textContent).toContain("主な所見");
+    expect(resultBlock?.textContent).not.toContain("この診断の確かめ方");
+    expect(resultBlock?.textContent).not.toContain(RESULT_ESTIMATE_SENTENCE);
+    expect(resultBlock?.textContent).not.toContain("最新口コミの鮮度");
+    const missed = container.querySelector("[data-result-section='unconfirmed']");
+    expect(missed?.textContent).toContain("最新口コミの鮮度");
+    expect(resultBlock?.compareDocumentPosition(method as Node)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
 
     expect(container).toHaveTextContent(RESULT_ESTIMATE_SENTENCE);
     expect(container).toHaveTextContent(

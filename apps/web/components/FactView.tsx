@@ -10,6 +10,7 @@ import {
   type ExportVariant,
 } from "@reviewcheck/core";
 import { lineChannelForTopic } from "@reviewcheck/config";
+import { ResultHook, ResultMethodDetails, UnconfirmedList } from "./result/ResultReading";
 
 
 /**
@@ -35,8 +36,8 @@ export interface FactViewData {
 function FactCard({ fact }: { fact: OsintFact }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <p className="text-sm text-slate-800">{fact.observation}</p>
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="text-base text-slate-900">{fact.observation}</p>
+      <p className="mt-2 text-base text-slate-800">
         出典：{fact.source.name}（{fact.source.kind}）
         {fact.source.url ? (
           <>
@@ -68,7 +69,7 @@ function linkifyAccess(text: string) {
         href={p}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-blue-700 underline break-all"
+        className="text-base text-blue-800 underline decoration-blue-800 underline-offset-2 break-all"
       >
         {p}
       </a>
@@ -82,20 +83,9 @@ function linkifyAccess(text: string) {
 function PointerCard({ pointer }: { pointer: OsintPointer }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <p className="text-sm font-medium text-slate-800">{pointer.name}</p>
-      <p className="mt-1 text-xs text-slate-600">確認できること：{pointer.whatCanBeConfirmed}</p>
-      <p className="mt-0.5 text-xs text-slate-600">アクセス方法：{linkifyAccess(pointer.howToAccess)}</p>
-    </div>
-  );
-}
-
-/** RetrievalNote: 取得できなかった旨の中立表示。 */
-function RetrievalNote({ source, attemptedAt }: { source: string; attemptedAt: string }) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <p className="text-sm text-slate-500">
-        {source}：情報は取得されませんでした（{attemptedAt} 試行）。
-      </p>
+      <p className="text-base font-bold text-slate-900">{pointer.name}</p>
+      <p className="mt-1 text-base text-slate-800">確認できること：{pointer.whatCanBeConfirmed}</p>
+      <p className="mt-1 text-base text-slate-800">アクセス方法：{linkifyAccess(pointer.howToAccess)}</p>
     </div>
   );
 }
@@ -153,43 +143,71 @@ export function FactView(data: FactViewData) {
     }
   };
 
+  const missed = retrievalFailures.map(
+    (row) => `${row.source}：情報は取得されませんでした（${row.attemptedAt} 試行）。`,
+  );
+  const lineLabel = "確認すべき情報源の整理を相談";
+
   return (
     <div className="space-y-6">
-      {/* ① 取得された公開情報 */}
-      <section>
-        <h2 className="mb-3 text-base font-bold text-slate-900">取得された公開情報</h2>
+      <section data-result-section="result" className="space-y-3">
+        <h2 className="text-xl font-extrabold text-slate-900">取得された公開情報</h2>
         <div className="space-y-2">
           {facts.map((f, i) => (
             <FactCard key={i} fact={f} />
           ))}
-          {retrievalFailures.map((r, i) => (
-            <RetrievalNote key={`n${i}`} source={r.source} attemptedAt={r.attemptedAt} />
-          ))}
-          {facts.length === 0 && retrievalFailures.length === 0 ? (
-            <p className="text-sm text-slate-500">表示できる公開情報はありませんでした。</p>
+          {facts.length === 0 ? (
+            <p className="text-base text-slate-800">表示できる公開情報はありませんでした。</p>
           ) : null}
+        </div>
+        <ResultHook>この記録を残したときと、入っていない情報は、次に続きます。</ResultHook>
+      </section>
+
+      <section
+        data-result-section="gains"
+        className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+      >
+        <h2 className="text-xl font-extrabold text-slate-900">直すと得られること</h2>
+        <p className="mt-2 text-base leading-relaxed text-slate-800">
+          観測できた公開情報は、上の文面のまま残せます。相手へ渡す文章は、このあとの外部送付用レポートです。
+        </p>
+        <div className="mt-4">
+          <ResultHook>記録に入っていないものは、次のとおりです。</ResultHook>
         </div>
       </section>
 
-      {/* ② Pointer Map（コンプラ確認カテゴリのみ） */}
-      {pointers.length > 0 ? (
-        <section>
-          <h2 className="mb-1 text-base font-bold text-slate-900">確認すべき情報源（所在の地図）</h2>
-          <p className="mb-3 text-xs text-slate-500">
-            以下は、確認を行う際に参照できる公開情報源の一覧です。当社が照会結果を判定するものではありません。
-          </p>
-          <div className="space-y-2">
-            {pointers.map((p, i) => (
-              <PointerCard key={i} pointer={p} />
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <section
+        data-result-section="losses"
+        className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+      >
+        <h2 className="text-xl font-extrabold text-slate-900">このままだと失うこと</h2>
+        <p className="mt-2 text-base leading-relaxed text-slate-800">
+          取得できなかった情報源の中身は、この記録にありません。判断に使うときは、その情報源を直接見る必要があります。
+        </p>
+        <div className="mt-4">
+          <ResultHook>次の一歩はひとつです。</ResultHook>
+        </div>
+      </section>
 
-      {/* ExportBlock: 出力区分を選んでコピーする。★既定は「外部送付用」。 */}
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="mb-2 text-base font-bold text-slate-900">確認記録の出力</h2>
-        <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="出力の種類">
+      <section
+        data-result-section="cta"
+        className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+      >
+        <button
+          type="button"
+          onClick={onLine}
+          className="inline-flex w-full items-center justify-center rounded-lg bg-[#06C755] px-4 py-3 text-base font-bold text-slate-950 hover:brightness-95"
+        >
+          {lineLabel}
+        </button>
+      </section>
+
+      <section
+        data-result-section="export"
+        className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+      >
+        <h2 className="text-xl font-extrabold text-slate-900">確認記録の出力</h2>
+        <div className="mb-3 mt-3 flex flex-wrap gap-2" role="group" aria-label="出力の種類">
           {([
             { v: "external", label: "外部送付用レポート" },
             { v: "internal", label: "社内確認用" },
@@ -203,17 +221,15 @@ export function FactView(data: FactViewData) {
               aria-pressed={variant === o.v}
               className={
                 variant === o.v
-                  ? "rounded-full bg-slate-800 px-3 py-1.5 text-xs font-bold text-white"
-                  : "rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50"
+                  ? "rounded-full bg-slate-800 px-3 py-2 text-base font-bold text-white"
+                  : "rounded-full border border-slate-500 bg-white px-3 py-2 text-base text-slate-900 hover:bg-slate-50"
               }
             >
               {o.label}
             </button>
           ))}
         </div>
-        {/* ★外部へ出してよいのは1区分だけ、と毎回わかるようにする。
-            事故は「どれが外部用か画面から判断できなかった」ことでも起きる。 */}
-        <p className="mb-3 text-xs text-slate-500">
+        <p className="mb-3 text-base text-slate-800">
           {variant === "external"
             ? "このまま相手へお送りいただけます。社内向けの記載は含まれません。"
             : "この文章はレポートには含まれません。相手へ送るのは「外部送付用レポート」です。"}
@@ -221,40 +237,67 @@ export function FactView(data: FactViewData) {
         <button
           type="button"
           onClick={onExport}
-          className="rounded-lg bg-slate-800 px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-900"
+          className="rounded-lg bg-slate-800 px-5 py-3 text-base font-bold text-white hover:bg-slate-900"
         >
           コピーする
         </button>
-        {copied ? <p className="mt-2 text-xs text-slate-500">コピーしました。</p> : null}
+        {copied ? <p className="mt-2 text-base text-slate-800">コピーしました。</p> : null}
         <textarea
           readOnly
           value={exportText}
           onFocus={(e) => e.currentTarget.select()}
           rows={8}
-          className="mt-3 w-full resize-none rounded-md border border-slate-300 bg-slate-50 p-2 text-xs text-slate-700"
+          className="mt-3 w-full resize-none rounded-md border border-slate-500 bg-slate-50 p-3 text-base text-slate-900"
         />
+        <div className="mt-4">
+          <ResultHook>読み終えたところの次の一歩は、この次です。</ResultHook>
+        </div>
       </section>
 
-      {/* 従CTA: LINE（論点整理のみ）＋ 月次記録 */}
-      <section className="flex flex-col gap-2 sm:flex-row">
+      <section
+        data-result-section="cta-repeat"
+        className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+      >
         <button
           type="button"
           onClick={onLine}
-          className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-800 hover:bg-slate-50"
+          className="inline-flex w-full items-center justify-center rounded-lg bg-[#06C755] px-4 py-3 text-base font-bold text-slate-950 hover:brightness-95"
         >
-          確認すべき情報源の整理を相談
+          {lineLabel}
         </button>
-        <a
-          href={monitorUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-3 text-center text-sm font-bold text-slate-800 hover:bg-slate-50"
-        >
-          この対象の公開情報の変化を毎月記録
-        </a>
       </section>
 
-      <p className="text-xs text-slate-400">{OSINT_DISCLAIMER}</p>
+      <UnconfirmedList lines={missed} note="上の公開情報には入れていません。" />
+
+      <ResultMethodDetails>
+        <p>外部から観測できる公開情報と、その所在をそのまま並べています。可否の判定はしていません。</p>
+        {pointers.length > 0 ? (
+          <div className="space-y-2">
+            <p className="font-bold text-slate-900">確認に使える情報源</p>
+            {pointers.map((p, i) => (
+              <PointerCard key={i} pointer={p} />
+            ))}
+          </div>
+        ) : (
+          <p>情報源の所在一覧は、コンプライアンス確認を選んだときに出します。</p>
+        )}
+        <p>
+          公開情報の変化は、
+          <a
+            href={monitorUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-blue-800 underline decoration-blue-800 underline-offset-2"
+          >
+            月次の記録ページ
+          </a>
+          で追えます。
+        </p>
+      </ResultMethodDetails>
+
+      <p data-result-section="disclaimer" className="text-base leading-relaxed text-slate-800">
+        {OSINT_DISCLAIMER}
+      </p>
     </div>
   );
 }

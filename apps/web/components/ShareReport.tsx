@@ -50,6 +50,7 @@ export function ShareReport({
 
   const pageLine = sanitizeRefLine(refLine);
   const attached = embedHidden || detached ? null : savedLine || pageLine;
+  // 共有リンクに出すのは、共有した人の公式LINEだけ。取次店コードは載せない。
   const shareTarget = withRefLine(url, attached);
   const shareText = buildShareText({ score, storeName, ruleVersion });
 
@@ -100,8 +101,8 @@ export function ShareReport({
       id="share"
       className="rounded-2xl border border-slate-200 bg-white p-5"
     >
-      <h2 className="text-base font-bold text-slate-900">診断結果をシェア・保存</h2>
-      <p className="mt-1 text-sm leading-relaxed text-slate-700">
+      <h2 className="text-xl font-extrabold text-slate-900">診断結果をシェア・保存</h2>
+      <p className="mt-1 text-base leading-relaxed text-slate-800">
         「チェックしてみた」をシェアして、知り合いのお店にも教えてあげましょう。
       </p>
 
@@ -110,7 +111,7 @@ export function ShareReport({
           <label htmlFor="sharer-line-url" className="block text-sm font-bold text-slate-900">
             自分の公式LINEのURL
           </label>
-          <p className="mt-1 text-sm leading-relaxed text-slate-700">
+          <p className="mt-1 text-base leading-relaxed text-slate-800">
             共有するリンクに載せます。この端末だけに保存します。
           </p>
           <div className="mt-2 flex flex-col gap-2 sm:flex-row">
