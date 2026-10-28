@@ -39,7 +39,7 @@ export function DiagnosisProgressNote({
   return (
     <p
       data-diagnosis-progress=""
-      className={`mt-2 max-w-xs text-sm font-medium leading-relaxed text-slate-800 ${className}`.trim()}
+      className={`mt-2 max-w-md text-base font-medium leading-relaxed text-slate-900 ${className}`.trim()}
     >
       <span className="block">{progressLabel(count)}</span>
       <span className="mt-0.5 block text-slate-700">数は、この端末の中だけです。</span>

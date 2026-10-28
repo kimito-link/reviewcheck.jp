@@ -84,6 +84,17 @@ describe("★外部送付用レポートに内部向けの文章が混ざらな�
     }
   });
 
+  test("取得できなかった情報源は調査結果のあとにまとめる", () => {
+    const out = buildExternalReport(INPUT);
+    const resultAt = out.indexOf("■ 調査結果と根拠");
+    const extraAt = out.indexOf("■ 追加確認事項");
+    const failAt = out.indexOf("取得されませんでした");
+    assert.ok(resultAt >= 0 && extraAt > resultAt && failAt > extraAt);
+    const resultBlock = out.slice(resultAt, extraAt);
+    assert.equal(resultBlock.includes("取得されませんでした"), false);
+    assert.equal(resultBlock.includes("公式サイトが確認できました"), true);
+  });
+
   test("取得できなかった情報源があれば追加確認事項を出す", () => {
     assert.ok(buildExternalReport(INPUT).includes("追加確認事項"));
     // 失敗が無ければ出さない（不要な節で読み手を惑わせない）

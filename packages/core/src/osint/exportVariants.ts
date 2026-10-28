@@ -64,10 +64,8 @@ export interface ExportInput {
   baseDate?: string | null;
 }
 
-const factLines = (i: ExportInput): string[] => [
-  ...i.facts.map((f) => `・${f.observation}（出典：${f.sourceName}／取得：${f.retrievedAt}）`),
-  ...i.failures.map((r) => `・${r.source}：取得されませんでした（${r.attemptedAt}）`),
-];
+const factLines = (i: ExportInput): string[] =>
+  i.facts.map((f) => `・${f.observation}（出典：${f.sourceName}／取得：${f.retrievedAt}）`);
 
 /**
  * ① 外部送付用レポート（既定）。
@@ -91,10 +89,10 @@ export function buildExternalReport(input: ExportInput): string {
 
   if (input.failures.length) {
     lines.push("■ 追加確認事項");
-    lines.push(
-      "・上記のうち「取得されませんでした」と記載した情報源は、この記録では確認できていません。",
-    );
-    lines.push("・重要な判断に用いる場合は、当該情報源を直接ご確認ください。");
+    for (const failure of input.failures) {
+      lines.push(`・${failure.source}：取得されませんでした（${failure.attemptedAt}）`);
+    }
+    lines.push("・上の調査結果には含めていません。重要な判断に用いる場合は、当該情報源を直接ご確認ください。");
     lines.push("");
   }
 

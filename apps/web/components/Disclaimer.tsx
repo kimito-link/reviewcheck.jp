@@ -4,7 +4,7 @@ import { DISCLAIMER, POLICY_NOTE } from "@reviewcheck/config";
 export function Disclaimer({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-relaxed text-amber-900 ${className}`}
+      className={`rounded-xl border border-amber-200 bg-amber-50 p-4 text-base leading-relaxed text-amber-950 ${className}`}
     >
       <p>
         <strong className="font-bold">ご注意：</strong>

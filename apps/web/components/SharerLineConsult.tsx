@@ -26,7 +26,7 @@ export function SharerLineConsult({ refLine }: { refLine?: string }) {
       aria-label="共有した人への連絡"
       className="rounded-xl border border-slate-200 bg-white px-4 py-3 sm:px-5"
     >
-      <p className="text-sm leading-relaxed text-slate-800">
+      <p className="text-base leading-relaxed text-slate-800">
         この結果を共有した人の公式LINEです。
       </p>
       <div className="mt-2">
@@ -34,7 +34,7 @@ export function SharerLineConsult({ refLine }: { refLine?: string }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex max-w-full items-center justify-center rounded-lg bg-[#06C755] px-3 py-2 text-sm font-bold text-slate-950 hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+          className="inline-flex max-w-full items-center justify-center rounded-lg bg-[#06C755] px-3 py-2 text-base font-bold text-slate-950 hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
         >
           共有した人に相談する（LINE）
         </a>

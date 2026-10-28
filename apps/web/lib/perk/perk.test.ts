@@ -148,6 +148,12 @@ describe("端末内レポート", () => {
     expect(html).not.toContain("0266");
     expect(html).not.toContain("maps.google");
     expect(html).not.toMatch(/[0-9,]+円/);
+    const headings = doc.blocks.map((block) => block.heading);
+    expect(headings[0]).toBe("点数");
+    expect(headings.indexOf("直し方")).toBeLessThan(headings.indexOf("このままだと失うこと"));
+    expect(headings.indexOf("このままだと失うこと")).toBeLessThan(headings.indexOf("次の一歩"));
+    expect(headings.indexOf("次の一歩")).toBeLessThan(headings.indexOf("確認できなかった項目"));
+    expect(headings.at(-1)).toBe("記録");
     expect(html).not.toContain("上位");
     expect(html).not.toContain("安全です");
     expect(html).not.toContain("優良");

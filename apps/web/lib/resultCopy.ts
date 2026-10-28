@@ -1,4 +1,10 @@
-import type { CompetitorComparison, StoreInput } from "@reviewcheck/core";
+import type {
+  CompetitorComparison,
+  DiagnosisResult,
+  ScoreFactor,
+  StoreInput,
+} from "@reviewcheck/core";
+import { selectReviewFindings } from "@reviewcheck/core";
 
 /** 点数のそばに出す1文。存在する項目だけを「／」でつなぐ。 */
 export function buildCountSummary(
@@ -75,4 +81,63 @@ export function leftAloneParagraphs(input: {
     "ここにあるのは公開情報からの目安です。来店数や金額を示すものではありません。",
   );
   return lines;
+}
+
+/** 実測できた採点項目。推定・未確認は結果の内訳に混ぜない。 */
+export function isConfirmedFactor(
+  factor: Pick<ScoreFactor, "estimated" | "status">,
+): boolean {
+  return factor.estimated !== true && factor.status !== "info";
+}
+
+/**
+ * 測れなかった旨。
+ * 「見当たらない」のような、見て分かった事実は含めない。
+ */
+export function isUnconfirmedNotice(text: string): boolean {
+  return /確認できず|確認できていない|未確認/.test(text);
+}
+
+/** 直すと得られることに出す改善。未確認の案内は末尾へ回す。 */
+export function isActionableImprovement(item: {
+  title: string;
+  detail: string;
+}): boolean {
+  return !isUnconfirmedNotice(`${item.title}\n${item.detail}`);
+}
+
+/** 結果の末尾に短く出す、今回測れなかった項目。重複は除く。 */
+export function collectUnconfirmedLines(result: DiagnosisResult): string[] {
+  const lines: string[] = [];
+  const selection = selectReviewFindings(result);
+  if (selection?.primary.unconfirmedNotes) {
+    lines.push(...selection.primary.unconfirmedNotes);
+  }
+  if (selection) {
+    for (const chip of selection.secondary) {
+      if (isUnconfirmedNotice(chip)) lines.push(chip);
+    }
+  }
+  for (const factor of result.factors) {
+    if (!isConfirmedFactor(factor)) {
+      lines.push(`${factor.title}：${factor.message}`);
+    }
+  }
+  if (
+    !result.comparison &&
+    !lines.some((line) => line.includes("周辺のお店との比較"))
+  ) {
+    lines.push("周辺のお店との比較は、今回の入力には含まれていません。");
+  }
+  const seen = new Set<string>();
+  return lines.filter((line) => {
+    const key = line.trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+export function visibleSecondaryChips(chips: string[]): string[] {
+  return chips.filter((chip) => !isUnconfirmedNotice(chip));
 }

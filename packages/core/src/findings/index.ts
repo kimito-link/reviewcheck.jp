@@ -26,6 +26,11 @@ export interface ReviewFinding {
   selfCare: string;
   /** 副所見として出す事実チップ（判定語なし）。K6 は主所見専用のため null。 */
   chip: string | null;
+  /**
+   * 今回測れなかった項目。結果の末尾に短く出す。
+   * 所見本文には混ぜない（「確認できた」と「確認できず」を同じ塊にしない）。
+   */
+  unconfirmedNotes?: string[];
 }
 
 /** selectReviewFindings の戻り値。主所見1つ＋事実チップ最大2件。 */
@@ -122,12 +127,12 @@ export const REVIEW_FINDING_DEFS: ReviewFindingDef[] = [
     build: () => ({
       key: "K4",
       name: "返信の空白",
-      finding: "口コミに対するお店からの返信が確認できませんでした。",
+      finding: "口コミに対するお店からの返信は見当たりません。",
       structure:
         "口コミを読む人は、お店からの返信も同じ画面で読んでいます。返信がない画面では、口コミに書かれた内容だけが、お店側の言葉が添えられないまま表示されています。",
       selfCare:
         "直近の口コミ2〜3件に、内容に触れた短い返信（お礼＋ひと言）を書くところから始められます。全件でなくて構いません。",
-      chip: "お店からの返信: 確認できず",
+      chip: "お店からの返信: 見当たらない",
     }),
   },
   {
@@ -172,26 +177,28 @@ export const REVIEW_FINDING_GOOD_DEF: ReviewFindingDef = {
     const hasComparison = r.comparison != null;
     const complete = unmeasured.length === 0 && hasComparison;
 
-    const notes: string[] = [];
+    const unconfirmedNotes: string[] = [];
     if (unmeasured.length > 0) {
-      notes.push(`${unmeasured.join("・")}は今回確認できていないため、この見立てには含めていません。`);
+      unconfirmedNotes.push(
+        `${unmeasured.join("・")}は今回確認できていないため、この見立てには含めていません。`,
+      );
     }
     if (!hasComparison) {
-      notes.push("周辺のお店との比較は今回確認できていないため、この見立てには含めていません。");
+      unconfirmedNotes.push(
+        "周辺のお店との比較は今回確認できていないため、この見立てには含めていません。",
+      );
     }
 
     return {
       key: "K6",
-      name: complete ? "良好な状態" : "確認できた範囲での状態",
-      finding: [
-        complete
-          ? `今回測定した範囲（${measured.join("・")}）では、来店検討の場面で不利に働きやすい大きな注目点は確認されませんでした。`
-          : `今回確認できた範囲（${measured.join("・")}）では、来店検討の場面で不利に働きやすい大きな注目点は確認されませんでした。`,
-        ...notes,
-      ].join(""),
+      name: complete ? "良好な状態" : "測れた項目の状態",
+      finding: complete
+        ? `今回測定した範囲（${measured.join("・")}）では、来店検討の場面で不利に働きやすい大きな注目点は確認されませんでした。`
+        : `測れた項目（${measured.join("・")}）では、来店検討の場面で不利に働きやすい大きな注目点は見当たりませんでした。`,
       structure: hasComparison
         ? "いまの星評価・口コミ数は、周辺のお店と比べても見劣りしない水準です。ただしこの数字は、周辺のお店の数字との相対的な位置づけなので、周辺が動けば来月は順位が変わることもあります。"
-        : "いまの星評価・口コミ数は、今回の採点の目安では高い水準です。周辺のお店の数字は今回確認できていないため、周辺と比べた位置づけはこの画面には含まれていません。",
+        : "いまの星評価・口コミ数は、今回の採点の目安では高い水準です。",
+      unconfirmedNotes: unconfirmedNotes.length > 0 ? unconfirmedNotes : undefined,
       selfCare:
         "月に一度、自分のお店をGoogleマップで「お客様として」検索して開き、星・件数・最新口コミの3点を見る習慣で、この状態の変化に自分で気づけます。",
       chip: null,
@@ -275,7 +282,7 @@ export const FINDING_CARD_TEXTS = {
   step1Label: "① 今日できること",
   step2Label: "② 自動の次の一手を受け取る",
   step2Text:
-    "この所見の上にあるボタンから進むと、点数が80未満のときはLINEのキミと分身が決まった質問のあと改善のポイントを自動で返します。人が最初に返信することは想定していません。",
+    "所見、直すと得られること、このままだと失うことのあとに続くボタンから進むと、点数が80未満のときはLINEのキミと分身が決まった質問のあと改善のポイントを自動で返します。人が最初に返信することは想定していません。",
   step3Label: "③ 経過観察（毎月）",
   step3Text:
     "この測定は今日の時点の写真です。数字の変化を毎月自動で測るのは、ページ下部の「月次モニタリング」の役割です。",

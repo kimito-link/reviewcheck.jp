@@ -20,7 +20,7 @@ const CLASS: Record<SelectabilityBand, string> = {
 export function ScoreBadge({ band }: { band: SelectabilityBand }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-bold ring-1 ring-inset ${CLASS[band]}`}
+      className={`inline-flex items-center rounded-full px-3 py-1 text-base font-bold ring-1 ring-inset ${CLASS[band]}`}
     >
       選ばれやすさ：{LABEL[band]}
     </span>

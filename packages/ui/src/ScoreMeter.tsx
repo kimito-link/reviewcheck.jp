@@ -12,13 +12,13 @@ const SIZE = {
     box: "h-36 w-36",
     svg: "h-36 w-36",
     score: "text-3xl",
-    unit: "text-xs",
+    unit: "text-base",
   },
   lg: {
     box: "h-52 w-52",
     svg: "h-52 w-52",
     score: "text-[60px] leading-none sm:text-[72px]",
-    unit: "text-sm",
+    unit: "text-base",
   },
 } as const;
 
@@ -68,7 +68,7 @@ export function ScoreMeter({
         <span className={`font-extrabold text-slate-900 ${tone.score}`}>
           {score}
         </span>
-        <span className={`text-slate-600 ${tone.unit}`}>/ 100</span>
+        <span className={`text-slate-800 ${tone.unit}`}>/ 100</span>
       </div>
     </div>
   );
