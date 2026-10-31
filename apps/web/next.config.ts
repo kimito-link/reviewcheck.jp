@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
     "@reviewcheck/core",
     "@reviewcheck/config",
     "@reviewcheck/ui",
+    "site-check",
   ],
   poweredByHeader: false,
   async headers() {

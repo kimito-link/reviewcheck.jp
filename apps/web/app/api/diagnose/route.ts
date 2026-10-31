@@ -19,6 +19,7 @@ import {
   type StoreInput,
 } from "@reviewcheck/core";
 import { incrementDiagnosisCount } from "@/lib/diagnosisCounter";
+import { checkStoreWebsite } from "@/lib/siteCheck";
 import { corsHeaders, getCacheStore, guardPlacesCall } from "@/lib/costGuard";
 
 export const runtime = "nodejs";
@@ -218,8 +219,20 @@ async function handle(request: Request, body: DiagnoseBody) {
     if (!demo) {
       incrementDiagnosisCount().catch(() => {});
     }
+    // ウェブサイトが分かるときだけ外から見る。URLは集計へ保存しない。
+    // 失敗しても口コミ診断は返す。
+    let siteCheck = null;
+    try {
+      siteCheck = await checkStoreWebsite(store.website);
+    } catch {
+      siteCheck = null;
+    }
     return NextResponse.json(
-      notices.length > 0 ? { ...result, notices } : result,
+      {
+        ...result,
+        ...(notices.length > 0 ? { notices } : {}),
+        ...(siteCheck ? { siteCheck } : {}),
+      },
       { headers: CORS_HEADERS },
     );
   } catch (e) {

@@ -12,6 +12,7 @@ import { AffiliateRefCapture } from "@/components/AffiliateRefCapture";
 import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
+import { checkStoreWebsite } from "@/lib/siteCheck";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -112,6 +113,13 @@ export default async function ReportPage({
     );
   }
 
+  let siteCheck = null;
+  try {
+    siteCheck = await checkStoreWebsite(result.input.store.website);
+  } catch {
+    siteCheck = null;
+  }
+
   const shareUrl = `${SITE.baseUrl}/report/${id}/`;
   const fetchedAtRecorded =
     typeof input.diagnosedAt === "string" &&
@@ -133,6 +141,7 @@ export default async function ReportPage({
       </h1>
       <ReportView
         result={result}
+        siteCheck={siteCheck}
         shareUrl={shareUrl}
         refCode={ref}
         shareContext={{

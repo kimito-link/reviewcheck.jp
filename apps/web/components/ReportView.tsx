@@ -1,4 +1,5 @@
 import type { DiagnosisResult } from "@reviewcheck/core";
+import type { SiteCheckJson } from "site-check";
 import { staleRuleVersionNote } from "@reviewcheck/core";
 import { CTAS, RESULT_ESTIMATE_SENTENCE, withRefCode } from "@reviewcheck/config";
 import { ScoreMeter, ScoreBadge, StatCompare } from "@reviewcheck/ui";
@@ -16,6 +17,8 @@ import { ResultActionProvider } from "./result/ResultActionContext";
 import { ResultNextCta } from "./result/ResultNextCta";
 import { ScoreHistoryNote } from "./result/ScoreHistoryNote";
 import { ScrollToResultScore } from "./result/ScrollToResultScore";
+import { SiteCheckSection } from "./SiteCheckSection";
+import { usableWebsite } from "@/lib/websiteUrl";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
   high: { label: "最優先", cls: "bg-red-100 text-red-700" },
@@ -47,11 +50,14 @@ export interface ReportShareContext {
 /** 診断結果の表示。/check と /report/[id] で共通利用。 */
 export function ReportView({
   result,
+  siteCheck,
   shareUrl,
   refCode,
   shareContext,
 }: {
   result: DiagnosisResult;
+  /** ウェブサイトが分かるときだけ。共有IDには入れない。 */
+  siteCheck?: SiteCheckJson | null;
   shareUrl?: string;
   /** アフィリエイター紹介コード（?ref=RH-XXXX で着地時）。monitor 橋URLに伝搬する。 */
   refCode?: string;
@@ -100,6 +106,7 @@ export function ReportView({
     ratingDiff: comparison ? comparison.ratingDiff : null,
   });
 
+  const website = usableWebsite(store.website);
   const ctaProps = {
     score: result.score,
     ruleVersion: result.ruleVersion,
@@ -178,6 +185,10 @@ export function ReportView({
             </div>
           </div>
         </section>
+
+        {siteCheck && website ? (
+          <SiteCheckSection report={siteCheck} website={website} />
+        ) : null}
 
         <section
           data-result-section="cta"
