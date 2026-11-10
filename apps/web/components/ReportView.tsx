@@ -1,5 +1,6 @@
 import type { DiagnosisResult } from "@reviewcheck/core";
 import { FINDING_CARD_TEXTS, staleRuleVersionNote } from "@reviewcheck/core";
+import { buildAreaComparison } from "@reviewcheck/core/areaMap";
 import { CTAS, RESULT_ESTIMATE_SENTENCE, withRefCode } from "@reviewcheck/config";
 import { ScoreMeter, ScoreBadge, StatCompare } from "@reviewcheck/ui";
 import { Disclaimer } from "./Disclaimer";
@@ -15,6 +16,7 @@ import {
   leftAloneParagraphs,
 } from "@/lib/resultCopy";
 import type { CohortPublic } from "@/lib/cohort/public";
+import { AreaCompare } from "./result/AreaCompare";
 import { CohortCompareNote } from "./result/CohortCompareNote";
 import { DiagnosisPerks } from "./result/DiagnosisPerks";
 import { DiagnosisProgressNote } from "./result/DiagnosisProgressNote";
@@ -113,6 +115,7 @@ export function ReportView({
     ? `/suggest-check/?store=${encodeURIComponent(storeQuery)}`
     : "/suggest-check/";
 
+  const area = buildAreaComparison(store, competitors);
   const countLine = buildCountSummary(store, comparison);
   const fetchedAtRecorded = shareContext ? shareContext.fetchedAtRecorded : true;
   const metaLine = fetchedAtRecorded
@@ -205,6 +208,8 @@ export function ReportView({
               </div>
             </div>
           </div>
+
+          {area ? <AreaCompare area={area} /> : null}
 
           <section data-result-section="findings" className="space-y-4">
             <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
@@ -426,8 +431,9 @@ export function ReportView({
         </section>
 
         <section
+          id="result-next-step"
           data-result-section="cta"
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+          className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
         >
           <ResultNextCta {...ctaProps} shopToggle />
           <div className="mt-4">
@@ -492,6 +498,11 @@ export function ReportView({
           </p>
           {autoCompetitors ? (
             <p>周辺の同業種から口コミ数の多い順に自動抽出した目安です。</p>
+          ) : null}
+          {area && area.pins.length > 0 ? (
+            <p>
+              地図の位置は、今回の診断で取得した公開の座標です。背景の地図は OpenStreetMap のタイルです。タイルやスクリプトが読めないときは、同じお店の一覧が正です。
+            </p>
           ) : null}
         </ResultMethodDetails>
 

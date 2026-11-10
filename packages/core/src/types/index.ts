@@ -39,6 +39,13 @@ export interface StoreInput {
   lowRatingRatio?: number;
   /** 最新口コミからの経過日数（鮮度）。 */
   daysSinceLastReview?: number;
+  /**
+   * 緯度。Place Details が返す公開座標。
+   * 診断のたびに取りに行かず、取得済みの値だけを残す。
+   */
+  lat?: number;
+  /** 経度。lat と組で使う。片方だけでは位置にしない。 */
+  lng?: number;
   /** データの出所 */
   source?: "places" | "mock" | "manual";
 }
@@ -50,6 +57,10 @@ export interface Competitor {
   reviewCount: number;
   mapsUrl?: string;
   placeId?: string;
+  /** 緯度。周辺検索で一緒に取れた公開座標だけ。 */
+  lat?: number;
+  /** 経度。lat と組で使う。 */
+  lng?: number;
 }
 
 /** 診断の入力一式（reportId にエンコードされる正本） */

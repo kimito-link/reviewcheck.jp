@@ -11,6 +11,7 @@
     "./scoring": "./src/scoring/index.ts",
     "./simulator": "./src/simulator/index.ts",
     "./competitor": "./src/competitor/index.ts",
+    "./areaMap": "./src/areaMap/index.ts",
     "./types": "./src/types/index.ts",
     "./utils": "./src/utils/index.ts",
     "./providers": "./src/providers/index.ts"
