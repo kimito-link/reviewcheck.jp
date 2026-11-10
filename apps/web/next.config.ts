@@ -35,7 +35,8 @@ const nextConfig: NextConfig = {
       `default-src 'self'`,
       `script-src 'self' 'unsafe-inline'`,
       `style-src 'self' 'unsafe-inline'`,
-      `img-src 'self' data:`,
+      // 結果のエリア地図（Leaflet）が読む OpenStreetMap タイルだけ。他の画像ホストは開けない。
+      `img-src 'self' data: https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org`,
       `font-src 'self'`,
       `object-src 'none'`,
       `base-uri 'self'`,

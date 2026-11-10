@@ -12,12 +12,13 @@ import { AffiliateRefCapture } from "@/components/AffiliateRefCapture";
 import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
+import { publishCohort } from "@/lib/cohort/service";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 type Params = { id: string };
-type SearchParams = { ref?: string };
+type SearchParams = { ref?: string; ref_line?: string };
 
 export async function generateMetadata({
   params,
@@ -66,7 +67,7 @@ export default async function ReportPage({
   searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
-  const { ref } = await searchParams;
+  const { ref, ref_line: refLine } = await searchParams;
   const input = decodeReportId(id);
 
   if (!input) {
@@ -116,6 +117,16 @@ export default async function ReportPage({
   const fetchedAtRecorded =
     typeof input.diagnosedAt === "string" &&
     !Number.isNaN(Date.parse(input.diagnosedAt));
+  const cohort = await publishCohort({
+    category: result.input.store.category,
+    address: result.input.store.address,
+    score: result.score,
+    rating: result.input.store.rating,
+    reviewCount: result.input.store.reviewCount,
+    hasOwnerReplies: result.input.store.hasOwnerReplies,
+    ruleVersion: result.ruleVersion,
+    record: false,
+  });
 
   return (
     <Container className="pb-12 pt-4 sm:pt-6">
@@ -135,10 +146,12 @@ export default async function ReportPage({
         result={result}
         shareUrl={shareUrl}
         refCode={ref}
+        refLine={refLine}
         shareContext={{
           loadedRuleVersion: input.ruleVersion,
           fetchedAtRecorded,
         }}
+        cohort={cohort}
       />
     </Container>
   );

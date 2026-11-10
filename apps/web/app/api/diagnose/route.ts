@@ -5,6 +5,7 @@ import {
   fetchCompetitors,
   fetchStore,
   getEnabledProviders,
+  withPublicPoint,
   guardMessage,
   InvalidInputError,
   MockStoreProvider,
@@ -19,6 +20,8 @@ import {
   type StoreInput,
 } from "@reviewcheck/core";
 import { incrementDiagnosisCount } from "@/lib/diagnosisCounter";
+import { publishCohort, shouldRecordCohort } from "@/lib/cohort/service";
+import type { CohortPublic } from "@/lib/cohort/public";
 import { corsHeaders, getCacheStore, guardPlacesCall } from "@/lib/costGuard";
 
 export const runtime = "nodejs";
@@ -116,7 +119,8 @@ async function handle(request: Request, body: DiagnoseBody) {
       }
     }
     if (fetched) {
-      base = fetched.store;
+      // KV の v1 は store 本体に座標が無く、context にだけ残っている。
+      base = fetched.store ? withPublicPoint(fetched.store, fetched.context) : null;
       providers = fetched.providers;
       context = fetched.context;
       reviews = fetched.reviews ?? [];
@@ -177,7 +181,9 @@ async function handle(request: Request, body: DiagnoseBody) {
     !demo &&
     context
   ) {
-    const compKey = context.placeId ? `rc:comp:v1:${context.placeId}:5` : null;
+    // v2 は公開座標つき。v1 の24時間キャッシュには lat/lng が無く、地図のピンが欠ける。
+    // 店ごとに周辺検索が1回だけ増える。SKU は変えない（location は既存 Enterprise より下）。
+    const compKey = context.placeId ? `rc:comp:v2:${context.placeId}:5` : null;
     const cachedComp = compKey ? await cacheGet<Competitor[]>(cache, compKey) : null;
     if (cachedComp) {
       competitors = cachedComp;
@@ -218,8 +224,36 @@ async function handle(request: Request, body: DiagnoseBody) {
     if (!demo) {
       incrementDiagnosisCount().catch(() => {});
     }
+    let cohort: CohortPublic = { show: false };
+    if (!demo && store.source !== "mock") {
+      const touched =
+        typeof override.rating === "number" ||
+        typeof override.reviewCount === "number" ||
+        typeof override.hasOwnerReplies === "boolean" ||
+        typeof override.category === "string" ||
+        typeof override.address === "string" ||
+        typeof override.name === "string";
+      cohort = await publishCohort({
+        category: store.category,
+        address: store.address,
+        score: result.score,
+        rating: store.rating,
+        reviewCount: store.reviewCount,
+        hasOwnerReplies: store.hasOwnerReplies,
+        ruleVersion: result.ruleVersion,
+        record: shouldRecordCohort({
+          demo,
+          source: store.source,
+          manualTouch: touched,
+        }),
+      });
+    }
     return NextResponse.json(
-      notices.length > 0 ? { ...result, notices } : result,
+      {
+        ...result,
+        ...(notices.length > 0 ? { notices } : {}),
+        cohort,
+      },
       { headers: CORS_HEADERS },
     );
   } catch (e) {
