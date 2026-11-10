@@ -15,6 +15,7 @@
 
 見積りの根拠（`packages/core/src/costguard/index.ts` の `PLACES_COST_YEN`。1ドル=150円・切り上げ・Google の月間無料枠は数えない＝保守的）:
 Text Search Pro $32/1000・Place Details Enterprise+Atmosphere $25/1000・Nearby Search Enterprise $35/1000。
+周辺競合の FieldMask に `places.location`（Essentials）を足している。呼び出しは従来どおり Nearby Search 1回で、見積りは 6円のまま（location は rating より下の項目）。競合キャッシュキーは `rc:comp:v2`（v1 には座標が無い。反映後、店ごとに1回だけ取り直す）。
 **未確認**: 実際の請求 SKU（Cloud Console の請求レポートで照合すること）。
 
 ## 2. 黒字の式（§A-4 の表・提案値）

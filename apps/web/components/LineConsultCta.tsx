@@ -73,7 +73,7 @@ export function LineConsultCta({
         type="button"
         onClick={handleClick}
         data-destination={destination}
-        className={`inline-flex items-center justify-center gap-2 rounded-lg bg-[#06C755] font-bold text-white shadow-sm transition hover:bg-[#05b34d] ${sizeCls} ${
+        className={`inline-flex items-center justify-center gap-2 rounded-lg bg-[#06C755] font-bold text-slate-950 shadow-sm transition hover:brightness-95 ${sizeCls} ${
           fullWidth ? "w-full" : ""
         } ${className}`}
       >
@@ -84,13 +84,13 @@ export function LineConsultCta({
       </button>
 
       {copyState === "copied" ? (
-        <p className="mt-2 text-xs text-slate-500" role="status">
+        <p className="mt-2 text-base text-slate-800" role="status">
           メッセージをコピーしました。LINEのトークに貼り付けて送ってください。
         </p>
       ) : null}
 
       {copyState === "failed" ? (
-        <div className="mt-2 text-xs text-slate-600">
+        <div className="mt-2 text-base text-slate-800">
           <p className="mb-1">
             以下の文をコピーして、LINEのトークに貼り付けて送ってください。
           </p>
@@ -98,7 +98,7 @@ export function LineConsultCta({
             readOnly
             value={message}
             onFocus={(e) => e.currentTarget.select()}
-            className="w-full resize-none rounded-md border border-slate-300 bg-white p-2 text-xs text-slate-800"
+            className="w-full resize-none rounded-md border border-slate-500 bg-white p-2 text-base text-slate-900"
             rows={2}
           />
         </div>

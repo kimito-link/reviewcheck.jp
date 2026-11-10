@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 type Params = { id: string };
-type SearchParams = { ref?: string };
+type SearchParams = { ref?: string; ref_line?: string };
 
 export async function generateMetadata({
   params,
@@ -67,7 +67,7 @@ export default async function ReportPage({
   searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
-  const { ref } = await searchParams;
+  const { ref, ref_line: refLine } = await searchParams;
   const input = decodeReportId(id);
 
   if (!input) {
@@ -146,6 +146,7 @@ export default async function ReportPage({
         result={result}
         shareUrl={shareUrl}
         refCode={ref}
+        refLine={refLine}
         shareContext={{
           loadedRuleVersion: input.ruleVersion,
           fetchedAtRecorded,

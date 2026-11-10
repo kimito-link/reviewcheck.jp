@@ -4,6 +4,7 @@ import {
   selectReviewFindings,
   THREAD_MAP_TEXTS,
 } from "@reviewcheck/core";
+import { visibleSecondaryChips } from "@/lib/resultCopy";
 import { ThreadMap } from "./ThreadMap";
 
 /**
@@ -18,46 +19,42 @@ export function FindingCard({ result }: { result: DiagnosisResult }) {
   const selection = selectReviewFindings(result);
   if (!selection) return null;
   const { primary, secondary } = selection;
+  const chips = visibleSecondaryChips(secondary);
   const t = FINDING_CARD_TEXTS;
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <div className="flex items-center gap-2">
-        <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[11px] font-bold text-white">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full bg-slate-700 px-2.5 py-1 text-base font-bold text-white">
           {t.badge}
         </span>
-        <span className="text-sm font-bold text-slate-700">{t.badgeSub}</span>
+        <span className="text-base font-bold text-slate-800">{t.badgeSub}</span>
       </div>
-      <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
-        {t.roleDeclaration}
-      </p>
 
-      <h2 className="mt-3 text-lg font-bold text-slate-900 sm:text-xl">
-        {primary.name}
-      </h2>
-      <p className="mt-2 text-sm leading-relaxed text-slate-700">
+      <h2 className="mt-3 text-xl font-bold text-slate-900">{primary.name}</h2>
+      <p className="mt-2 text-base leading-relaxed text-slate-800">
         {primary.finding} {primary.structure}
       </p>
 
-      {secondary.length > 0 ? (
-        <div className="mt-2.5">
-          <p className="text-xs font-bold text-slate-500">{t.chipsHeading}</p>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {secondary.map((chip) => (
-              <span
+      {chips.length > 0 ? (
+        <div className="mt-3">
+          <p className="text-base font-bold text-slate-800">{t.chipsHeading}</p>
+          <ul className="mt-1 flex flex-wrap gap-2">
+            {chips.map((chip) => (
+              <li
                 key={chip}
-                className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600"
+                className="rounded-full bg-slate-100 px-3 py-1 text-base text-slate-800"
               >
                 {chip}
-              </span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       ) : null}
 
       {/* 一本の糸マップ（P1・設計§C-4）。既定は折りたたみ＝カード高さに影響させない。 */}
       <details className="mt-3">
-        <summary className="cursor-pointer text-sm font-bold text-slate-800">
+        <summary className="cursor-pointer text-base font-bold text-slate-900 underline decoration-slate-900 underline-offset-2">
           {THREAD_MAP_TEXTS.summary}
         </summary>
         <div className="mt-2 rounded-xl bg-slate-50 p-3">
@@ -65,15 +62,14 @@ export function FindingCard({ result }: { result: DiagnosisResult }) {
         </div>
       </details>
 
-      {/* モバイルのカード高さ上限（設計§E-5: 375pxで480px以下）のため既定は折りたたみ。
-          治療②の実体（LINE主CTA）はカード直下に常時表示されているため導線は途切れない。 */}
+      {/* 既定は折りたたみ。主CTAは「直すと得られること」「このままだと失うこと」の後。 */}
       <details className="mt-2">
-        <summary className="cursor-pointer text-sm font-bold text-slate-800">
+        <summary className="cursor-pointer text-base font-bold text-slate-900 underline decoration-slate-900 underline-offset-2">
           {t.nextSummary}
         </summary>
         <div className="mt-2 rounded-xl bg-slate-50 p-3">
-          <p className="text-sm font-bold text-slate-900">{t.nextHeading}</p>
-          <ul className="mt-2 space-y-2 text-sm leading-relaxed text-slate-700">
+          <p className="text-base font-bold text-slate-900">{t.nextHeading}</p>
+          <ul className="mt-2 space-y-2 text-base leading-relaxed text-slate-800">
             <li>
               <strong className="text-slate-900">{t.step1Label}:</strong>{" "}
               {primary.selfCare}

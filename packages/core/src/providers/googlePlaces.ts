@@ -1,5 +1,6 @@
 import type { Competitor, StoreInput } from "../types/index";
 import type { ReviewItem } from "../reviews/index";
+import { readPoint } from "../utils/geo";
 import {
   parseMapsUrl,
   isShortMapsUrl,
@@ -24,6 +25,16 @@ export interface FetchCompetitorsOptions {
   /** 返す競合の最大件数。既定 5。 */
   limit?: number;
 }
+
+/**
+ * 周辺競合の FieldMask。
+ * rating / userRatingCount で Nearby Search は Enterprise になる。
+ * location はそれより下の Essentials なので、この1項目を足しても SKU は上がらない。
+ * 呼び出し回数も増えない（同じ searchNearby の応答に座標が入る）。
+ * reviews は足さない（SKU が上がるため）。
+ */
+export const COMPETITOR_SEARCH_FIELD_MASK =
+  "places.id,places.displayName,places.rating,places.userRatingCount,places.googleMapsUri,places.location";
 
 /**
  * Google Places API (v1 / Places API New) adapter。
@@ -116,8 +127,7 @@ export class GooglePlacesProvider implements StoreDataProvider {
           headers: {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": key,
-            "X-Goog-FieldMask":
-              "places.id,places.displayName,places.rating,places.userRatingCount,places.googleMapsUri",
+            "X-Goog-FieldMask": COMPETITOR_SEARCH_FIELD_MASK,
           },
           body: JSON.stringify(body),
         },
@@ -137,13 +147,17 @@ export class GooglePlacesProvider implements StoreDataProvider {
         )
         .sort((a, b) => (b.userRatingCount ?? 0) - (a.userRatingCount ?? 0))
         .slice(0, limit)
-        .map((p) => ({
-          name: p.displayName?.text,
-          rating: normalizeRating(p.rating as number),
-          reviewCount: toCount(p.userRatingCount ?? 0),
-          mapsUrl: p.googleMapsUri,
-          placeId: p.id,
-        }));
+        .map((p) => {
+          const point = readPoint(p.location?.latitude, p.location?.longitude);
+          return {
+            name: p.displayName?.text,
+            rating: normalizeRating(p.rating as number),
+            reviewCount: toCount(p.userRatingCount ?? 0),
+            mapsUrl: p.googleMapsUri,
+            placeId: p.id,
+            ...(point ? { lat: point.lat, lng: point.lng } : {}),
+          };
+        });
     } catch {
       return [];
     }
@@ -368,6 +382,7 @@ export class GooglePlacesProvider implements StoreDataProvider {
 
     // 注: Places API では「最新口コミの鮮度」「オーナー返信の網羅」「低評価比率」は
     // 安定して取得できないため未確認（undefined）のままにし、スコア側で推定値扱いにする。
+    const point = readPoint(p.location?.latitude, p.location?.longitude);
     const store: StoreInput = {
       name: p.displayName?.text,
       address: p.formattedAddress,
@@ -380,11 +395,12 @@ export class GooglePlacesProvider implements StoreDataProvider {
       website: p.websiteUri,
       hasOpeningHours: Boolean(p.regularOpeningHours),
       source: "places",
+      ...(point ? { lat: point.lat, lng: point.lng } : {}),
     };
 
     const context: StoreContext = {
-      lat: p.location?.latitude,
-      lng: p.location?.longitude,
+      lat: point?.lat,
+      lng: point?.lng,
       primaryType: p.primaryType,
       placeId: p.id ?? placeId,
     };
@@ -433,6 +449,7 @@ interface NearbyPlace {
   rating?: number;
   userRatingCount?: number;
   googleMapsUri?: string;
+  location?: { latitude?: number; longitude?: number };
 }
 
 interface NearbyDetailPlace extends NearbyPlace {

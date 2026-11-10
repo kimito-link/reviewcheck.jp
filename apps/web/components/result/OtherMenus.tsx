@@ -30,7 +30,7 @@ export function OtherMenus({
       </summary>
       <div className="mt-4 space-y-6">
         <div>
-          <p className="text-sm font-bold text-slate-800">相談のテーマ</p>
+          <p className="text-base font-bold text-slate-900">相談のテーマ</p>
           <div className="mt-3">
             <ConsultCtaGrid />
           </div>
@@ -43,14 +43,14 @@ export function OtherMenus({
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 hover:border-blue-300"
+                  className="block rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-bold text-blue-800 underline decoration-blue-800 underline-offset-2 hover:border-blue-300"
                 >
                   {item.label}
                 </a>
               ) : (
                 <Link
                   href={item.href}
-                  className="block rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 hover:border-blue-300"
+                  className="block rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-bold text-blue-800 underline decoration-blue-800 underline-offset-2 hover:border-blue-300"
                 >
                   {item.label}
                 </Link>
@@ -59,7 +59,7 @@ export function OtherMenus({
           ))}
         </ul>
         <div>
-          <p className="text-sm font-bold text-slate-800">関連して見られるページ</p>
+          <p className="text-base font-bold text-slate-900">関連して見られるページ</p>
           <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {CROSS_SELL.map((item) => {
               const desc =
@@ -68,8 +68,10 @@ export function OtherMenus({
                   : item.desc;
               const body = (
                 <>
-                  <span className="font-bold text-slate-900">{item.title}</span>
-                  <span className="mt-1 block text-sm leading-relaxed text-slate-600">
+                  <span className="font-bold text-blue-800 underline decoration-blue-800 underline-offset-2">
+                    {item.title}
+                  </span>
+                  <span className="mt-1 block text-base leading-relaxed text-slate-800">
                     {desc}
                   </span>
                 </>

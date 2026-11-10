@@ -119,3 +119,28 @@ h3 {
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Leaflet。Tailwind の img リセットでタイルが潰れるのを防ぎ、
+   地図内部の重なりがヘッダーより前に出ないよう重ね順を閉じる。 */
+.leaflet-container {
+  z-index: 0;
+  height: 100%;
+  width: 100%;
+  font-family: inherit;
+  font-size: 16px;
+  background: #f1f5f9;
+}
+.leaflet-container img {
+  max-width: none !important;
+  max-height: none !important;
+}
+.area-map-pin {
+  background: transparent !important;
+  border: none !important;
+}
+.area-map-popup .leaflet-popup-content {
+  margin: 10px 14px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #0f172a;
+}

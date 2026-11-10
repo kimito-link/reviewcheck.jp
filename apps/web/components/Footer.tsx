@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { FOOTER_LINKS, SITE, DISCLAIMER, COMMERCE } from "@reviewcheck/config";
 import { Container } from "./Container";
+import { DiagnosisAppsFooter } from "./DiagnosisAppsFooter";
 
 export function Footer() {
   return (
@@ -45,6 +46,7 @@ export function Footer() {
             </div>
           ))}
         </div>
+        <DiagnosisAppsFooter />
         {/* 運営会社ブロック：石川氏の指摘対応。特商法表記への導線とあわせて明示する。 */}
         <div className="mt-10 rounded-lg border border-white/10 bg-white/5 p-4 text-xs leading-relaxed text-slate-400">
           <h3 className="text-sm font-bold text-white">運営会社</h3>
