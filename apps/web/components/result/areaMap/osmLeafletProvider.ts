@@ -1,4 +1,10 @@
 import type { AreaMapPin } from "@reviewcheck/core/areaMap";
+import {
+  connectorSegment,
+  mapLabelHtml,
+  placeMapLabels,
+  type MapPoint,
+} from "./labelLayout";
 import type { AreaMapProvider } from "./types";
 
 /**
@@ -42,7 +48,7 @@ export const osmLeafletProvider: AreaMapProvider = {
     const bounds = L.latLngBounds(
       pins.map((pin) => L.latLng(pin.lat, pin.lng)),
     );
-    for (const pin of pins) {
+    const markers = pins.map((pin) => {
       const marker = L.marker(L.latLng(pin.lat, pin.lng), {
         icon: iconFor(L, pin),
         keyboard: true,
@@ -50,31 +56,122 @@ export const osmLeafletProvider: AreaMapProvider = {
         title: pin.label,
         zIndexOffset: pin.kind === "subject" ? 1000 : 0,
       });
-      marker.bindPopup(escapeHtml(pin.label), {
-        className: "area-map-popup",
+      marker.bindTooltip(mapLabelHtml(pin), {
+        permanent: true,
+        direction: "right",
+        offset: [22, 0],
+        opacity: 1,
+        interactive: false,
+        className:
+          pin.kind === "subject"
+            ? "area-map-label area-map-label-subject"
+            : "area-map-label",
       });
       marker.addTo(map);
-    }
+      return marker;
+    });
+    const connectors = pins.map((pin) =>
+      L.polyline([], {
+        color: "#0f172a",
+        weight: pin.kind === "subject" ? 3 : 2,
+        opacity: 0.9,
+        interactive: false,
+      }).addTo(map),
+    );
 
     const samePoint = bounds.getNorthEast().equals(bounds.getSouthWest());
-    if (samePoint) {
-      map.setView(bounds.getCenter(), 16);
-    } else {
-      map.fitBounds(bounds, { padding: [28, 28], maxZoom: 16 });
-    }
+    const fit = () => {
+      if (samePoint) {
+        map.setView(bounds.getCenter(), 15);
+        return;
+      }
+      const size = map.getSize();
+      const narrow = size.x > 0 && size.x < 520;
+      map.fitBounds(bounds, narrow
+        ? {
+            paddingTopLeft: [12, 16],
+            paddingBottomRight: [156, 40],
+            maxZoom: 16,
+          }
+        : {
+            paddingTopLeft: [64, 28],
+            paddingBottomRight: [28, 36],
+            maxZoom: 16,
+          });
+    };
+    fit();
+    const layoutLabels = () => {
+      const size = map.getSize();
+      if (size.x < 40 || size.y < 40) return;
+      const narrow = size.x < 520;
+      const labelWidth = narrow ? "8.75rem" : "14rem";
+      for (const marker of markers) {
+        const el = marker.getTooltip()?.getElement();
+        if (!el) continue;
+        el.style.width = labelWidth;
+        el.style.maxWidth = labelWidth;
+      }
+      const points: MapPoint[] = markers.map((marker, index) => {
+        const point = map.latLngToContainerPoint(marker.getLatLng());
+        return {
+          x: point.x,
+          y: point.y,
+          subject: pins[index]?.kind === "subject",
+        };
+      });
+      const labelSizes = markers.map((marker) => {
+        const el = marker.getTooltip()?.getElement();
+        return {
+          w: el?.offsetWidth || (narrow ? 148 : 200),
+          h: el?.offsetHeight || 56,
+        };
+      });
+      const placed = placeMapLabels({
+        points,
+        labelSizes,
+        map: { w: size.x, h: size.y },
+      });
+      markers.forEach((marker, index) => {
+        const tip = marker.getTooltip();
+        const spot = placed[index];
+        if (!tip || !spot) return;
+        tip.options.direction = spot.direction;
+        tip.options.offset = L.point(spot.offset[0], spot.offset[1]);
+        tip.update();
+        keepLabelInside(container, tip, L);
+        const segment = connectorSegment(points[index]!, spot.box);
+        const line = connectors[index];
+        if (!line) return;
+        if (!segment) {
+          line.setLatLngs([]);
+          return;
+        }
+        line.setLatLngs([
+          map.containerPointToLatLng(L.point(segment.from.x, segment.from.y)),
+          map.containerPointToLatLng(L.point(segment.to.x, segment.to.y)),
+        ]);
+      });
+    };
     container.setAttribute("role", "region");
     container.setAttribute(
       "aria-label",
-      "このエリアの地図。ひし形の自が診断したお店、丸の数字は口コミ数の順位です。",
+      "このエリアの地図。各ピンのそばに店名・星・口コミ数・順位を表示しています。ひし形の自が診断したお店です。",
     );
 
-    const onResize = () => map.invalidateSize();
+    const onResize = () => {
+      map.invalidateSize();
+      fit();
+      layoutLabels();
+    };
     const resize =
       typeof ResizeObserver === "undefined"
         ? undefined
         : new ResizeObserver(onResize);
     resize?.observe(container);
-    requestAnimationFrame(onResize);
+    requestAnimationFrame(() => {
+      layoutLabels();
+      requestAnimationFrame(layoutLabels);
+    });
 
     return () => {
       resize?.disconnect();
@@ -103,10 +200,25 @@ function iconFor(
 const pinBox =
   "width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;";
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+/** 計算位置と実際の描画がずれて端で切れるとき、枠の内側へ戻す。 */
+function keepLabelInside(
+  container: HTMLElement,
+  tip: import("leaflet").Tooltip,
+  L: typeof import("leaflet"),
+) {
+  const el = tip.getElement();
+  if (!el) return;
+  const frame = container.getBoundingClientRect();
+  const box = el.getBoundingClientRect();
+  let dx = 0;
+  let dy = 0;
+  const margin = 4;
+  if (box.left < frame.left + margin) dx += frame.left + margin - box.left;
+  if (box.right > frame.right - margin) dx += frame.right - margin - box.right;
+  if (box.top < frame.top + margin) dy += frame.top + margin - box.top;
+  if (box.bottom > frame.bottom - margin) dy += frame.bottom - margin - box.bottom;
+  if (dx === 0 && dy === 0) return;
+  const current = L.point(tip.options.offset ?? [0, 0]);
+  tip.options.offset = L.point(current.x + dx, current.y + dy);
+  tip.update();
 }

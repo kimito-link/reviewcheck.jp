@@ -28,7 +28,12 @@ export interface AreaMapPin {
   kind: "subject" | "peer";
   /** 診断店は「自」。周辺店は順位の数字。色ではなく形と文字で区別する。 */
   mark: string;
+  /** 読み上げと、地図の常時ラベルの元。クリックしなくても同じ内容をラベルに出す。 */
   label: string;
+  name: string;
+  rating: number;
+  reviewCount: number;
+  reviewCountRank: number;
 }
 
 export interface AreaComparison {
@@ -168,6 +173,10 @@ function mapPins(places: AreaPlace[], subjectHasPoint: boolean): AreaMapPin[] {
       lng: place.lng,
       kind: place.isSubject ? "subject" : "peer",
       mark: place.isSubject ? "自" : String(place.reviewCountRank),
+      name: place.name,
+      rating: place.rating,
+      reviewCount: place.reviewCount,
+      reviewCountRank: place.reviewCountRank,
       label: `${place.isSubject ? "診断したお店 " : ""}${place.name} 星${place.rating.toFixed(1)} 口コミ${place.reviewCount}件 第${place.reviewCountRank}位`,
     });
   }

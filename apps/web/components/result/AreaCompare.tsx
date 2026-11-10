@@ -35,7 +35,7 @@ export function AreaCompare({ area }: { area: AreaComparison }) {
       {showMap ? (
         <>
           <p className="mt-3 text-base leading-relaxed text-slate-800">
-            ひし形の「自」が診断したお店、丸の数字は口コミ数の順位です。
+            ひし形の「自」が診断したお店、丸の数字は口コミ数の順位です。店名・星・口コミ数・順位は、各ピンのそばに書いてあります。
           </p>
           <div className="mt-3">
             <AreaMapCanvas pins={area.pins} />

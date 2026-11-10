@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AreaMapPin } from "@reviewcheck/core/areaMap";
 
 const FRAME =
-  "relative z-0 h-64 w-full overflow-hidden rounded-xl border border-slate-300 bg-slate-100 sm:h-80";
+  "relative z-0 h-[34rem] w-full overflow-hidden rounded-xl border border-slate-300 bg-slate-100 sm:h-80";
 
 type MapPhase = "pending" | "ready" | "fallback";
 
