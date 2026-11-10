@@ -120,27 +120,15 @@ h3 {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Leaflet。Tailwind の img リセットでタイルが潰れるのを防ぎ、
-   地図内部の重なりがヘッダーより前に出ないよう重ね順を閉じる。 */
-.leaflet-container {
-  z-index: 0;
-  height: 100%;
-  width: 100%;
-  font-family: inherit;
-  font-size: 16px;
-  background: #f1f5f9;
-}
-.leaflet-container img {
-  max-width: none !important;
-  max-height: none !important;
-}
-.area-map-pin {
-  background: transparent !important;
-  border: none !important;
-}
-.area-map-popup .leaflet-popup-content {
-  margin: 10px 14px;
+/* Places 由来の一覧に添える出典。文言は Google Maps のまま、訳さず1行に保つ。
+   ロゴ画像は置かない。Roboto の読み込みは任意なので、既存の本文書体へ落とす。 */
+.gmp-attribution {
+  font-family: Roboto, var(--font-sans), sans-serif;
+  font-style: normal;
+  font-weight: 400;
   font-size: 16px;
   line-height: 1.5;
-  color: #0f172a;
+  letter-spacing: normal;
+  white-space: nowrap;
+  color: #1f1f1f;
 }

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, test, vi } from "vitest";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
@@ -38,16 +40,18 @@ function areaOf(nextStore: StoreInput = store, nextPeers: Competitor[] = peers):
 }
 
 describe("エリアの比較", () => {
-  test("座標がある店は高さ固定の地図と、距離つきの一覧になる", () => {
+  test("座標があっても地図は出さず、距離つきの一覧と出典を出す", () => {
     window.history.pushState(null, "", "/check/");
-    document.documentElement.removeAttribute("data-area-map");
+    document.documentElement.dataset.areaMap = "fallback";
     const { container } = render(<AreaCompare area={areaOf()} />);
     const section = container.querySelector("[data-result-section='area-map']");
-    const frame = section?.querySelector("[data-area-map-frame]");
-    expect(frame).toBeTruthy();
-    expect(frame?.className).toContain("h-64");
-    expect(frame?.className).toContain("sm:h-80");
-    expect(frame?.getAttribute("data-area-map-state")).toBe("pending");
+    expect(section?.querySelector("[data-area-map-frame]")).toBeNull();
+    expect(section?.querySelector("[data-area-map-canvas]")).toBeNull();
+    expect(section?.innerHTML ?? "").not.toMatch(/openstreetmap|leaflet/i);
+    const attribution = section?.querySelector("[data-places-attribution]");
+    const credit = attribution?.querySelector("[translate='no']");
+    expect(credit?.textContent).toBe("Google Maps");
+    expect(credit?.className).toContain("gmp-attribution");
     expect(section?.textContent).toContain("テスト食堂");
     expect(section?.textContent).toContain("診断したお店");
     expect(section?.textContent).toContain("第3位");
@@ -63,33 +67,29 @@ describe("エリアの比較", () => {
     expect(section?.innerHTML ?? "").not.toContain("#06C755");
   });
 
-  test("座標が無ければ一覧だけを出し、地図の枠は確保しない", () => {
+  test("座標が無くても一覧と出典は残り、地図の枠は出ない", () => {
     const area = areaOf(
       { name: "テスト食堂", rating: 4, reviewCount: 45 },
       [{ name: "競合A", rating: 4.2, reviewCount: 80 }],
     );
     const { container } = render(<AreaCompare area={area} />);
     expect(container.querySelector("[data-area-map-frame]")).toBeNull();
+    expect(container.querySelector("[data-places-attribution] [translate='no']")?.textContent).toBe(
+      "Google Maps",
+    );
     expect(container).toHaveTextContent("競合A");
     expect(container).toHaveTextContent("未取得");
     expect(container).toHaveTextContent("中央値は62.5件");
   });
 
-  test("地図が落ちても、同じ高さの案内と一覧が残る", async () => {
-    document.documentElement.dataset.areaMap = "fallback";
-    const { container } = render(<AreaCompare area={areaOf()} />);
-    await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("地図を表示できませんでした");
-    });
-    const frame = container.querySelector("[data-area-map-frame]");
-    expect(frame?.className).toContain("h-64");
-    expect(frame?.className).toContain("sm:h-80");
-    expect(frame?.getAttribute("data-area-map-state")).toBe("fallback");
-    expect(container.querySelector("[data-area-map-canvas]")).toBeNull();
-    expect(container).toHaveTextContent("テスト食堂");
-    expect(container).toHaveTextContent("競合A");
-    expect(container).toHaveTextContent("OpenStreetMap contributors");
-    document.documentElement.removeAttribute("data-area-map");
+  test("画面の実装に、非Google地図の読み込みを残さない", () => {
+    const root = process.cwd();
+    const areaCompare = readFileSync(join(root, "components/result/AreaCompare.tsx"), "utf8");
+    const nextConfig = readFileSync(join(root, "next.config.ts"), "utf8");
+    const webPackage = readFileSync(join(root, "package.json"), "utf8");
+    expect(areaCompare).not.toMatch(/leaflet|openstreetmap|AreaMapCanvas/i);
+    expect(nextConfig).not.toMatch(/openstreetmap/i);
+    expect(webPackage).not.toMatch(/"leaflet"|"@types\/leaflet"/);
   });
 
   test("http 以外のURLはリンクにしない", () => {
