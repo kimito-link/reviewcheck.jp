@@ -7,6 +7,7 @@ import {
   type AreaPlace,
 } from "@reviewcheck/core/areaMap";
 import { useEmbedHidden } from "../diagnosis/useEmbedHidden";
+import { GoogleMapsCredit } from "./GoogleMapsCredit";
 import { ResultHook } from "./ResultReading";
 
 /**
@@ -14,7 +15,16 @@ import { ResultHook } from "./ResultReading";
  * 店の位置は地図タイルに載せず、一覧だけで比べる。
  * ?embed=1 では、あとから足したブロックと同じく出さない。
  */
-export function AreaCompare({ area }: { area: AreaComparison }) {
+export function AreaCompare({
+  area,
+  attributeToGoogle = false,
+  scopeText,
+}: {
+  area: AreaComparison;
+  /** Places の応答そのものを並べているときだけ出典を出す。 */
+  attributeToGoogle?: boolean;
+  scopeText?: string;
+}) {
   const hidden = useEmbedHidden();
   if (hidden || area.places.length === 0) return null;
 
@@ -24,16 +34,19 @@ export function AreaCompare({ area }: { area: AreaComparison }) {
       className="rounded-2xl border border-slate-200 bg-white p-5 text-base text-slate-900 shadow-sm sm:p-6"
     >
       <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
-        このエリアで比べたお店
+        この検索で比べたお店
       </h2>
       <p className="mt-2 text-base leading-relaxed text-slate-800">
-        上の順位は、診断したお店と周辺のお店の口コミ数です。店名・星・口コミ数は、この一覧で比べられます。
+        上の順位は、この検索が返したお店の口コミ数です。エリア全体の順位ではありません。
       </p>
+      {scopeText ? (
+        <p className="mt-2 text-base leading-relaxed text-slate-800">{scopeText}</p>
+      ) : null}
       <div className="mt-4">
         <AreaPlaceCards places={area.places} />
         <AreaPlaceTable places={area.places} />
       </div>
-      <GoogleMapsAttribution />
+      {attributeToGoogle ? <GoogleMapsCredit /> : null}
       <p className="mt-4 text-base leading-relaxed text-slate-800">
         {areaMedianMessage(area)}{" "}
         <a
@@ -52,7 +65,7 @@ export function AreaCompare({ area }: { area: AreaComparison }) {
 
 function AreaPlaceCards({ places }: { places: AreaPlace[] }) {
   return (
-    <ol className="space-y-3 sm:hidden" data-area-map-list="cards" aria-label="このエリアで比べたお店">
+    <ol className="space-y-3 sm:hidden" data-area-map-list="cards" aria-label="この検索で比べたお店">
       {places.map((place) => (
         <li
           key={place.id}
@@ -86,7 +99,7 @@ function AreaPlaceTable({ places }: { places: AreaPlace[] }) {
   return (
     <div className="hidden overflow-x-auto sm:block" data-area-map-list="table">
       <table className="w-full border-collapse text-left text-base">
-        <caption className="sr-only">このエリアで比べたお店</caption>
+        <caption className="sr-only">この検索で比べたお店</caption>
         <thead>
           <tr className="border-b border-slate-300 text-slate-900">
             <th scope="col" className="px-2 py-2 font-bold">順位</th>
@@ -130,20 +143,6 @@ function AreaPlaceTable({ places }: { places: AreaPlace[] }) {
         </tbody>
       </table>
     </div>
-  );
-}
-
-function GoogleMapsAttribution() {
-  return (
-    <p
-      className="mt-3 text-base leading-relaxed text-slate-800"
-      data-places-attribution=""
-    >
-      店名・星・口コミ数の出典{" "}
-      <span translate="no" className="gmp-attribution">
-        Google Maps
-      </span>
-    </p>
   );
 }
 

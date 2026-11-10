@@ -60,15 +60,16 @@ const at = new Date("2026-10-19T03:00:00Z");
 describe("reserveDailyBudget（L2・日次予算の予約）", () => {
   test("上限を小さくすると、超えた分は拒否され、カウンタは戻る", async () => {
     const store = memoryStore();
-    const opts = { pool: "t", costYen: PLACES_COST_YEN.store, limitYen: 20, at };
-    const first = await reserveDailyBudget(store, opts); // 9
-    const second = await reserveDailyBudget(store, opts); // 18
-    const third = await reserveDailyBudget(store, opts); // 27 > 20 → 拒否
+    const cost = PLACES_COST_YEN.store;
+    const opts = { pool: "t", costYen: cost, limitYen: cost * 2, at };
+    const first = await reserveDailyBudget(store, opts);
+    const second = await reserveDailyBudget(store, opts);
+    const third = await reserveDailyBudget(store, opts);
     assert.equal(first.ok, true);
     assert.equal(second.ok, true);
     assert.deepEqual(third, { ok: false, reason: "budget_exhausted" });
     // 拒否した分は戻っている（呼んでいないので使っていない）。
-    assert.equal([...store.values.values()][0], 18);
+    assert.equal([...store.values.values()][0], cost * 2);
   });
 
   test("上限 0 なら1回目から拒否（キルスイッチ代わりにも使える）", async () => {

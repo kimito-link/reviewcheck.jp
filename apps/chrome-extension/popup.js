@@ -3,7 +3,7 @@ import {
   CHECKS_STORAGE_KEY,
   buildExtensionShareText,
   domainOf,
-  encodeReportId,
+  encodePlaceReportId,
   isDiagnosablePage,
   isMapsUrl,
   mergeCheckEntry,
@@ -46,6 +46,7 @@ const els = {
   shareStatus: document.getElementById("shareStatus"),
   shareFallback: document.getElementById("shareFallback"),
   detailBtn: document.getElementById("detailBtn"),
+  mapsCredit: document.getElementById("mapsCredit"),
 };
 
 let currentTabUrl = "";
@@ -128,7 +129,7 @@ function showRecheck(iso) {
   els.recheck.classList.remove("hidden");
 }
 
-function showResult(view) {
+function showResult(view, previousIso) {
   currentView = view;
   const band = BAND[view.band] || BAND.fair;
   els.scoreValue.textContent = String(Math.round(Number(view.score)));
@@ -150,7 +151,10 @@ function showResult(view) {
     item.textContent = point;
     els.points.append(item);
   }
-  showRecheck(view.diagnosedAt);
+  showRecheck(previousIso || "");
+  if (els.mapsCredit) {
+    els.mapsCredit.classList.toggle("hidden", view.placesAttributed !== true);
+  }
   els.detailBtn.dataset.url = view.reportUrl || "";
   els.shareStatus.textContent = "";
   els.shareFallback.classList.add("hidden");
@@ -167,7 +171,11 @@ function viewFromApi(result) {
     reviewCount: store.reviewCount,
     points: pickHighlights(result),
     diagnosedAt: result.diagnosedAt,
-    reportUrl: `${CONFIG.API_BASE}/report/${encodeReportId(result.input)}/`,
+    placeId: typeof store.placeId === "string" ? store.placeId : "",
+    placesAttributed: result.placesAttributed === true,
+    reportUrl: store.placeId
+      ? `${CONFIG.API_BASE}/report/${encodePlaceReportId(store.placeId)}/`
+      : `${CONFIG.API_BASE}/check/`,
   };
 }
 
@@ -212,8 +220,9 @@ async function diagnose(query, key, manualStore) {
       showError(data.message || "店舗データを取得できませんでした。星評価と口コミ数を入力してください。");
       return;
     }
+    const previous = key ? (await loadChecks())[key] : null;
     const view = viewFromApi(data);
-    showResult(view);
+    showResult(view, previous?.diagnosedAt);
     await saveCheck(key, view);
   } catch {
     showError("通信エラーが発生しました。時間をおいて再度お試しください。");
@@ -245,14 +254,9 @@ async function init() {
   prefillFromTab(currentTabUrl);
 
   const key = storageTargetKey(currentTabUrl, "");
-  const saved = key ? (await loadChecks())[key] : null;
-  if (saved?.diagnosedAt && Array.isArray(saved.points)) showResult(saved);
-
   const query = queryFromTab(currentTabUrl);
   if (!query) {
-    if (!saved) {
-      showError("このページは診断できません。店舗名かGoogleマップのURLを入力してください。");
-    }
+    showError("このページは診断できません。店舗名かGoogleマップのURLを入力してください。");
     return;
   }
   await diagnose(query, key);

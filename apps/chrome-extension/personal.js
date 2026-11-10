@@ -1,6 +1,7 @@
 /**
  * ポップアップの表示に使う純粋関数。
- * 前回の点検は chrome.storage.local にだけ残す。
+ * 前回の点検日時と Place ID だけを chrome.storage.local に残す。
+ * 星・店名・点数は残さない。
  */
 
 export const CHECKS_STORAGE_KEY = "reviewcheck.checks.v1";
@@ -142,6 +143,33 @@ export function recheckCopy(previousIso) {
   };
 }
 
+export function encodePlaceReportId(placeId) {
+  const id = String(placeId || "").trim();
+  const json = JSON.stringify({ placeId: id });
+  const bytes = new TextEncoder().encode(json);
+  let bin = "";
+  for (const byte of bytes) bin += String.fromCharCode(byte);
+  const b64 =
+    typeof btoa === "function"
+      ? btoa(bin)
+      : Buffer.from(bin, "binary").toString("base64");
+  return `p1.${b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
+}
+
+/**
+ * 端末に残してよい項目だけ。星・店名・点数は落とす。
+ * @param {unknown} entry
+ * @returns {{ placeId?: string, diagnosedAt?: string }}
+ */
+export function rememberedCheck(entry) {
+  const placeId = typeof entry?.placeId === "string" ? entry.placeId.trim() : "";
+  const diagnosedAt = typeof entry?.diagnosedAt === "string" ? entry.diagnosedAt : "";
+  const next = {};
+  if (placeId) next.placeId = placeId;
+  if (diagnosedAt) next.diagnosedAt = diagnosedAt;
+  return next;
+}
+
 export function encodeReportId(input) {
   const json = JSON.stringify(input);
   const bytes = new TextEncoder().encode(json);
@@ -154,9 +182,21 @@ export function encodeReportId(input) {
   return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+/**
+ * @param {Record<string, unknown>} existing
+ * @param {string} key
+ * @param {unknown} entry
+ * @returns {Record<string, { placeId?: string, diagnosedAt?: string }>}
+ */
 export function mergeCheckEntry(existing, key, entry) {
-  const base = existing && typeof existing === "object" ? { ...existing } : {};
-  base[key] = entry;
+  /** @type {Record<string, { placeId?: string, diagnosedAt?: string }>} */
+  const base = {};
+  const source = existing && typeof existing === "object" ? existing : {};
+  for (const [itemKey, item] of Object.entries(source)) {
+    const slim = rememberedCheck(item);
+    if (slim.placeId || slim.diagnosedAt) base[itemKey] = slim;
+  }
+  base[key] = rememberedCheck(entry);
   const keys = Object.keys(base);
   if (keys.length <= CHECKS_STORAGE_LIMIT) return base;
   const sorted = keys.sort((a, b) => {

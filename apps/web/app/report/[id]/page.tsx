@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  diagnose,
-  decodeReportId,
-  SCORE_RULE_VERSION,
-} from "@reviewcheck/core";
+import { headers } from "next/headers";
+import { encodePlaceReportId } from "@reviewcheck/core";
 import { SITE } from "@reviewcheck/config";
 import { Container } from "@/components/Container";
 import { ReportView } from "@/components/ReportView";
@@ -12,7 +9,10 @@ import { AffiliateRefCapture } from "@/components/AffiliateRefCapture";
 import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
-import { publishCohort } from "@/lib/cohort/service";
+import { isPreviewRequest } from "@/lib/previewRequest";
+import { reportLoadPlan } from "@/lib/reportLoadPlan";
+import { loadSharedPlace } from "@/lib/loadSharedPlace";
+import { sanitizeRefLine } from "@/lib/refLine";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -26,36 +26,12 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const input = decodeReportId(id);
-  if (!input) {
-    return buildMetadata({
-      title: "Google口コミ診断結果",
-      description:
-        "Googleマップの公開情報から計算した選ばれやすさの目安です。",
-      path: `/report/${id}/`,
-      ogType: "article",
-      omitOgImage: true,
-    });
-  }
-  let title = "Google口コミ診断結果";
-  let description =
-    "Googleマップの公開情報（星・口コミ数・返信・新しさ・プロフィール）を、決まった採点ルールで計算した目安です。";
-  try {
-    const result = diagnose(input, {
-      providers: input.store.source === "places" ? ["google-places"] : [],
-    });
-    const name = result.input.store.name ? `｜${result.input.store.name}` : "";
-    title = `選ばれやすさ ${result.score}点（目安）${name}`;
-    description = `選ばれやすさ ${result.score}点（目安）。採点ルール v${SCORE_RULE_VERSION}。Googleマップの公開情報から計算した目安で、断定ではありません。`;
-  } catch {
-    /* タイトルは汎用のまま */
-  }
   return buildMetadata({
-    title,
-    description,
+    title: "口コミ診断の共有",
+    description:
+      "共有された口コミ診断です。点数は、開いた人が店舗を取り直したときに出します。",
     path: `/report/${id}/`,
     ogType: "article",
-    omitOgImage: true,
   });
 }
 
@@ -68,66 +44,45 @@ export default async function ReportPage({
 }) {
   const { id } = await params;
   const { ref, ref_line: refLine } = await searchParams;
-  const input = decodeReportId(id);
+  const headerList = await headers();
+  const preview = isPreviewRequest(headerList);
+  const plan = reportLoadPlan(id, preview);
+  const again = checkHref(ref, refLine);
 
-  if (!input) {
+  if (!plan.fetch) {
     return (
-      <Container className="py-16 text-center">
-        <h1 className="text-xl font-bold text-slate-900">
-          レポートが見つかりませんでした
-        </h1>
-        <p className="mt-2 text-slate-600">
-          URLが正しくない可能性があります。もう一度診断してください。
-        </p>
-        <Link
-          href="/check/"
-          className="mt-6 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700"
-        >
-          口コミ診断へ
-        </Link>
-      </Container>
+      <QuietReport
+        title={
+          plan.reason === "invalid"
+            ? "レポートが見つかりませんでした"
+            : plan.reason === "preview"
+              ? "このリンクは、開いた人が診断を取り直します"
+              : "このリンクからは、店舗を取り直せません"
+        }
+        body={
+          plan.reason === "preview"
+            ? "プレビューでは点数を出していません。受け取った人がブラウザで開くと、店舗の識別子から取り直します。"
+            : plan.reason === "no-place"
+              ? "以前のリンクに、取り直すための店舗の識別子がありません。紹介の情報は残しています。店舗名から、もう一度診断してください。"
+              : "URLが正しくない可能性があります。紹介の情報は残しています。もう一度診断してください。"
+        }
+        href={again}
+      />
     );
   }
 
-  let result;
-  let failed = false;
-  try {
-    result = diagnose(input, {
-      providers: input.store.source === "places" ? ["google-places"] : [],
-    });
-  } catch {
-    failed = true;
-  }
-
-  if (failed || !result) {
+  const loaded = await loadSharedPlace(forwardedRequest(headerList), plan.placeId);
+  if (!loaded.ok) {
     return (
-      <Container className="py-16 text-center">
-        <h1 className="text-xl font-bold text-slate-900">診断に失敗しました</h1>
-        <Link
-          href="/check/"
-          className="mt-6 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700"
-        >
-          もう一度診断する
-        </Link>
-      </Container>
+      <QuietReport
+        title="いまは取り直せませんでした"
+        body={`${loaded.message} 紹介の情報は残しています。`}
+        href={again}
+      />
     );
   }
 
-  const shareUrl = `${SITE.baseUrl}/report/${id}/`;
-  const fetchedAtRecorded =
-    typeof input.diagnosedAt === "string" &&
-    !Number.isNaN(Date.parse(input.diagnosedAt));
-  const cohort = await publishCohort({
-    category: result.input.store.category,
-    address: result.input.store.address,
-    score: result.score,
-    rating: result.input.store.rating,
-    reviewCount: result.input.store.reviewCount,
-    hasOwnerReplies: result.input.store.hasOwnerReplies,
-    ruleVersion: result.ruleVersion,
-    record: false,
-  });
-
+  const shareUrl = `${SITE.baseUrl}/report/${encodePlaceReportId(plan.placeId)}/`;
   return (
     <Container className="pb-12 pt-4 sm:pt-6">
       <AffiliateRefCapture />
@@ -135,24 +90,66 @@ export default async function ReportPage({
         data={breadcrumbJsonLd([
           { name: "トップ", path: "/" },
           { name: "口コミ診断", path: "/check/" },
-          { name: "診断結果", path: `/report/${id}/` },
+          { name: "診断結果", path: `/report/${encodePlaceReportId(plan.placeId)}/` },
         ])}
       />
       <h1 className="sr-only">
-        選ばれやすさ {result.score}点（目安）
-        {result.input.store.name ? `｜${result.input.store.name}` : ""}
+        選ばれやすさ {loaded.result.score}点（目安）
+        {loaded.result.input.store.name ? `｜${loaded.result.input.store.name}` : ""}
       </h1>
       <ReportView
-        result={result}
+        result={loaded.result}
         shareUrl={shareUrl}
         refCode={ref}
         refLine={refLine}
         shareContext={{
-          loadedRuleVersion: input.ruleVersion,
-          fetchedAtRecorded,
+          loadedRuleVersion: loaded.result.ruleVersion,
+          fetchedAtRecorded: true,
         }}
-        cohort={cohort}
+        cohort={{ show: false }}
       />
     </Container>
   );
+}
+
+function QuietReport({
+  title,
+  body,
+  href,
+}: {
+  title: string;
+  body: string;
+  href: string;
+}) {
+  return (
+    <Container className="py-16 text-center">
+      <AffiliateRefCapture />
+      <h1 className="text-xl font-bold text-slate-900">{title}</h1>
+      <p className="mt-3 text-base leading-relaxed text-slate-800">{body}</p>
+      <Link
+        href={href}
+        className="mt-6 inline-flex rounded-xl bg-blue-600 px-5 py-3 text-base font-bold text-white underline decoration-white underline-offset-2 hover:bg-blue-700"
+      >
+        口コミ診断へ
+      </Link>
+    </Container>
+  );
+}
+
+function checkHref(ref: string | undefined, refLine: string | undefined): string {
+  const params = new URLSearchParams();
+  if (ref?.trim()) params.set("ref", ref.trim());
+  const line = sanitizeRefLine(refLine);
+  if (line) params.set("ref_line", line);
+  const query = params.toString();
+  return query ? `/check/?${query}` : "/check/";
+}
+
+function forwardedRequest(headerList: Headers): Request {
+  const next = new Headers();
+  for (const name of ["x-forwarded-for", "x-real-ip"]) {
+    const value = headerList.get(name);
+    if (value) next.set(name, value);
+  }
+  return new Request("https://reviewcheck.jp/report/", { headers: next });
 }

@@ -108,12 +108,14 @@ describe("診断結果の並び", () => {
 
     expect(container).toHaveTextContent(RESULT_ESTIMATE_SENTENCE);
     expect(container).toHaveTextContent(
-      "採点ルール v1.0 ／ 取得：2026-10-24 17:41（日本時間） ／ 出典：Googleマップ",
+      "採点ルール v1.0 ／ 取得：2026-10-24 17:41（日本時間）",
     );
+    expect(container).not.toHaveTextContent("Google Maps");
+    expect(container.querySelector("[data-places-attribution]")).toBeNull();
     expect(container).toHaveTextContent(
-      "星4.0／口コミ45件／周辺5店中 口コミ数 第5位",
+      "星4.0／口コミ45件／この検索の5店中 口コミ数 第5位",
     );
-    expect(container).toHaveTextContent("このエリアで比べたお店");
+    expect(container).toHaveTextContent("この検索で比べたお店");
     expect(container).toHaveTextContent("中央値は160件");
     expect(container).toHaveTextContent("あと115件");
     const estimate = container.querySelector("[data-result-section='estimate']");
@@ -290,7 +292,7 @@ describe("特典と比較", () => {
         screen.queryByRole("link", { name: "共有した人に相談する（LINE）" }),
       ).not.toBeInTheDocument();
       expect(screen.queryByLabelText("自分の公式LINEのURL")).not.toBeInTheDocument();
-      expect(screen.queryByRole("heading", { name: "このエリアで比べたお店" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "この検索で比べたお店" })).not.toBeInTheDocument();
     });
     expect(screen.getByText(RESULT_ESTIMATE_SENTENCE)).toBeInTheDocument();
     window.history.pushState(null, "", "/report/embed/");
@@ -298,10 +300,12 @@ describe("特典と比較", () => {
 
   test("座標があるときは順位の直下に一覧を残し、地図タイルは出さない", () => {
     window.history.pushState(null, "", "/report/map/");
-    const result = diagnose({
+    const result = {
+      ...diagnose({
       ...fixture.input,
       store: {
         ...fixture.input.store,
+        source: "places",
         lat: 36.06,
         lng: 138.05,
         mapsUrl: "https://maps.google.com/?q=subject",
@@ -312,7 +316,9 @@ describe("特典と比較", () => {
         lng: 138.05,
         mapsUrl: `https://maps.google.com/?q=peer${index}`,
       })),
-    });
+    }),
+      placesAttributed: true,
+    };
     const { container } = render(
       <ReportView result={result} shareUrl="https://reviewcheck.jp/report/map/" />,
     );

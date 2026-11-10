@@ -13,17 +13,24 @@ export default function TermsPage() {
   return (
     <Container className="py-12">
       <h1 className="text-2xl font-extrabold text-slate-900">利用規約</h1>
-      <div className="mt-6 space-y-6 text-sm leading-relaxed text-slate-700">
+      <p className="mt-3 text-base text-slate-800">運営者は株式会社ベストトラストです。</p>
+      <div className="mt-6 space-y-6 text-base leading-relaxed text-slate-800">
         <section>
           <h2 className="font-bold text-slate-900">第1条（本サービス）</h2>
           <p className="mt-2">
-            {SITE.name}（以下「本サービス」）は、店舗名またはGoogleマップURL等の入力情報・公開情報をもとに、Google口コミの状態を簡易診断し、口コミ改善・MEO対策等の相談導線を提供するサービスです。
+            {SITE.name}（以下「本サービス」）は、店舗名またはGoogleマップURL等の入力情報と、その場で受け取った公開情報をもとに、Google口コミの状態を簡易診断し、口コミ改善・MEO対策等の相談導線を提供するサービスです。
           </p>
         </section>
         <section>
           <h2 className="font-bold text-slate-900">第2条（診断結果の位置づけ）</h2>
           <p className="mt-2">
             診断結果は簡易的な目安であり、検索順位・来店数・口コミ増加・星評価の改善を保証するものではありません。表示される数値（あと何件・何点 等）はGoogleの丸め処理や反映タイミングにより実際と異なる場合があります。
+          </p>
+          <p className="mt-2">
+            点数と、1回の検索の中での口コミ数の並びは、その場の応答から計算しています。この計算を続けることが Google の利用条件で許されるかは、書面の確認が終わるまで未確定です。本サービスは、その確認が終わったとは表示しません。
+          </p>
+          <p className="mt-2">
+            順位は、その検索が返したお店の中の並びです。半径の中のすべての店の順位ではありません。半径は設計上の目安です。
           </p>
         </section>
         <section>
@@ -35,7 +42,7 @@ export default function TermsPage() {
         <section>
           <h2 className="font-bold text-slate-900">第4条（免責）</h2>
           <p className="mt-2">
-            本サービスの利用により生じた損害について、当方は法令で認められる範囲で責任を負わないものとします。外部サービス（Google等）の仕様変更・障害等による影響についても同様とします。
+            本サービスの利用により生じた損害について、当方は法令で認められる範囲で責任を負わないものとします。外部サービス（Google等）の仕様変更・障害等による影響についても同様とします。画面に出した見積りの円は、請求書の金額ではありません。
           </p>
         </section>
         <section>
@@ -44,9 +51,6 @@ export default function TermsPage() {
             本規約は予告なく変更されることがあります。変更後の規約は本ページに掲載した時点で効力を生じます。
           </p>
         </section>
-        <p className="text-xs text-slate-500">
-          ※本規約は草案です。実運用に合わせて加筆・修正してください。
-        </p>
       </div>
     </Container>
   );

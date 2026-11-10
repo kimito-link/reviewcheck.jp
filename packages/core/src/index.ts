@@ -5,6 +5,7 @@ export * from "./scoring/index";
 export * from "./simulator/index";
 export * from "./competitor/index";
 export * from "./areaMap/index";
+export * from "./catchment/index";
 export * from "./providers/index";
 export * from "./suggest/index";
 export * from "./reviews/index";

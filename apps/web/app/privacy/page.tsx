@@ -15,37 +15,59 @@ export default function PrivacyPage() {
       <h1 className="text-2xl font-extrabold text-slate-900">
         プライバシーポリシー
       </h1>
-      <div className="mt-6 space-y-6 text-sm leading-relaxed text-slate-700">
+      <p className="mt-3 text-base text-slate-800">
+        運営者は株式会社ベストトラストです。このページは、いまのプログラムの動きに合わせています。Google の利用条件を満たしているとは書いていません。
+      </p>
+      <div className="mt-6 space-y-6 text-base leading-relaxed text-slate-800">
         <section>
-          <h2 className="font-bold text-slate-900">1. 取得する情報</h2>
+          <h2 className="font-bold text-slate-900">1. 診断で扱う情報</h2>
           <p className="mt-2">
-            当サービスは、診断のために利用者が入力した店舗名・GoogleマップURL・星評価・口コミ数・競合情報等を取得します。閲覧履歴を常時収集することはありません。
+            利用者が入力した店舗名・GoogleマップのURL・星評価・口コミ数・競合の情報を、その診断のあいだ扱います。閲覧履歴を常時集めることはありません。
+          </p>
+          <p className="mt-2">
+            現在地からお店を探すときは、端末の位置情報を使います。問い合わせのときは約100mに丸めます。その座標は、候補を返すためだけに使い、診断のあとには保存しません。
           </p>
         </section>
         <section>
-          <h2 className="font-bold text-slate-900">2. 利用目的</h2>
+          <h2 className="font-bold text-slate-900">2. Google から受け取った内容</h2>
           <p className="mt-2">
-            取得した情報は、当サービスの簡易診断および結果表示のためにのみ使用します。診断結果の共有機能を利用する場合に限り、入力内容を含む共有用URLを生成します。
+            接続しているときは、店舗名やURLや Place ID を Google Places API へ送り、店名・星・口コミ数などをその応答から画面に出します。口コミの本文は取りません。
+          </p>
+          <p className="mt-2">
+            店名・星・口コミ数・口コミ本文・Google のURL・座標は、当サービスの保存領域へ新しく書きません。古いキーが残っていても、診断と共有の画面はそれを読みません。Place ID は、共有リンクに載ることがあります。
+          </p>
+          <p className="mt-2">
+            手入力の星や件数は、利用者がその場で渡した値として計算します。Google の画面から書き写した値が、書き写しただけで許されるとは書いていません。
           </p>
         </section>
         <section>
-          <h2 className="font-bold text-slate-900">3. 外部サービスへの照会</h2>
+          <h2 className="font-bold text-slate-900">3. 共有と LINE</h2>
           <p className="mt-2">
-            店舗情報の取得のため、Google Places API
-            等の外部サービスへ店舗名・GoogleマップURL・Place
-            ID等を照会する場合があります（接続している場合）。当サービスは、口コミの購入・偽レビュー・やらせ・競合への低評価工作などの不正行為は一切行いません。
+            口コミ診断の共有リンクには、Place ID と、許可した共有者の LINE のURL（ref_line）だけを載せます。店名・星・口コミ数・座標・個人の名前は、URL にもプレビュー画像にも入れません。
+          </p>
+          <p className="mt-2">
+            リンクを人が開くと、Place ID から店舗を取り直します。プレビューやクローラは取り直しません。予算や回数の上限に当たると、点数は出さず、もう一度診断する案内を出します。
+          </p>
+          <p className="mt-2">
+            LINE で送るときは、利用者が選んだ文面に店名や点数が含まれることがあります。共有ボタンは LINE の共有機能へ、そのURLを渡します。
           </p>
         </section>
         <section>
-          <h2 className="font-bold text-slate-900">4. 第三者提供</h2>
+          <h2 className="font-bold text-slate-900">4. 端末に残るもの</h2>
           <p className="mt-2">
-            法令に基づく場合を除き、取得した情報を第三者に提供しません。
+            Google から取った診断は、このブラウザの前回点数として保存しません。利用者が自分で数字を入れて診断したときだけ、点数と比較のための日付をそのブラウザに残すことがあります。店名そのものは残しません。
+          </p>
+          <p className="mt-2">
+            Chrome 拡張は、前回の点検日時と Place ID だけを、その端末の拡張の保存領域に残します。星・店名・点数は残しません。権限は増やしていません。
           </p>
         </section>
         <section>
-          <h2 className="font-bold text-slate-900">5. Cookie・アクセス解析</h2>
+          <h2 className="font-bold text-slate-900">5. 回数の制限と、書いていない記録</h2>
           <p className="mt-2">
-            サービス改善のためアクセス解析を利用する場合があります。個人を特定する目的では使用しません。
+            連続した自動取得を止めるため、接続元を約1日数えます。別のアクセス解析サービスは足していません。
+          </p>
+          <p className="mt-2">
+            業種と地域で点数を集計する記録は、確認が終わるまで読み書きしません。継続監視が Google の点数を新しく記録することも、同じ確認が終わるまで止めています。既にある記録は、この変更では消さず、公開の診断画面には出しません。
           </p>
         </section>
         <section>
@@ -54,12 +76,9 @@ export default function PrivacyPage() {
             個人情報保護管理者：株式会社ベストトラスト 個人情報お問い合わせ窓口
           </p>
           <p className="mt-2">
-            本ポリシーに関するお問い合わせは、{SITE.contactEmail} または当サイトの相談・お問い合わせ窓口までご連絡ください。
+            このポリシーに関するお問い合わせは、{SITE.contactEmail} または当サイトの相談・お問い合わせ窓口までご連絡ください。
           </p>
         </section>
-        <p className="text-xs text-slate-500">
-          ※本ポリシーは草案です。実運用に合わせて加筆・修正してください。
-        </p>
       </div>
     </Container>
   );

@@ -171,10 +171,17 @@ export interface DiagnosisResult {
   /** 接続済みデータプロバイダ名（mock時は空） */
   providers: string[];
   /**
-   * マップ口コミの簡易分析（代表口コミが取得できた場合のみ）。
-   * reportId（input）には含めず、ライブ診断時にAPIが付与する。
+   * マップ口コミの簡易分析。口コミ本文は取得しないため、新しい診断では付けない。
+   * 型だけ残し、画面と保存には使わない。
    */
   reviewAnalysis?: import("../reviews/index").ReviewAnalysis | null;
+  /**
+   * 店名・星・口コミ数が Places の応答そのものか。
+   * 手入力で上書きしたとき、サンプルのときは false。出典表示の条件。
+   */
+  placesAttributed?: boolean;
+  /** 検索半径と標本の説明。place ID 以外の保存には使わない。 */
+  areaScopeText?: string;
 }
 
 /** 入力が不正なときに投げる */

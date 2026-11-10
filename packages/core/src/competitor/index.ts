@@ -5,8 +5,12 @@ import type {
 } from "../types/index";
 import { round1 } from "../utils/number";
 
-/** 上限件数（UIでもこの数まで） */
-export const MAX_COMPETITORS = 5;
+/**
+ * 画面に残す周辺店の上限。
+ * Nearby Search の maxResultCount は 20。自店がその中に入ると周辺は最大 19。
+ * ここはそれより少ない 10 で、結果の先頭が点数と相談のまま読めるようにする。
+ */
+export const MAX_COMPETITORS = 10;
 
 /**
  * 自店舗と競合（最大5件）を比較し、平均・差・順位を返す。

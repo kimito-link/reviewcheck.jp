@@ -5,7 +5,6 @@ import { CTAS, RESULT_ESTIMATE_SENTENCE, withRefCode } from "@reviewcheck/config
 import { ScoreMeter, ScoreBadge, StatCompare } from "@reviewcheck/ui";
 import { Disclaimer } from "./Disclaimer";
 import { ShareReport } from "./ShareReport";
-import { ReviewInsights } from "./ReviewInsights";
 import { FindingCard } from "./FindingCard";
 import {
   buildCountSummary,
@@ -17,6 +16,7 @@ import {
 } from "@/lib/resultCopy";
 import type { CohortPublic } from "@/lib/cohort/public";
 import { AreaCompare } from "./result/AreaCompare";
+import { GoogleMapsCredit } from "./result/GoogleMapsCredit";
 import { CohortCompareNote } from "./result/CohortCompareNote";
 import { DiagnosisPerks } from "./result/DiagnosisPerks";
 import { DiagnosisProgressNote } from "./result/DiagnosisProgressNote";
@@ -118,9 +118,10 @@ export function ReportView({
   const area = buildAreaComparison(store, competitors);
   const countLine = buildCountSummary(store, comparison);
   const fetchedAtRecorded = shareContext ? shareContext.fetchedAtRecorded : true;
+  const saveOnDevice = store.source !== "places" && fetchedAtRecorded;
   const metaLine = fetchedAtRecorded
-    ? `採点ルール v${result.ruleVersion} ／ 取得：${formatDiagnosedAtJst(result.diagnosedAt)}（日本時間） ／ 出典：Googleマップ`
-    : `採点ルール v${result.ruleVersion} ／ 取得：記録なし ／ 出典：Googleマップ`;
+    ? `採点ルール v${result.ruleVersion} ／ 取得：${formatDiagnosedAtJst(result.diagnosedAt)}（日本時間）`
+    : `採点ルール v${result.ruleVersion} ／ 取得：記録なし`;
   const ruleNote = shareContext
     ? staleRuleVersionNote(shareContext.loadedRuleVersion)
     : null;
@@ -172,7 +173,7 @@ export function ReportView({
                   score={result.score}
                   ruleVersion={result.ruleVersion}
                   diagnosedAt={result.diagnosedAt}
-                  enabled={fetchedAtRecorded}
+                  enabled={saveOnDevice}
                   className="text-center lg:text-left"
                 />
               </div>
@@ -184,6 +185,7 @@ export function ReportView({
                 <p className="mt-2 text-center text-base font-bold text-slate-900 lg:text-left">
                   {store.name || "店舗"}
                 </p>
+                {result.placesAttributed ? <GoogleMapsCredit /> : null}
                 {store.category || store.address ? (
                   <p className="mt-0.5 text-center text-base text-slate-800 lg:text-left">
                     {[store.category, store.address].filter(Boolean).join("｜")}
@@ -209,7 +211,13 @@ export function ReportView({
             </div>
           </div>
 
-          {area ? <AreaCompare area={area} /> : null}
+          {area ? (
+            <AreaCompare
+              area={area}
+              attributeToGoogle={result.placesAttributed === true}
+              scopeText={result.areaScopeText}
+            />
+          ) : null}
 
           <section data-result-section="findings" className="space-y-4">
             <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
@@ -217,9 +225,6 @@ export function ReportView({
             </h2>
             <p className="text-base leading-relaxed text-slate-800">{result.summary}</p>
             <FindingCard result={result} />
-            {result.reviewAnalysis ? (
-              <ReviewInsights analysis={result.reviewAnalysis} />
-            ) : null}
           </section>
 
           <section id="score-breakdown" data-result-section="causes" className="space-y-4">
@@ -497,7 +502,15 @@ export function ReportView({
             Googleの評価は丸め処理・反映タイミングがあるため、目標までの件数は目安です。
           </p>
           {autoCompetitors ? (
-            <p>周辺の同業種から口コミ数の多い順に自動抽出した目安です。</p>
+            <p>
+              周辺の店は、1回の検索が返した中から口コミ数の多い順に最大10件を出しています。エリア全体の順位ではありません。半径は設計上の目安です。
+            </p>
+          ) : null}
+          {result.areaScopeText ? <p>{result.areaScopeText}</p> : null}
+          {result.placesAttributed ? (
+            <p>
+              点数は、その場で受け取った星・口コミ数・公開プロフィールから計算しています。この計算を続けてよいかは、書面の確認が終わるまで未確定です。
+            </p>
           ) : null}
           {area ? (
             <p>

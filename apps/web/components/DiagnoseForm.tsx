@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import type { Competitor, DiagnosisResult, NearbyStore } from "@reviewcheck/core";
-import { encodeReportId } from "@reviewcheck/core";
+import { encodePlaceReportId } from "@reviewcheck/core";
 import { SITE, POLICY_NOTE } from "@reviewcheck/config";
 import { ReportView } from "./ReportView";
+import { GoogleMapsCredit } from "./result/GoogleMapsCredit";
 import { Disclaimer } from "./Disclaimer";
 import { resolveRefCode } from "@/lib/affiliateRef";
 import { parseCohortPublic, type CohortPublic } from "@/lib/cohort/public";
@@ -219,9 +220,12 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
     }
   }
 
-  const shareUrl = result
-    ? `${SITE.baseUrl}/report/${encodeReportId(result.input)}/`
-    : undefined;
+  const placeId = result?.input.store.placeId?.trim();
+  const shareUrl = placeId
+    ? `${SITE.baseUrl}/report/${encodePlaceReportId(placeId)}/`
+    : result
+      ? `${SITE.baseUrl}/check/`
+      : undefined;
 
   return (
     <div className="space-y-8">
@@ -278,9 +282,9 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
 
             {nearby && nearby.length > 0 ? (
               <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50/50 p-3">
-                <p className="text-xs font-bold text-slate-700">
+                <p className="text-base font-bold text-slate-900">
                   現在地周辺{areaHint ? `（${areaHint}付近）` : ""}のお店
-                  <span className="ml-1 font-normal text-slate-500">
+                  <span className="ml-1 font-normal text-slate-800">
                     ／ タップで診断
                   </span>
                 </p>
@@ -291,26 +295,26 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
                         type="button"
                         onClick={() => diagnoseNearby(s)}
                         disabled={loading}
-                        className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-blue-400 hover:bg-blue-50 disabled:opacity-60"
+                        className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-base transition hover:border-blue-400 hover:bg-blue-50 disabled:opacity-60"
                       >
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-bold text-slate-900">
+                          <span className="block truncate font-bold text-slate-900">
                             {s.name ?? "店舗"}
                           </span>
                           {s.category ? (
-                            <span className="block truncate text-xs text-slate-500">
+                            <span className="block truncate text-slate-800">
                               {s.category}
                             </span>
                           ) : null}
                         </span>
                         <span className="flex shrink-0 items-center gap-3">
                           {typeof s.rating === "number" ? (
-                            <span className="text-xs font-bold text-slate-700">
+                            <span className="font-bold text-slate-900">
                               ★{s.rating.toFixed(1)}
                             </span>
                           ) : null}
                           {typeof s.reviewCount === "number" ? (
-                            <span className="font-mono text-xs text-slate-500">
+                            <span className="font-mono text-slate-800">
                               {s.reviewCount}件
                             </span>
                           ) : null}
@@ -322,8 +326,9 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-2 text-[11px] text-slate-500">
-                  ※ 位置情報はお店候補の表示にのみ使用し、保存しません。
+                <GoogleMapsCredit />
+                <p className="mt-2 text-base text-slate-800">
+                  位置情報はお店候補の表示にだけ使い、このあと保存しません。問い合わせは約100mに丸めています。
                 </p>
               </div>
             ) : null}

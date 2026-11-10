@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  SCORE_HISTORY_FIRST,
   parseStoredScore,
   planScoreHistory,
   scoreHistoryKey,
@@ -31,7 +30,7 @@ export function ScoreHistoryNote({
 
   useEffect(() => {
     if (!enabled) {
-      setMessage(SCORE_HISTORY_FIRST);
+      setMessage(null);
       return;
     }
     const key = scoreHistoryKey(shopName);
