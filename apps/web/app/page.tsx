@@ -12,6 +12,13 @@ import { DiagnosisCounter } from "@/components/DiagnosisCounter";
 import { LineCtaButton } from "@/components/LineCtaButton";
 import { JsonLd } from "@/components/JsonLd";
 import { softwareApplicationJsonLd, faqJsonLd } from "@/lib/jsonld";
+import type { Metadata } from "next";
+
+// ★トップだけ canonical が出ていなかった（2026-11-09 本番実測。ほかのページは buildMetadata で出ている）。
+//   layout の metadata に置くと、自前の canonical を持たないページまで「トップの複製」になるため、ここに置く。
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const WORRIES = [
   "競合より口コミ数が少ない",

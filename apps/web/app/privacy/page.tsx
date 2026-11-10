@@ -51,6 +51,9 @@ export default function PrivacyPage() {
         <section>
           <h2 className="font-bold text-slate-900">6. お問い合わせ</h2>
           <p className="mt-2">
+            個人情報保護管理者：株式会社ベストトラスト 個人情報お問い合わせ窓口
+          </p>
+          <p className="mt-2">
             本ポリシーに関するお問い合わせは、{SITE.contactEmail} または当サイトの相談・お問い合わせ窓口までご連絡ください。
           </p>
         </section>

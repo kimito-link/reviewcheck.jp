@@ -1,5 +1,10 @@
 @../web-ios-android/CLAUDE.md
 
+★すべてのAI共通の「作業はすべてGitHubに残す」ルール（ブランチ名・下書きPR・PR本文の4行・Issueのラベル）は
+[`AGENTS.md`](AGENTS.md) が正本。Claude もそのとおりに動く（ブランチは `claude/〇〇`、マージ・本番反映はしない）。
+
+@AGENTS.md
+
 # reviewcheck.jp（口コミチェック.jp）
 
 店舗名/Google Map URLから口コミ状況を無料診断し、口コミ改善・MEO相談へ送客するサービス。
