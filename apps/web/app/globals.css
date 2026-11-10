@@ -138,9 +138,40 @@ h3 {
   background: transparent !important;
   border: none !important;
 }
-.area-map-popup .leaflet-popup-content {
-  margin: 10px 14px;
-  font-size: 16px;
-  line-height: 1.5;
+.leaflet-tooltip.area-map-label {
+  background: #ffffff;
   color: #0f172a;
+  border: 2px solid #0f172a;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.18);
+  padding: 6px 8px;
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 500;
+  white-space: normal;
+  writing-mode: horizontal-tb;
+  box-sizing: border-box;
+  width: 8.75rem;
+  max-width: 8.75rem;
+}
+@media (min-width: 640px) {
+  .leaflet-tooltip.area-map-label {
+    width: 14rem;
+    max-width: 14rem;
+  }
+}
+.leaflet-tooltip.area-map-label-subject {
+  border-width: 3px;
+}
+.leaflet-tooltip.area-map-label::before {
+  display: none;
+}
+.area-map-label-name,
+.area-map-label-role,
+.area-map-label-facts {
+  display: block;
+}
+.area-map-label-name,
+.area-map-label-role {
+  font-weight: 800;
 }

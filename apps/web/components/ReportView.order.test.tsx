@@ -328,7 +328,7 @@ describe("特典と比較", () => {
       "causes",
     ]);
     const frame = container.querySelector("[data-area-map-frame]");
-    expect(frame?.className).toContain("h-64");
+    expect(frame?.className).toContain("h-[34rem]");
     expect(frame?.className).toContain("sm:h-80");
     const area = container.querySelector("[data-result-section='area-map']");
     expect(area?.textContent).toContain("km");

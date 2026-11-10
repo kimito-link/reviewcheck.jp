@@ -45,7 +45,7 @@ describe("エリアの比較", () => {
     const section = container.querySelector("[data-result-section='area-map']");
     const frame = section?.querySelector("[data-area-map-frame]");
     expect(frame).toBeTruthy();
-    expect(frame?.className).toContain("h-64");
+    expect(frame?.className).toContain("h-[34rem]");
     expect(frame?.className).toContain("sm:h-80");
     expect(frame?.getAttribute("data-area-map-state")).toBe("pending");
     expect(section?.textContent).toContain("テスト食堂");
@@ -82,7 +82,7 @@ describe("エリアの比較", () => {
       expect(screen.getByRole("status")).toHaveTextContent("地図を表示できませんでした");
     });
     const frame = container.querySelector("[data-area-map-frame]");
-    expect(frame?.className).toContain("h-64");
+    expect(frame?.className).toContain("h-[34rem]");
     expect(frame?.className).toContain("sm:h-80");
     expect(frame?.getAttribute("data-area-map-state")).toBe("fallback");
     expect(container.querySelector("[data-area-map-canvas]")).toBeNull();

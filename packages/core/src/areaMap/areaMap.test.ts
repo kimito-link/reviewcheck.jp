@@ -123,7 +123,17 @@ describe("buildAreaComparison: 座標と距離", () => {
       area.pins.map((pin) => `${pin.kind}:${pin.mark}`).sort(),
       ["peer:1", "peer:2", "peer:4", "subject:自"],
     );
-    assert.equal(area.pins.find((pin) => pin.kind === "subject")?.mark, "自");
+    const subjectPin = area.pins.find((pin) => pin.kind === "subject");
+    assert.equal(subjectPin?.mark, "自");
+    assert.equal(subjectPin?.name, "テスト食堂");
+    assert.equal(subjectPin?.rating, 4);
+    assert.equal(subjectPin?.reviewCount, 45);
+    assert.equal(subjectPin?.reviewCountRank, 5);
+    assert.match(subjectPin?.label ?? "", /診断したお店/);
+    const peerPin = area.pins.find((pin) => pin.mark === "1");
+    assert.equal(peerPin?.name, "競合A");
+    assert.equal(peerPin?.reviewCount, 320);
+    assert.equal(peerPin?.reviewCountRank, 1);
     assert.equal(area.places.filter((place) => place.distanceMeters == null).length, 2);
 
     const noSubjectPoint = buildAreaComparison(
