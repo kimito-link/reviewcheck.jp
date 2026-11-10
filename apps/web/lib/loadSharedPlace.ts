@@ -12,6 +12,11 @@ import {
   type DiagnosisResult,
 } from "@reviewcheck/core";
 import { guardPlacesCall } from "@/lib/costGuard";
+import {
+  PLACES_FIXTURE_PLACE_ID,
+  buildPlacesFixtureResult,
+  placesFixtureEnabled,
+} from "@/lib/placesFixture";
 
 export type SharedPlaceLoad =
   | { ok: true; result: DiagnosisResult }
@@ -25,6 +30,9 @@ export async function loadSharedPlace(
   request: Request,
   placeId: string,
 ): Promise<SharedPlaceLoad> {
+  if (placesFixtureEnabled() && placeId.trim() === PLACES_FIXTURE_PLACE_ID) {
+    return { ok: true, result: buildPlacesFixtureResult() };
+  }
   const placesEnabled = getEnabledProviders().length > 0;
   if (placesEnabled) {
     const storeGuard = await guardPlacesCall(request, "diagnose", PLACES_COST_YEN.store);

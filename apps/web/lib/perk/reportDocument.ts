@@ -80,6 +80,49 @@ function cohortParagraphs(cohort: CohortPublic | null): string[] {
   return lines;
 }
 
+/** Google の結果を端末に残すとき。点数・順位・推定の販売文は入れない。 */
+function buildPlacesFactsDocument(result: DiagnosisResult): DiagnosisReportDocument {
+  const store = result.input.store;
+  const when = formatDiagnosedAtJst(result.diagnosedAt);
+  const missed = collectUnconfirmedLines(result);
+  return {
+    lead: "取得できた公開情報です。点数と順位は入れていません。未確認の項目は、足りないものとしては書いていません。このファイルはこの端末の中に残ります。",
+    blocks: [
+      {
+        heading: "取得できた公開情報",
+        paragraphs: [
+          `星 ${store.rating.toFixed(1)}`,
+          `口コミ ${store.reviewCount}件`,
+          `電話 ${store.phone?.trim() || "公開情報に無し"}`,
+          `ウェブサイト ${store.website?.trim() || "公開情報に無し"}`,
+          `営業時間 ${store.hasOpeningHours ? "公開情報にあり" : "公開情報に無し"}`,
+          "写真、返信、最新口コミの日付は今回取得していません。不足としては書いていません。",
+        ],
+      },
+      ...(store.name?.trim()
+        ? [{ heading: "店名", paragraphs: [store.name.trim()] }]
+        : []),
+      {
+        heading: "任意の相談",
+        paragraphs: [
+          "相談は任意です。初回15分は既存の無料相談です。月次の自動巡回は、新規では受けていません。",
+        ],
+      },
+      ...(missed.length > 0
+        ? [{ heading: "確認できなかった項目", paragraphs: missed }]
+        : []),
+      {
+        heading: "記録",
+        paragraphs: [
+          `診断日時：${when}（日本時間）`,
+          "データの取得元：Googleマップの公開情報",
+          "このレポートに点数と順位は入れていません。",
+        ],
+      },
+    ],
+  };
+}
+
 export function buildDiagnosisReport(input: {
   result: DiagnosisResult;
   previous: StoredScore | null;
@@ -87,6 +130,7 @@ export function buildDiagnosisReport(input: {
 }): DiagnosisReportDocument {
   const { result, previous, cohort } = input;
   const store = result.input.store;
+  if (store.source === "places") return buildPlacesFactsDocument(result);
   const selection = selectReviewFindings(result);
   const when = formatDiagnosedAtJst(result.diagnosedAt);
   const region = parseCohortRegion(store.address);

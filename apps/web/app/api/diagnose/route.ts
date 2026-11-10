@@ -19,6 +19,7 @@ import {
 import { incrementDiagnosisCount } from "@/lib/diagnosisCounter";
 import { incrementFunnel } from "@/lib/funnelCount";
 import { corsHeaders, guardPlacesCall } from "@/lib/costGuard";
+import { buildPlacesFixtureResult, isPlacesFixtureRequest } from "@/lib/placesFixture";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,6 +58,16 @@ async function handle(request: Request, body: DiagnoseBody) {
   };
   const demo = body.demo === true;
   const query = body.query ?? {};
+  // 画面確認用。環境変数が無い本番ではここへ入らない。Google も Redis も呼ばない。
+  if (!demo && isPlacesFixtureRequest(query)) {
+    incrementFunnel({ event: "diagnosis_complete" }).catch(() => {});
+    return NextResponse.json(buildPlacesFixtureResult(), {
+      headers: {
+        ...CORS_HEADERS,
+        "x-funnel-counted": "diagnosis_complete",
+      },
+    });
+  }
   const hasQuery = Boolean(
     query.text?.trim() || query.mapsUrl?.trim() || query.placeId?.trim(),
   );

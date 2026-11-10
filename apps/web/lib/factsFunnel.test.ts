@@ -5,6 +5,12 @@ import { acceptFunnelBody, funnelStorageKey } from "./funnelEvents";
 import { retentionCleanupPlan } from "./retentionPlan";
 import { measuredProfileGaps, supportOffersForPlaces } from "./supportOffers";
 import { buildFactsShareText } from "./resultCopy";
+import {
+  PLACES_FIXTURE_PLACE_ID,
+  PLACES_FIXTURE_TEXT,
+  buildPlacesFixtureResult,
+  isPlacesFixtureRequest,
+} from "./placesFixture";
 
 describe("事実表示と到達カウント", () => {
   test("未取得の写真を欠けとして数えない", () => {
@@ -46,6 +52,24 @@ describe("事実表示と到達カウント", () => {
       "rc:funnel:v1:apply:consult",
     );
     expect(funnelStorageKey({ event: "diagnosis_complete" })).not.toContain("purchase");
+  });
+
+  test("固定のGoogle応答は、環境変数が無いと返さない", () => {
+    const previous = process.env.REVIEWCHECK_PLACES_FIXTURE;
+    delete process.env.REVIEWCHECK_PLACES_FIXTURE;
+    expect(
+      isPlacesFixtureRequest({ text: PLACES_FIXTURE_TEXT, placeId: PLACES_FIXTURE_PLACE_ID }),
+    ).toBe(false);
+    process.env.REVIEWCHECK_PLACES_FIXTURE = "1";
+    expect(isPlacesFixtureRequest({ text: PLACES_FIXTURE_TEXT })).toBe(true);
+    const result = buildPlacesFixtureResult();
+    expect(result.input.store.source).toBe("places");
+    expect(result.input.store.name).toContain("架空");
+    expect(result.placesAttributed).toBe(true);
+    expect(result.input.store.hasPhotos).toBeUndefined();
+    expect(result.input.store.hasOwnerReplies).toBeUndefined();
+    if (previous === undefined) delete process.env.REVIEWCHECK_PLACES_FIXTURE;
+    else process.env.REVIEWCHECK_PLACES_FIXTURE = previous;
   });
 
   test("削除計画は実行できない", () => {

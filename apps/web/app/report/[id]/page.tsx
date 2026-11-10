@@ -94,8 +94,13 @@ export default async function ReportPage({
         ])}
       />
       <h1 className="sr-only">
-        選ばれやすさ {loaded.result.score}点（目安）
-        {loaded.result.input.store.name ? `｜${loaded.result.input.store.name}` : ""}
+        {loaded.result.input.store.source === "places"
+          ? `取得できた公開情報${
+              loaded.result.input.store.name ? `｜${loaded.result.input.store.name}` : ""
+            }`
+          : `選ばれやすさ ${loaded.result.score}点（目安）${
+              loaded.result.input.store.name ? `｜${loaded.result.input.store.name}` : ""
+            }`}
       </h1>
       <ReportView
         result={loaded.result}
