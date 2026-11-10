@@ -387,8 +387,7 @@ export class GooglePlacesProvider implements StoreDataProvider {
     const p = (await res.json()) as PlaceDetails;
     if (typeof p.rating !== "number") return null;
 
-    // 注: Places API では「最新口コミの鮮度」「オーナー返信の網羅」「低評価比率」は
-    // 安定して取得できないため未確認（undefined）のままにし、スコア側で推定値扱いにする。
+    // 返信・鮮度・低評価比率・写真は、このフィールドに無い。未確認のままにし、点数の仮加点には使わない。
     const point = readPoint(p.location?.latitude, p.location?.longitude);
     const store: StoreInput = {
       name: p.displayName?.text,

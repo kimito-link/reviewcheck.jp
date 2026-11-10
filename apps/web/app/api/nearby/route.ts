@@ -24,7 +24,10 @@ export function OPTIONS(request: Request) {
  * 入力ゼロでワンタップ診断につなげるため、緯度経度から近い順の候補を返す。
  */
 export async function GET(request: Request) {
-  const CORS_HEADERS = corsHeaders(request, CORS_METHODS);
+  const CORS_HEADERS = {
+    ...corsHeaders(request, CORS_METHODS),
+    "Cache-Control": "private, no-store",
+  };
   const params = new URL(request.url).searchParams;
   const rawLat = Number(params.get("lat"));
   const rawLng = Number(params.get("lng"));

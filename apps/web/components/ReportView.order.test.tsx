@@ -74,7 +74,7 @@ describe("診断結果の並び", () => {
       JSON.stringify({
         score: 62,
         date: "2026-10-01T00:00:00.000Z",
-        ruleVersion: "1.0",
+        ruleVersion: "1.1",
       }),
     );
 
@@ -108,7 +108,7 @@ describe("診断結果の並び", () => {
 
     expect(container).toHaveTextContent(RESULT_ESTIMATE_SENTENCE);
     expect(container).toHaveTextContent(
-      "採点ルール v1.0 ／ 取得：2026-10-24 17:41（日本時間）",
+      "採点ルール v1.1 ／ 取得：2026-10-24 17:41（日本時間）",
     );
     expect(container).not.toHaveTextContent("Google Maps");
     expect(container.querySelector("[data-places-attribution]")).toBeNull();
@@ -139,7 +139,7 @@ describe("診断結果の並び", () => {
         ?.textContent ?? "",
     ).not.toMatch(/円/);
 
-    const history = await screen.findByText("前回（10/1）62点 → 今回45点（-17）");
+    const history = await screen.findByText("前回（10/1）62点 → 今回43点（-19）");
     expect(history).toBeInTheDocument();
     expect(
       container.querySelector('[data-result-section="score"]'),
@@ -263,7 +263,7 @@ describe("特典と比較", () => {
     );
     const preview = document.querySelector("[data-report-preview]");
     expect(preview?.textContent).toContain("これは診断時点の推定で、断定ではありません。");
-    expect(preview?.textContent).toContain("SCORE_RULE_VERSION：1.0");
+    expect(preview?.textContent).toContain("SCORE_RULE_VERSION：1.1");
     expect(preview?.textContent).toContain("2026-10-24 17:41");
     expect(preview?.textContent).toContain("データの取得元：手入力");
     expect(preview?.textContent ?? "").not.toContain("無料");
@@ -327,11 +327,11 @@ describe("特典と比較", () => {
     );
     expect(ids.slice(0, 6)).toEqual([
       "result",
-      "score",
-      "estimate",
       "area-map",
-      "findings",
-      "causes",
+      "cta",
+      "perks",
+      "share",
+      "unconfirmed",
     ]);
     expect(container.querySelector("[data-area-map-frame]")).toBeNull();
     expect(container.querySelector("[data-area-map-canvas]")).toBeNull();
@@ -345,8 +345,10 @@ describe("特典と比較", () => {
     expect(area?.textContent ?? "").not.toMatch(/無料|必ず|保証|今すぐ|緊急/);
     expect(area?.innerHTML ?? "").not.toMatch(/text-(xs|sm)\b/);
     expect(container.querySelector("[data-result-section='method']")?.textContent).toContain(
-      "地図のタイルには載せていません",
+      "設計上の仮定",
     );
+    expect(container.textContent).not.toContain("口コミ数 第");
+    expect(container.textContent).not.toContain("partner.reverse");
   });
 });
 
@@ -428,5 +430,36 @@ describe("共有した人の公式LINE", () => {
       value: original,
       configurable: true,
     });
+  });
+
+  test("Google の結果は点数と監視の申込を出さない", () => {
+    const places = diagnose({
+      store: {
+        name: "事実食堂",
+        rating: 4.2,
+        reviewCount: 12,
+        source: "places",
+        hasOpeningHours: false,
+        placeId: "ChIJtest",
+      },
+      competitors: [],
+      diagnosedAt: "2026-10-24T08:41:00.000Z",
+    });
+    places.placesAttributed = true;
+    render(
+      <ReportView
+        result={places}
+        shareUrl="https://reviewcheck.jp/report/p1.test/"
+      />,
+    );
+    expect(screen.getByText("今回取得できた公開情報")).toBeTruthy();
+    expect(document.body.textContent).toContain("4.2");
+    expect(document.body.textContent).toContain("12件");
+    expect(document.body.textContent).toContain("15分の無料相談");
+    expect(document.body.textContent).toContain("33,000円");
+    expect(document.body.textContent).not.toContain("partner.reverse");
+    expect(document.body.textContent).not.toContain("選ばれやすさ");
+    expect(document.body.textContent).not.toContain("口コミ数 第");
+    expect(document.body.textContent).toContain("今回は取得していません");
   });
 });

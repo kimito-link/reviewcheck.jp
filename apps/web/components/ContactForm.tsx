@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SITE, PLAN_TOPIC_LABELS } from "@reviewcheck/config";
+import { postFunnel } from "@/lib/postFunnel";
+import { acceptFunnelBody } from "@/lib/funnelEvents";
 
 const TOPICS: Record<string, string> = {
   improvement: "Google口コミ改善のご相談",
@@ -28,9 +30,17 @@ export function ContactForm() {
   const isMonitoring = topicKey === "monitoring";
   const isApply = isMonitoring || topicKey.startsWith("plan-");
 
-  const [store, setStore] = useState(params.get("store") ?? "");
+  const [store, setStore] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const topic = params.get("topic");
+    const accepted = acceptFunnelBody({ event: "apply", slot: topic });
+    if (accepted?.event === "apply" && accepted.slot) {
+      postFunnel("apply", accepted.slot);
+    }
+  }, [params]);
 
   const mailto = `mailto:${SITE.contactEmail}?subject=${encodeURIComponent(
     `【${topicLabel}】${SITE.name}`,
@@ -42,8 +52,8 @@ export function ContactForm() {
     <div className="rounded-2xl border border-slate-200 bg-white p-6">
       <p className="text-sm font-bold text-blue-700">{topicLabel}</p>
       {isMonitoring ? (
-        <p className="mt-2 rounded-lg bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-800">
-          毎月、あなたと競合の口コミ数・星評価・順位の変化を自動でレポートし、抜かれそうなときにお知らせします。お申し込み内容を確認後、開始方法をご連絡します。
+        <p className="mt-2 rounded-lg bg-slate-100 p-3 text-sm leading-relaxed text-slate-900" data-monitor-paused="">
+          月次モニタリングの新規申込は停止中です。この画面から決済は始まりません。次回の自動巡回も約束しません。既存の決済・解約・返金は、ここでは変更しません。
         </p>
       ) : null}
       <div className="mt-4 space-y-4">
@@ -96,7 +106,7 @@ export function ContactForm() {
           href={mailto}
           className="inline-flex w-full items-center justify-center rounded-xl bg-cta px-6 py-3.5 text-base font-bold text-white hover:bg-cta-strong"
         >
-          {isApply ? "この内容で申し込む" : "メールで相談する"}
+          {isMonitoring ? "自動では開始しません。メールで問い合わせる" : isApply ? "この内容で申し込む" : "メールで相談する"}
         </a>
         <p className="text-xs text-slate-500">
           ボタンを押すとメールソフトが開きます。LINEでのご相談も歓迎です（画面右下・ヘッダーのLINEボタン）。直接 {SITE.contactEmail} 宛にご連絡いただいても構いません。

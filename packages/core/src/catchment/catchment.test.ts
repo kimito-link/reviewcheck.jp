@@ -30,7 +30,7 @@ describe("業種の半径は1回の検索の仮定", () => {
     assert.equal(MAX_COMPETITORS, RETAINED_COMPETITOR_LIMIT);
     assert.equal(RETAINED_COMPETITOR_LIMIT, 10);
     assert.equal(PEERS_IF_SELF_INCLUDED, 19);
-    assert.equal(SCORE_RULE_VERSION, "1.0");
+    assert.equal(SCORE_RULE_VERSION, "1.1");
   });
 
   test("説明は標本であり、業種が無いときは同じ業種と言わない", () => {

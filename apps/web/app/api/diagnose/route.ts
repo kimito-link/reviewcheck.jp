@@ -17,6 +17,7 @@ import {
   type StoreInput,
 } from "@reviewcheck/core";
 import { incrementDiagnosisCount } from "@/lib/diagnosisCounter";
+import { incrementFunnel } from "@/lib/funnelCount";
 import { corsHeaders, guardPlacesCall } from "@/lib/costGuard";
 
 export const runtime = "nodejs";
@@ -50,7 +51,10 @@ interface DiagnoseBody {
 }
 
 async function handle(request: Request, body: DiagnoseBody) {
-  const CORS_HEADERS = corsHeaders(request, CORS_METHODS);
+  const CORS_HEADERS = {
+    ...corsHeaders(request, CORS_METHODS),
+    "Cache-Control": "private, no-store",
+  };
   const demo = body.demo === true;
   const query = body.query ?? {};
   const hasQuery = Boolean(
@@ -175,6 +179,7 @@ async function handle(request: Request, body: DiagnoseBody) {
     );
     if (!demo) {
       incrementDiagnosisCount().catch(() => {});
+      incrementFunnel({ event: "diagnosis_complete" }).catch(() => {});
     }
     const manualNumbers =
       typeof override.rating === "number" || typeof override.reviewCount === "number";

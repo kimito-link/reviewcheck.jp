@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   type AiCheckScore,
   type AiCheckFactorKey,
   buildAiCheckLineMessage,
-  buildAiCheckMonitorUrl,
   buildKanbanLineMessage,
-  buildKanbanMonitorUrl,
   withViaParam,
 } from "@reviewcheck/core";
 import { lineChannelForTopic } from "@reviewcheck/config";
@@ -116,26 +114,14 @@ export function AiReportView(props: AiReportData) {
     negativeSuggestCount,
     probedAtLabel,
     probedModel,
-    refCode,
     shareUrl,
     variant = "store",
   } = props;
-  const [urlRef, setUrlRef] = useState<string | undefined>(refCode);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = new URLSearchParams(window.location.search).get("ref")?.trim();
-    if (raw && /^[A-Za-z0-9_-]{1,32}$/.test(raw)) setUrlRef(raw);
-  }, []);
-
   const bandTitle = BAND_LABEL[score.band];
   const lineMessage =
     variant === "kanban"
       ? buildKanbanLineMessage(storeName, score.total)
       : buildAiCheckLineMessage(storeName, score.total);
-  const monitorUrl =
-    variant === "kanban"
-      ? buildKanbanMonitorUrl({ refCode: urlRef, storeName })
-      : buildAiCheckMonitorUrl({ refCode: urlRef, storeName });
   const lineChannel = lineChannelForTopic();
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
@@ -327,16 +313,14 @@ export function AiReportView(props: AiReportData) {
         </p>
         <p>点数は、取得できた項目だけで正規化した目安です。対象外の項目は点数に入れていません。</p>
         <p>
-          見られ方の変化は、
+          月次の自動巡回は、いま新規では受けていません。
           <a
-            href={monitorUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/contact/?topic=consult"
             className="font-bold text-blue-800 underline decoration-blue-800 underline-offset-2"
           >
-            月次モニタリングのページ
+            相談ページ
           </a>
-          で追えます。
+          を開いたことは、購入の確定ではありません。
         </p>
       </ResultMethodDetails>
     </div>

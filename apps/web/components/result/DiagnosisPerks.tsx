@@ -40,14 +40,19 @@ export function DiagnosisPerks({
   const [open, setOpen] = useState(false);
   const [previous, setPrevious] = useState<StoredScore | null>(null);
   const shopName = result.input.store.name ?? "";
+  const placesFacts = result.input.store.source === "places";
 
   useEffect(() => {
+    if (placesFacts) {
+      setPrevious(null);
+      return;
+    }
     try {
       setPrevious(parseStoredScore(window.localStorage.getItem(scoreHistoryKey(shopName))));
     } catch {
       setPrevious(null);
     }
-  }, [shopName, result.score, result.ruleVersion, result.diagnosedAt]);
+  }, [placesFacts, shopName, result.score, result.ruleVersion, result.diagnosedAt]);
 
   const doc = useMemo(
     () => buildDiagnosisReport({ result, previous, cohort }),

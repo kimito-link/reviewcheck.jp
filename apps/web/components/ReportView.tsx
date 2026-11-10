@@ -1,7 +1,7 @@
 import type { DiagnosisResult } from "@reviewcheck/core";
 import { FINDING_CARD_TEXTS, staleRuleVersionNote } from "@reviewcheck/core";
 import { buildAreaComparison } from "@reviewcheck/core/areaMap";
-import { CTAS, RESULT_ESTIMATE_SENTENCE, withRefCode } from "@reviewcheck/config";
+import { RESULT_ESTIMATE_SENTENCE } from "@reviewcheck/config";
 import { ScoreMeter, ScoreBadge, StatCompare } from "@reviewcheck/ui";
 import { Disclaimer } from "./Disclaimer";
 import { ShareReport } from "./ShareReport";
@@ -25,6 +25,7 @@ import { OtherMenus } from "./result/OtherMenus";
 import { ResultActionProvider } from "./result/ResultActionContext";
 import { ResultHook, ResultMethodDetails, UnconfirmedList } from "./result/ResultReading";
 import { ResultNextCta } from "./result/ResultNextCta";
+import { PlacesFactsView } from "./result/PlacesFactsView";
 import { ScoreHistoryNote } from "./result/ScoreHistoryNote";
 import { ScrollToResultScore } from "./result/ScrollToResultScore";
 import { SharerLineConsult } from "./SharerLineConsult";
@@ -67,7 +68,6 @@ export interface ReportShareContext {
 export function ReportView({
   result,
   shareUrl,
-  refCode,
   refLine,
   shareContext,
   cohort = null,
@@ -89,6 +89,11 @@ export function ReportView({
   const { input, comparison, simulation } = result;
   const store = input.store;
   const competitors = input.competitors ?? [];
+  if (store.source === "places") {
+    return (
+      <PlacesFactsView result={result} shareUrl={shareUrl} refLine={refLine} />
+    );
+  }
   const isMock = store.source === "mock";
   const autoCompetitors =
     competitors.length > 0 && competitors.every((c) => Boolean(c.placeId));
@@ -96,19 +101,7 @@ export function ReportView({
   const gains = result.improvements.filter((item) => isActionableImprovement(item));
   const missed = collectUnconfirmedLines(result);
 
-  const monitoringParams = new URLSearchParams();
-  if (!isMock) {
-    if (store.name) monitoringParams.set("store", store.name);
-    if (store.mapsUrl) monitoringParams.set("url", store.mapsUrl);
-    if (Number.isFinite(result.score)) {
-      monitoringParams.set("score", String(Math.round(result.score)));
-    }
-  }
-  const monitoringExtra = monitoringParams.toString();
-  const monitoringBase = withRefCode(CTAS.monitoring.href, refCode);
-  const monitoringHref = monitoringExtra
-    ? `${monitoringBase}&${monitoringExtra}`
-    : monitoringBase;
+  const monitoringHref = "";
 
   const storeQuery = !isMock ? store.mapsUrl || store.name || "" : "";
   const suggestHref = storeQuery
@@ -118,7 +111,7 @@ export function ReportView({
   const area = buildAreaComparison(store, competitors);
   const countLine = buildCountSummary(store, comparison);
   const fetchedAtRecorded = shareContext ? shareContext.fetchedAtRecorded : true;
-  const saveOnDevice = store.source !== "places" && fetchedAtRecorded;
+  const saveOnDevice = fetchedAtRecorded;
   const metaLine = fetchedAtRecorded
     ? `採点ルール v${result.ruleVersion} ／ 取得：${formatDiagnosedAtJst(result.diagnosedAt)}（日本時間）`
     : `採点ルール v${result.ruleVersion} ／ 取得：記録なし`;
@@ -523,7 +516,7 @@ export function ReportView({
           <Disclaimer />
         </div>
 
-        <OtherMenus monitoringHref={monitoringHref} suggestHref={suggestHref} />
+        <OtherMenus monitoringPaused suggestHref={suggestHref} />
         <ResultNextCta {...ctaProps} placement="sticky" />
       </div>
     </ResultActionProvider>

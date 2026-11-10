@@ -75,18 +75,8 @@ export function pickHighlights(result) {
   return summary ? [summary] : [];
 }
 
-export function buildExtensionShareText({ score, storeName, points }) {
-  const rounded = Math.round(Number(score));
-  const name = typeof storeName === "string" ? storeName.trim() : "";
-  const head = name
-    ? `選ばれやすさ ${rounded}点（目安）｜${name}`
-    : `選ばれやすさ ${rounded}点（目安）`;
-  const lines = (Array.isArray(points) ? points : [])
-    .map((point) => String(point).trim())
-    .filter(Boolean)
-    .slice(0, 3)
-    .map((point) => `・${point}`);
-  return lines.length > 0 ? `${head}\n${lines.join("\n")}` : head;
+export function buildExtensionShareText(_view) {
+  return "口コミチェック.jp で公開情報を確認しました。点数と店名はこの文面に入れていません。";
 }
 
 function jstParts(date) {

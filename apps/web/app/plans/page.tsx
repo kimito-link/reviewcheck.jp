@@ -214,6 +214,9 @@ export default function PlansPage() {
         lead="守備範囲に合わせて3プラン。束ねるほど割安です。まずは無料診断からどうぞ。"
       >
         <PlanCards />
+        <p className="mt-4 text-sm leading-relaxed text-slate-800" data-monitor-paused="">
+          Light に書いてある月次レポートの自動巡回は、いま新規では動いていません。表示の金額と、カード決済の額は変えていません。既存契約の停止・返金は、このページでは行いません。
+        </p>
         <p className="mt-4 text-xs leading-relaxed text-slate-500">
           Light・Standardは
           <strong className="text-slate-700">クレジットカード（Stripe）</strong>

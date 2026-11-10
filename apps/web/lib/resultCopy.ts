@@ -38,7 +38,12 @@ export function formatDiagnosedAtJst(iso: string): string {
   return `${g("year")}-${g("month")}-${g("day")} ${g("hour")}:${g("minute")}`;
 }
 
-/** シェア文。点数を先頭にする。「無料」は入れない。 */
+/** Google の内容を外部の共有文に載せない。点数も店名も入れない。 */
+export function buildFactsShareText(): string {
+  return "口コミチェック.jp で、Googleマップの公開情報を確認しました。点数と店名はこの文面に入れていません。";
+}
+
+/** シェア文。点数を先頭にする。「無料」は入れない。手入力の結果用。 */
 export function buildShareText(opts: {
   score?: number;
   storeName?: string;

@@ -2,14 +2,9 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
-import {
-  areaFromAddress,
-  buildAiHearingMessage,
-  resolveAiHearingHref,
-  selectResultCta,
-} from "@reviewcheck/config";
+import { buildLineConsultMessage, selectResultCta } from "@reviewcheck/config";
+import { postFunnel } from "@/lib/postFunnel";
 import { LineConsultCta } from "../LineConsultCta";
-import { useIncludeShop } from "./ResultActionContext";
 
 interface ResultNextCtaProps {
   score: number;
@@ -29,73 +24,54 @@ interface ResultNextCtaProps {
  */
 export function ResultNextCta({
   score,
-  ruleVersion,
-  shopName,
-  category,
-  address,
-  monitoringHref,
-  shopToggle = false,
   placement = "block",
 }: ResultNextCtaProps) {
   const copy = selectResultCta(score);
-  const { includeShop, setIncludeShop } = useIncludeShop();
-  const isLine = copy.kind !== "monitoring";
-  const message = buildAiHearingMessage({
-    score,
-    ruleVersion,
-    shopName: includeShop ? shopName : undefined,
-    category,
-    area: areaFromAddress(address),
-  });
-  const { href } = resolveAiHearingHref(message);
+  const paused = copy.kind === "monitoring";
+  const isLine = !paused;
+  const headline = paused ? "月次の自動巡回は、いま新規では受けていません" : copy.headline;
+  const body = paused
+    ? "既存の決済・解約・返金は、この画面では変更しません。相談は、初回15分の既存メニューです。購入の確定ではありません。"
+    : copy.body;
+  const message = buildLineConsultMessage();
 
   const action = isLine ? (
-    <LineConsultCta
-      text={copy.label}
-      message={message}
-      href={href}
-      fullWidth={placement === "block"}
-      size={placement === "block" ? "lg" : "default"}
-    />
+    <div onClick={() => postFunnel("cta", "consult")}>
+      <LineConsultCta
+        text={copy.label}
+        message={message}
+        fullWidth={placement === "block"}
+        size={placement === "block" ? "lg" : "default"}
+      />
+    </div>
   ) : (
     <a
-      href={monitoringHref}
-      target="_blank"
-      rel="noopener noreferrer"
-      data-destination={monitoringHref}
+      href="/contact/?topic=consult"
+      data-funnel="cta:consult"
+      onClick={() => postFunnel("cta", "consult")}
       className={`inline-flex items-center justify-center rounded-lg bg-blue-700 font-bold text-white shadow-sm transition hover:bg-blue-800 ${
         placement === "block"
           ? "w-full px-7 py-4 text-base"
           : "px-4 py-2.5 text-base"
       }`}
     >
-      {copy.label}
+      15分の無料相談ページを開く
     </a>
   );
 
   if (placement === "sticky") {
-    return <StickyBar headline={copy.headline} action={action} />;
+    return <StickyBar headline={headline} action={action} />;
   }
 
   return (
-    <div data-cta-kind={copy.kind}>
+    <div data-cta-kind={paused ? "consult-paused-monitor" : copy.kind}>
       <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
-        {copy.headline}
+        {headline}
       </h2>
-      <p className="mt-2 text-base leading-relaxed text-slate-800">{copy.body}</p>
-      {shopToggle && isLine ? (
-        <label className="mt-3 flex items-start gap-2 text-sm leading-relaxed text-slate-800">
-          <input
-            type="checkbox"
-            className="mt-1 h-4 w-4 shrink-0"
-            checked={includeShop}
-            onChange={(e) => setIncludeShop(e.target.checked)}
-          />
-          <span>
-            店名もメッセージに含める（選んだときだけ送信します。送るのは点数・採点ルール・業種・エリアと、選んだ場合の店名だけです）
-          </span>
-        </label>
-      ) : null}
+      <p className="mt-2 text-base leading-relaxed text-slate-800">{body}</p>
+      <p className="mt-2 text-base leading-relaxed text-slate-800">
+        送る文面に、店名と点数は入れません。
+      </p>
       <div className="mt-4 max-w-xl">{action}</div>
     </div>
   );

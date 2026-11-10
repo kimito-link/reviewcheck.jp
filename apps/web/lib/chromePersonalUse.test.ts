@@ -108,8 +108,9 @@ describe("拡張の点検日と診断対象", () => {
       storeName: "テスト食堂",
       points: ["口コミが少ない", "返信が無い"],
     });
-    expect(text.startsWith("選ばれやすさ 45点（目安）｜テスト食堂")).toBe(true);
-    expect(text).toContain("・口コミが少ない");
+    expect(text).not.toContain("45");
+    expect(text).not.toContain("テスト食堂");
+    expect(text).not.toContain("口コミが少ない");
     expect(text).not.toMatch(/無料|必ず|保証/);
   });
 

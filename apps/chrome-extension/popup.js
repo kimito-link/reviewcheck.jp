@@ -131,12 +131,17 @@ function showRecheck(iso) {
 
 function showResult(view, previousIso) {
   currentView = view;
+  const placesFacts = view.placesAttributed === true;
   const band = BAND[view.band] || BAND.fair;
-  els.scoreValue.textContent = String(Math.round(Number(view.score)));
-  els.scoreCircle.style.borderColor = band.border;
-  els.bandBadge.textContent = `選ばれやすさ: ${band.label}`;
-  els.bandBadge.style.background = band.badgeBg;
-  els.bandBadge.style.color = band.badgeFg;
+  els.scoreValue.textContent = placesFacts
+    ? "—"
+    : String(Math.round(Number(view.score)));
+  els.scoreCircle.style.borderColor = placesFacts ? "#1e293b" : band.border;
+  els.bandBadge.textContent = placesFacts
+    ? "公開の星と件数"
+    : `選ばれやすさ: ${band.label}`;
+  els.bandBadge.style.background = placesFacts ? "#f8fafc" : band.badgeBg;
+  els.bandBadge.style.color = placesFacts ? "#0f172a" : band.badgeFg;
   els.storeName.textContent = view.storeName || "店舗";
   const rating = Number(view.rating);
   const count = Number(view.reviewCount);
@@ -169,7 +174,7 @@ function viewFromApi(result) {
     storeName: store.name || "店舗",
     rating: store.rating,
     reviewCount: store.reviewCount,
-    points: pickHighlights(result),
+    points: result.placesAttributed === true ? [] : pickHighlights(result),
     diagnosedAt: result.diagnosedAt,
     placeId: typeof store.placeId === "string" ? store.placeId : "",
     placesAttributed: result.placesAttributed === true,

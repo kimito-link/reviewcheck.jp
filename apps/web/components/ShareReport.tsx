@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { SCORE_RULE_VERSION } from "@reviewcheck/core";
-import { buildShareText } from "@/lib/resultCopy";
+import { buildFactsShareText, buildShareText } from "@/lib/resultCopy";
 import {
   SHARER_LINE_STORAGE_KEY,
   sanitizeRefLine,
@@ -21,6 +21,7 @@ export function ShareReport({
   score,
   ruleVersion = SCORE_RULE_VERSION,
   refLine,
+  factsOnly = false,
 }: {
   url: string;
   storeName?: string;
@@ -28,6 +29,8 @@ export function ShareReport({
   ruleVersion?: string;
   /** 開いているページに付いている ref_line。自分の保存が無いとき、転送で残す。 */
   refLine?: string;
+  /** Google の結果では、点数と店名を共有文に入れない。 */
+  factsOnly?: boolean;
 }) {
   const embedHidden = useEmbedHidden();
   const [copied, setCopied] = useState(false);
@@ -52,7 +55,9 @@ export function ShareReport({
   const attached = embedHidden || detached ? null : savedLine || pageLine;
   // 共有リンクに出すのは、共有した人の公式LINEだけ。取次店コードは載せない。
   const shareTarget = withRefLine(url, attached);
-  const shareText = buildShareText({ score, storeName, ruleVersion });
+  const shareText = factsOnly
+    ? buildFactsShareText()
+    : buildShareText({ score, storeName, ruleVersion });
 
   async function copy() {
     try {

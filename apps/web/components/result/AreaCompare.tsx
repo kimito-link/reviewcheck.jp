@@ -19,11 +19,16 @@ export function AreaCompare({
   area,
   attributeToGoogle = false,
   scopeText,
+  showGap = true,
+  lead = "上の順位は、この検索が返したお店の口コミ数です。エリア全体の順位ではありません。",
 }: {
   area: AreaComparison;
   /** Places の応答そのものを並べているときだけ出典を出す。 */
   attributeToGoogle?: boolean;
   scopeText?: string;
+  /** 中央値までの件数は、順位を販売理由にしない画面では出さない。 */
+  showGap?: boolean;
+  lead?: string;
 }) {
   const hidden = useEmbedHidden();
   if (hidden || area.places.length === 0) return null;
@@ -36,26 +41,35 @@ export function AreaCompare({
       <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
         この検索で比べたお店
       </h2>
-      <p className="mt-2 text-base leading-relaxed text-slate-800">
-        上の順位は、この検索が返したお店の口コミ数です。エリア全体の順位ではありません。
-      </p>
+      <p className="mt-2 text-base leading-relaxed text-slate-800">{lead}</p>
       {scopeText ? (
         <p className="mt-2 text-base leading-relaxed text-slate-800">{scopeText}</p>
       ) : null}
       <div className="mt-4">
-        <AreaPlaceCards places={area.places} />
-        <AreaPlaceTable places={area.places} />
+        <AreaPlaceCards places={area.places} showRank={showGap} />
+        <AreaPlaceTable places={area.places} showRank={showGap} />
       </div>
       {attributeToGoogle ? <GoogleMapsCredit /> : null}
-      <p className="mt-4 text-base leading-relaxed text-slate-800">
-        {areaMedianMessage(area)}{" "}
-        <a
-          href="#result-next-step"
-          className="font-bold text-blue-800 underline decoration-blue-800 underline-offset-2"
-        >
-          次の一歩を見る
-        </a>
-      </p>
+      {showGap ? (
+        <p className="mt-4 text-base leading-relaxed text-slate-800">
+          {areaMedianMessage(area)}{" "}
+          <a
+            href="#result-next-step"
+            className="font-bold text-blue-800 underline decoration-blue-800 underline-offset-2"
+          >
+            次の一歩を見る
+          </a>
+        </p>
+      ) : (
+        <p className="mt-4 text-base leading-relaxed text-slate-800">
+          <a
+            href="#result-next-step"
+            className="font-bold text-blue-800 underline decoration-blue-800 underline-offset-2"
+          >
+            任意の支援を見る
+          </a>
+        </p>
+      )}
       <div className="mt-3">
         <ResultHook>主な所見は、この次です。</ResultHook>
       </div>
@@ -63,7 +77,13 @@ export function AreaCompare({
   );
 }
 
-function AreaPlaceCards({ places }: { places: AreaPlace[] }) {
+function AreaPlaceCards({
+  places,
+  showRank,
+}: {
+  places: AreaPlace[];
+  showRank: boolean;
+}) {
   return (
     <ol className="space-y-3 sm:hidden" data-area-map-list="cards" aria-label="この検索で比べたお店">
       {places.map((place) => (
@@ -81,7 +101,7 @@ function AreaPlaceCards({ places }: { places: AreaPlace[] }) {
             <p className="mt-1 text-base text-slate-800">周辺のお店</p>
           )}
           <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
-            <Fact term="順位" value={`第${place.reviewCountRank}位`} />
+            {showRank ? <Fact term="順位" value={`第${place.reviewCountRank}位`} /> : null}
             <Fact term="星" value={place.rating.toFixed(1)} />
             <Fact term="口コミ数" value={`${place.reviewCount}件`} />
             <Fact term="距離" value={distanceLabel(place)} />
@@ -95,14 +115,20 @@ function AreaPlaceCards({ places }: { places: AreaPlace[] }) {
   );
 }
 
-function AreaPlaceTable({ places }: { places: AreaPlace[] }) {
+function AreaPlaceTable({
+  places,
+  showRank,
+}: {
+  places: AreaPlace[];
+  showRank: boolean;
+}) {
   return (
     <div className="hidden overflow-x-auto sm:block" data-area-map-list="table">
       <table className="w-full border-collapse text-left text-base">
         <caption className="sr-only">この検索で比べたお店</caption>
         <thead>
           <tr className="border-b border-slate-300 text-slate-900">
-            <th scope="col" className="px-2 py-2 font-bold">順位</th>
+            {showRank ? <th scope="col" className="px-2 py-2 font-bold">順位</th> : null}
             <th scope="col" className="px-2 py-2 font-bold">店名</th>
             <th scope="col" className="px-2 py-2 font-bold">星</th>
             <th scope="col" className="px-2 py-2 font-bold">口コミ数</th>
@@ -119,9 +145,11 @@ function AreaPlaceTable({ places }: { places: AreaPlace[] }) {
                 place.isSubject ? "bg-slate-50" : "bg-white"
               }`}
             >
-              <td className="px-2 py-3 font-bold text-slate-900">
-                第{place.reviewCountRank}位
-              </td>
+              {showRank ? (
+                <td className="px-2 py-3 font-bold text-slate-900">
+                  第{place.reviewCountRank}位
+                </td>
+              ) : null}
               <td className="px-2 py-3 text-slate-900">
                 <span className="font-bold">{place.name}</span>
                 {place.isSubject ? (

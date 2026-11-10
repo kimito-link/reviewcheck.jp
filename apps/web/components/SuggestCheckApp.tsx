@@ -92,13 +92,14 @@ export function SuggestCheckApp({
           loss: "取得が完了していない分は、この一覧に含まれていません。",
         }
       : STORY.safe!;
-  const consultHref = query.trim()
-    ? `${CTAS.suggest.href}&store=${encodeURIComponent(query.trim())}`
-    : CTAS.suggest.href;
-  const primaryHref = unverified ? null : hasNegatives ? consultHref : CTAS.monitoring.href;
+  const primaryHref = unverified
+    ? null
+    : hasNegatives
+      ? CTAS.suggest.href
+      : CTAS.freeConsult.href;
   const primaryLabel = hasNegatives
     ? CTAS.suggest.label
-    : "検索候補を月次モニタリングする";
+    : "15分の無料相談ページを開く";
   const missed =
     data && data.status !== "ok"
       ? ["検索候補の一部：取得が完了していません。判定は取得できた候補についてだけです。"]

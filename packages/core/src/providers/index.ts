@@ -10,7 +10,8 @@ import type { StoreDataProvider, StoreQuery } from "./types";
 
 /**
  * 同時に飛んだ同じ問い合わせだけを1回にまとめる。
- * 終わったら捨てる。店名・星・口コミ数はプロセスにも残さない。
+ * 応答が終わるまでメモリ上の Promise が店名・星・口コミ数を持つ。永続の保存ではない。
+ * 完了したら Map から外す。
  */
 const inflightStore = new Map<string, Promise<FetchStoreResult>>();
 const inflightCompetitors = new Map<string, Promise<Competitor[]>>();

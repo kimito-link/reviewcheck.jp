@@ -125,7 +125,7 @@ describe("端末内レポート", () => {
       previous: {
         score: 62,
         date: "2026-10-01T00:00:00.000Z",
-        ruleVersion: "1.0",
+        ruleVersion: "1.1",
       },
       cohort: { show: false },
     });
@@ -133,7 +133,7 @@ describe("端末内レポート", () => {
     expect(doc.lead).toBe(REPORT_LEAD);
     expect(html.startsWith("<!DOCTYPE html>")).toBe(true);
     expect(html).toContain("これは診断時点の推定で、断定ではありません。");
-    expect(html).toContain("SCORE_RULE_VERSION：1.0");
+    expect(html).toContain("SCORE_RULE_VERSION：1.1");
     expect(html).toContain("診断日時：2026-10-24 17:41（日本時間）");
     expect(html).toContain("データの取得元：手入力");
     expect(html).toContain("取得時刻：2026-10-24 17:41（日本時間）");

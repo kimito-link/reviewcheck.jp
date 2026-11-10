@@ -8,6 +8,7 @@ import { ReportView } from "./ReportView";
 import { GoogleMapsCredit } from "./result/GoogleMapsCredit";
 import { Disclaimer } from "./Disclaimer";
 import { resolveRefCode } from "@/lib/affiliateRef";
+import { postFunnel } from "@/lib/postFunnel";
 import { parseCohortPublic, type CohortPublic } from "@/lib/cohort/public";
 
 interface CompetitorRow {
@@ -187,6 +188,7 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
       return;
     }
     setLoading(true);
+    if (!demo) postFunnel("diagnosis_start");
     try {
       const res = await fetch("/api/diagnose", {
         method: "POST",
