@@ -296,7 +296,7 @@ describe("特典と比較", () => {
     window.history.pushState(null, "", "/report/embed/");
   });
 
-  test("座標があるときは順位の直下に地図枠を確保し、確かめ方へ出典を書く", () => {
+  test("座標があるときは順位の直下に一覧を残し、地図タイルは出さない", () => {
     window.history.pushState(null, "", "/report/map/");
     const result = diagnose({
       ...fixture.input,
@@ -327,16 +327,19 @@ describe("特典と比較", () => {
       "findings",
       "causes",
     ]);
-    const frame = container.querySelector("[data-area-map-frame]");
-    expect(frame?.className).toContain("h-64");
-    expect(frame?.className).toContain("sm:h-80");
+    expect(container.querySelector("[data-area-map-frame]")).toBeNull();
+    expect(container.querySelector("[data-area-map-canvas]")).toBeNull();
+    expect(container.innerHTML).not.toMatch(/openstreetmap|leaflet/i);
     const area = container.querySelector("[data-result-section='area-map']");
+    expect(area?.querySelector("[data-places-attribution] [translate='no']")?.textContent).toBe(
+      "Google Maps",
+    );
     expect(area?.textContent).toContain("km");
     expect(area?.textContent).toContain("基準");
     expect(area?.textContent ?? "").not.toMatch(/無料|必ず|保証|今すぐ|緊急/);
     expect(area?.innerHTML ?? "").not.toMatch(/text-(xs|sm)\b/);
     expect(container.querySelector("[data-result-section='method']")?.textContent).toContain(
-      "OpenStreetMap",
+      "地図のタイルには載せていません",
     );
   });
 });

@@ -8,18 +8,15 @@ import {
 } from "@reviewcheck/core/areaMap";
 import { useEmbedHidden } from "../diagnosis/useEmbedHidden";
 import { ResultHook } from "./ResultReading";
-import { AreaMapCanvas } from "./areaMap/AreaMapCanvas";
 
 /**
  * 順位の直下に置く、エリアの根拠。
- * 一覧は常にサーバー描画される。地図はその上に載せるだけで、落ちても一覧は残る。
+ * 店の位置は地図タイルに載せず、一覧だけで比べる。
  * ?embed=1 では、あとから足したブロックと同じく出さない。
  */
 export function AreaCompare({ area }: { area: AreaComparison }) {
   const hidden = useEmbedHidden();
   if (hidden || area.places.length === 0) return null;
-
-  const showMap = area.pins.length >= 2;
 
   return (
     <section
@@ -30,33 +27,13 @@ export function AreaCompare({ area }: { area: AreaComparison }) {
         このエリアで比べたお店
       </h2>
       <p className="mt-2 text-base leading-relaxed text-slate-800">
-        上の順位は、診断したお店と周辺のお店の口コミ数です。
+        上の順位は、診断したお店と周辺のお店の口コミ数です。店名・星・口コミ数は、この一覧で比べられます。
       </p>
-      {showMap ? (
-        <>
-          <p className="mt-3 text-base leading-relaxed text-slate-800">
-            ひし形の「自」が診断したお店、丸の数字は口コミ数の順位です。
-          </p>
-          <div className="mt-3">
-            <AreaMapCanvas pins={area.pins} />
-          </div>
-          <p className="mt-2 text-base leading-relaxed text-slate-800">
-            地図 ©{" "}
-            <a
-              href="https://www.openstreetmap.org/copyright"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold text-blue-800 underline decoration-blue-800 underline-offset-2"
-            >
-              OpenStreetMap contributors
-            </a>
-          </p>
-        </>
-      ) : null}
       <div className="mt-4">
         <AreaPlaceCards places={area.places} />
         <AreaPlaceTable places={area.places} />
       </div>
+      <GoogleMapsAttribution />
       <p className="mt-4 text-base leading-relaxed text-slate-800">
         {areaMedianMessage(area)}{" "}
         <a
@@ -153,6 +130,20 @@ function AreaPlaceTable({ places }: { places: AreaPlace[] }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+function GoogleMapsAttribution() {
+  return (
+    <p
+      className="mt-3 text-base leading-relaxed text-slate-800"
+      data-places-attribution=""
+    >
+      店名・星・口コミ数の出典{" "}
+      <span translate="no" className="gmp-attribution">
+        Google Maps
+      </span>
+    </p>
   );
 }
 

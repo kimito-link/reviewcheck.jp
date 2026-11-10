@@ -499,9 +499,9 @@ export function ReportView({
           {autoCompetitors ? (
             <p>周辺の同業種から口コミ数の多い順に自動抽出した目安です。</p>
           ) : null}
-          {area && area.pins.length > 0 ? (
+          {area ? (
             <p>
-              地図の位置は、今回の診断で取得した公開の座標です。背景の地図は OpenStreetMap のタイルです。タイルやスクリプトが読めないときは、同じお店の一覧が正です。
+              周辺のお店の店名・星・口コミ数は、上の一覧に出しています。地図のタイルには載せていません。
             </p>
           ) : null}
         </ResultMethodDetails>
