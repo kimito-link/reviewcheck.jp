@@ -59,7 +59,7 @@ export function ScoreHistoryNote({
   if (!message) return null;
   return (
     <p
-      className={`mt-3 text-sm font-medium leading-relaxed text-slate-800 ${className}`.trim()}
+      className={`mt-3 text-base font-medium leading-relaxed text-slate-900 ${className}`.trim()}
       data-score-history=""
     >
       {message}

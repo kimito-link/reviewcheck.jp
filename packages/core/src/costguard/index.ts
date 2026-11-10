@@ -36,6 +36,8 @@ export interface CacheStore {
 //   Text Search Pro（displayName を取る）          $32/1000 → 5円
 //   Place Details Enterprise+Atmosphere（reviews） $25/1000 → 4円
 //   Nearby Search Enterprise（rating を取る）       $35/1000 → 6円
+//   競合の FieldMask に location（Essentials）を足しても、この見積りは変えない。
+//   追加リクエストは無く、SKU は rating の Enterprise のまま。
 // ---------------------------------------------------------------------------
 export const PLACES_COST_YEN = {
   /** 店舗の特定＋詳細（Text Search＋Place Details）。placeId 指定でも保守的に同額。 */
