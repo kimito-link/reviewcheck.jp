@@ -1,6 +1,7 @@
 import type { Competitor, StoreInput } from "../types/index";
 import type { ReviewItem } from "../reviews/index";
 import { TtlCache } from "../cache/index";
+import { withPublicPoint } from "../utils/geo";
 import {
   GooglePlacesProvider,
   type FetchCompetitorsOptions,
@@ -86,7 +87,8 @@ export async function fetchStore(
       }
       if (detailed) {
         return {
-          store: detailed.store,
+          // 古いキャッシュは store に座標が無く、context にだけある。
+          store: withPublicPoint(detailed.store, detailed.context),
           providers: [provider.name],
           isMock: false,
           context: detailed.context,
@@ -135,7 +137,8 @@ export async function fetchCompetitors(
   options: FetchCompetitorsOptions = {},
 ): Promise<Competitor[]> {
   if (!context) return [];
-  const key = `${context.placeId ?? ""}|${options.limit ?? ""}|${options.radius ?? ""}`;
+  // v2: 競合オブジェクトに公開座標を含める。v1 のメモリは座標が無いので使わない。
+  const key = `v2|${context.placeId ?? ""}|${options.limit ?? ""}|${options.radius ?? ""}`;
   for (const provider of getEnabledProviders()) {
     if (provider instanceof GooglePlacesProvider) {
       const cached = competitorsCache.get(key);

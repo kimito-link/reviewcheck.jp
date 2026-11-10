@@ -17,6 +17,7 @@ import type {
   StoreInput,
 } from "./types/index";
 import { InvalidInputError } from "./types/index";
+import { withPublicPoint } from "./utils/geo";
 import { normalizeRating, toCount } from "./utils/number";
 
 export interface DiagnoseOptions {
@@ -32,14 +33,16 @@ export function diagnose(
   input: DiagnosisInput,
   options: DiagnoseOptions = {},
 ): DiagnosisResult {
-  const store = sanitizeStore(input.store);
+  const store = withPublicPoint(sanitizeStore(input.store));
   const competitors = (input.competitors ?? [])
     .slice(0, MAX_COMPETITORS)
-    .map((c) => ({
-      ...c,
-      rating: normalizeRating(c.rating),
-      reviewCount: toCount(c.reviewCount),
-    }));
+    .map((c) =>
+      withPublicPoint({
+        ...c,
+        rating: normalizeRating(c.rating),
+        reviewCount: toCount(c.reviewCount),
+      }),
+    );
 
   const { score, band, factors } = computeSelectabilityScore(store, competitors);
   const comparison = analyzeCompetitors(store, competitors);
