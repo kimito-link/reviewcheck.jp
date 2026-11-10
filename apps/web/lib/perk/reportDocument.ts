@@ -5,7 +5,11 @@ import type { CohortPublic } from "@/lib/cohort/public";
 import { parseCohortRegion } from "@/lib/cohort/region";
 import {
   buildCountSummary,
+  collectUnconfirmedLines,
   formatDiagnosedAtJst,
+  isActionableImprovement,
+  isConfirmedFactor,
+  isUnconfirmedNotice,
   leftAloneParagraphs,
 } from "@/lib/resultCopy";
 import {
@@ -94,7 +98,9 @@ export function buildDiagnosisReport(input: {
       .replace(/詳しくは下の「[^」]+」に並べてあります。/g, "")
       .trim();
     findings.push(`${selection.primary.name}：${finding}`);
-    for (const chip of selection.secondary) findings.push(chip);
+    for (const chip of selection.secondary) {
+      if (!isUnconfirmedNotice(chip)) findings.push(chip);
+    }
   }
   if (findings.length === 0) {
     findings.push("主な指摘として名前を付けられる組み合わせはありませんでした。");
@@ -103,45 +109,23 @@ export function buildDiagnosisReport(input: {
   const reasons: string[] = [];
   if (selection?.primary.structure) reasons.push(selection.primary.structure);
   for (const factor of result.factors) {
+    if (!isConfirmedFactor(factor)) continue;
     reasons.push(`${factor.title}：${factor.message}`);
   }
 
-  const fixes = result.improvements.map(
-    (item) => `${item.title}：${item.detail}`,
-  );
+  const fixes = result.improvements
+    .filter((item) => isActionableImprovement(item))
+    .map((item) => `${item.title}：${item.detail}`);
   if (selection?.primary.selfCare) fixes.push(selection.primary.selfCare);
   fixes.push(REPORT_FIX_BOUNDARY);
 
   const cta = selectResultCta(result.score);
   const blocks: ReportBlock[] = [];
 
-  const subject: string[] = [];
-  if (store.name?.trim()) subject.push(`店名：${store.name.trim()}`);
-  if (region) subject.push(`地域：${region.label}`);
-  if (subject.length > 0) blocks.push({ heading: "対象", paragraphs: subject });
-
-  blocks.push({
-    heading: "点数",
-    paragraphs: [`選ばれやすさ ${Math.round(result.score)}点（目安）`],
-  });
-  blocks.push({
-    heading: "件数のまとめ",
-    paragraphs: [buildCountSummary(store, result.comparison)],
-  });
-  blocks.push({ heading: "主な指摘", paragraphs: findings });
-  blocks.push({ heading: "理由", paragraphs: reasons });
-  blocks.push({
-    heading: "放置したら",
-    paragraphs: leftAloneParagraphs({
-      reviewCountDiff: result.comparison ? result.comparison.reviewCountDiff : null,
-      ratingDiff: result.comparison ? result.comparison.ratingDiff : null,
-    }),
-  });
-  blocks.push({ heading: "直し方", paragraphs: fixes });
-  blocks.push({
-    heading: "次の一歩",
-    paragraphs: [cta.headline, cta.body, cta.label],
-  });
+  const scoreLines = [`選ばれやすさ ${Math.round(result.score)}点（目安）`];
+  if (store.name?.trim()) scoreLines.push(`店名：${store.name.trim()}`);
+  if (region) scoreLines.push(`地域：${region.label}`);
+  blocks.push({ heading: "点数", paragraphs: scoreLines });
 
   const compare = previousCompareLine(previous, {
     score: result.score,
@@ -150,9 +134,33 @@ export function buildDiagnosisReport(input: {
   });
   if (compare) blocks.push({ heading: "前回との差", paragraphs: [compare] });
 
+  blocks.push({
+    heading: "件数のまとめ",
+    paragraphs: [buildCountSummary(store, result.comparison)],
+  });
+  blocks.push({ heading: "主な指摘", paragraphs: findings });
+  if (reasons.length > 0) blocks.push({ heading: "理由", paragraphs: reasons });
+  blocks.push({ heading: "直し方", paragraphs: fixes });
+  blocks.push({
+    heading: "このままだと失うこと",
+    paragraphs: leftAloneParagraphs({
+      reviewCountDiff: result.comparison ? result.comparison.reviewCountDiff : null,
+      ratingDiff: result.comparison ? result.comparison.ratingDiff : null,
+    }),
+  });
+  blocks.push({
+    heading: "次の一歩",
+    paragraphs: [cta.headline, cta.body, cta.label],
+  });
+
   const cohortLines = cohortParagraphs(cohort);
   if (cohortLines.length > 0) {
     blocks.push({ heading: "同じ業種・地域との比較", paragraphs: cohortLines });
+  }
+
+  const missed = collectUnconfirmedLines(result);
+  if (missed.length > 0) {
+    blocks.push({ heading: "確認できなかった項目", paragraphs: missed });
   }
 
   blocks.push({

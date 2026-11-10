@@ -27,17 +27,21 @@ vi.mock("next/link", () => ({
 }));
 
 const RESULT_SECTION_ORDER = [
+  "result",
   "score",
   "estimate",
-  "cta",
-  "next-diagnoses",
-  "perks",
+  "area-map",
   "findings",
   "causes",
+  "gains",
   "if-left-alone",
-  "fixes",
-  "cta-repeat",
+  "cta",
+  "perks",
   "share",
+  "cta-repeat",
+  "next-diagnoses",
+  "unconfirmed",
+  "method",
   "disclaimer",
 ] as const;
 
@@ -85,6 +89,22 @@ describe("診断結果の並び", () => {
       (el) => el.getAttribute("data-result-section"),
     );
     expect(ids).toEqual([...RESULT_SECTION_ORDER]);
+    expect(ids[0]).toBe("result");
+    const method = container.querySelector("details[data-result-section='method']");
+    expect(method).toBeTruthy();
+    expect(method?.hasAttribute("open")).toBe(false);
+    expect(method?.textContent).toContain("この診断の確かめ方");
+    expect(method?.textContent).toContain(RESULT_ESTIMATE_SENTENCE);
+    const resultBlock = container.querySelector("[data-result-section='result']");
+    expect(resultBlock?.textContent).toContain("主な所見");
+    expect(resultBlock?.textContent).not.toContain("この診断の確かめ方");
+    expect(resultBlock?.textContent).not.toContain(RESULT_ESTIMATE_SENTENCE);
+    expect(resultBlock?.textContent).not.toContain("最新口コミの鮮度");
+    const missed = container.querySelector("[data-result-section='unconfirmed']");
+    expect(missed?.textContent).toContain("最新口コミの鮮度");
+    expect(resultBlock?.compareDocumentPosition(method as Node)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
 
     expect(container).toHaveTextContent(RESULT_ESTIMATE_SENTENCE);
     expect(container).toHaveTextContent(
@@ -93,6 +113,21 @@ describe("診断結果の並び", () => {
     expect(container).toHaveTextContent(
       "星4.0／口コミ45件／周辺5店中 口コミ数 第5位",
     );
+    expect(container).toHaveTextContent("このエリアで比べたお店");
+    expect(container).toHaveTextContent("中央値は160件");
+    expect(container).toHaveTextContent("あと115件");
+    const estimate = container.querySelector("[data-result-section='estimate']");
+    const areaMap = container.querySelector("[data-result-section='area-map']");
+    const findings = container.querySelector("[data-result-section='findings']");
+    expect(estimate?.compareDocumentPosition(areaMap as Node)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(areaMap?.compareDocumentPosition(findings as Node)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(areaMap?.querySelector("[data-area-map-frame]")).toBeNull();
+    expect(areaMap?.querySelector("a[href='#result-next-step']")).toBeTruthy();
+    expect(document.getElementById("result-next-step")).toBeTruthy();
     expect(container.textContent ?? "").not.toContain("無料");
     expect(container.innerHTML).not.toContain("topic=consult");
     expect(container.innerHTML).not.toContain("border-[#06C755]");
@@ -255,9 +290,54 @@ describe("特典と比較", () => {
         screen.queryByRole("link", { name: "共有した人に相談する（LINE）" }),
       ).not.toBeInTheDocument();
       expect(screen.queryByLabelText("自分の公式LINEのURL")).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "このエリアで比べたお店" })).not.toBeInTheDocument();
     });
     expect(screen.getByText(RESULT_ESTIMATE_SENTENCE)).toBeInTheDocument();
     window.history.pushState(null, "", "/report/embed/");
+  });
+
+  test("座標があるときは順位の直下に地図枠を確保し、確かめ方へ出典を書く", () => {
+    window.history.pushState(null, "", "/report/map/");
+    const result = diagnose({
+      ...fixture.input,
+      store: {
+        ...fixture.input.store,
+        lat: 36.06,
+        lng: 138.05,
+        mapsUrl: "https://maps.google.com/?q=subject",
+      },
+      competitors: fixture.input.competitors.map((competitor, index) => ({
+        ...competitor,
+        lat: 36.06 + (index + 1) * 0.01,
+        lng: 138.05,
+        mapsUrl: `https://maps.google.com/?q=peer${index}`,
+      })),
+    });
+    const { container } = render(
+      <ReportView result={result} shareUrl="https://reviewcheck.jp/report/map/" />,
+    );
+    const ids = [...container.querySelectorAll("[data-result-section]")].map((el) =>
+      el.getAttribute("data-result-section"),
+    );
+    expect(ids.slice(0, 6)).toEqual([
+      "result",
+      "score",
+      "estimate",
+      "area-map",
+      "findings",
+      "causes",
+    ]);
+    const frame = container.querySelector("[data-area-map-frame]");
+    expect(frame?.className).toContain("h-64");
+    expect(frame?.className).toContain("sm:h-80");
+    const area = container.querySelector("[data-result-section='area-map']");
+    expect(area?.textContent).toContain("km");
+    expect(area?.textContent).toContain("基準");
+    expect(area?.textContent ?? "").not.toMatch(/無料|必ず|保証|今すぐ|緊急/);
+    expect(area?.innerHTML ?? "").not.toMatch(/text-(xs|sm)\b/);
+    expect(container.querySelector("[data-result-section='method']")?.textContent).toContain(
+      "OpenStreetMap",
+    );
   });
 });
 

@@ -5,6 +5,7 @@ import {
   fetchCompetitors,
   fetchStore,
   getEnabledProviders,
+  withPublicPoint,
   guardMessage,
   InvalidInputError,
   MockStoreProvider,
@@ -118,7 +119,8 @@ async function handle(request: Request, body: DiagnoseBody) {
       }
     }
     if (fetched) {
-      base = fetched.store;
+      // KV の v1 は store 本体に座標が無く、context にだけ残っている。
+      base = fetched.store ? withPublicPoint(fetched.store, fetched.context) : null;
       providers = fetched.providers;
       context = fetched.context;
       reviews = fetched.reviews ?? [];
@@ -179,7 +181,9 @@ async function handle(request: Request, body: DiagnoseBody) {
     !demo &&
     context
   ) {
-    const compKey = context.placeId ? `rc:comp:v1:${context.placeId}:5` : null;
+    // v2 は公開座標つき。v1 の24時間キャッシュには lat/lng が無く、地図のピンが欠ける。
+    // 店ごとに周辺検索が1回だけ増える。SKU は変えない（location は既存 Enterprise より下）。
+    const compKey = context.placeId ? `rc:comp:v2:${context.placeId}:5` : null;
     const cachedComp = compKey ? await cacheGet<Competitor[]>(cache, compKey) : null;
     if (cachedComp) {
       competitors = cachedComp;

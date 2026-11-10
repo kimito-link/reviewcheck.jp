@@ -24,7 +24,7 @@ export function NextDiagnoses({ context }: { context: DiagnosisRankContext }) {
       >
         次に試すとよい診断
       </h2>
-      <p className="mt-1 text-sm leading-relaxed text-slate-700">
+      <p className="mt-1 text-base leading-relaxed text-slate-800">
         いまの結果に近いものから並べています。
       </p>
       <ol className="mt-3 space-y-3">
@@ -40,9 +40,9 @@ export function NextDiagnoses({ context }: { context: DiagnosisRankContext }) {
             >
               {app.name}
             </DiagnosisLink>
-            <p className="mt-1 text-sm leading-relaxed text-slate-800">{app.value}</p>
+            <p className="mt-1 text-base leading-relaxed text-slate-800">{app.value}</p>
             {app.patentNote ? (
-              <p className="mt-1 text-sm leading-relaxed text-slate-700">{app.patentNote}</p>
+              <p className="mt-1 text-base leading-relaxed text-slate-800">{app.patentNote}</p>
             ) : null}
           </li>
         ))}
