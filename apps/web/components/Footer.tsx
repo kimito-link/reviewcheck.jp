@@ -8,9 +8,13 @@ export function Footer() {
   return (
     <footer
       className="mt-20 border-t border-white/10 text-slate-300"
-      style={{ backgroundColor: "#0f1b2d" }}
+      style={{
+        backgroundColor: "#0f1b2d",
+        paddingBottom:
+          "var(--sticky-consult-offset, calc(7.5rem + env(safe-area-inset-bottom)))",
+      }}
     >
-      <Container className="py-12 pb-28 sm:pb-12">
+      <Container className="pt-12">
         <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="inline-flex rounded bg-white p-1.5">
             <Image

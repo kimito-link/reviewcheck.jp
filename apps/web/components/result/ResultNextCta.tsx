@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { buildLineConsultMessage, CONSULT_OPEN_LABEL, selectResultCta } from "@reviewcheck/config";
 import { postFunnel } from "@/lib/postFunnel";
 import { LineConsultCta } from "../LineConsultCta";
+import { StickyConsult } from "./StickyConsult";
 
 interface ResultNextCtaProps {
   score: number;
@@ -87,8 +88,8 @@ function StickyBar({
   const [closed, setClosed] = useState(false);
   if (closed) return null;
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <div className="pointer-events-auto relative mx-auto flex max-w-3xl flex-col gap-2 rounded-2xl border border-slate-200 bg-white/95 p-3 pr-10 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:pr-3">
+    <StickyConsult>
+      <div className="relative mx-auto flex max-w-3xl flex-col gap-2 rounded-2xl border border-slate-200 bg-white/95 p-3 pr-10 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:pr-3">
         <p className="min-w-0 flex-1 text-base font-bold leading-snug text-slate-900">
           {headline}
         </p>
@@ -102,6 +103,6 @@ function StickyBar({
           ×
         </button>
       </div>
-    </div>
+    </StickyConsult>
   );
 }

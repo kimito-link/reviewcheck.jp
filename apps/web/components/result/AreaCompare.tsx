@@ -36,6 +36,7 @@ export function AreaCompare({
   return (
     <section
       data-result-section="area-map"
+      data-sticky-protect=""
       className="rounded-2xl border border-slate-200 bg-white p-5 text-base text-slate-900 shadow-sm sm:p-6"
     >
       <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">

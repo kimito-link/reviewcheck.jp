@@ -156,13 +156,26 @@ export function ReportView({
 
   return (
     <ResultActionProvider>
-      <div className="space-y-8 pb-28">
+      <div
+        className="space-y-8"
+        style={{
+          paddingBottom:
+            "var(--sticky-consult-offset, calc(7.5rem + env(safe-area-inset-bottom)))",
+        }}
+      >
         <section
           id="result-score"
           data-result-section="result"
+          data-sticky-protect=""
           className="scroll-mt-20 space-y-6"
         >
           <ScrollToResultScore />
+
+          {store.source === "manual" ? (
+            <p className="rounded-xl border border-slate-300 bg-slate-50 p-4 text-base leading-relaxed text-slate-900">
+              これは、入力された数字の計算です。Googleの公開情報ではありません。出典の表示はありません。
+            </p>
+          ) : null}
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
@@ -215,6 +228,11 @@ export function ReportView({
               area={area}
               attributeToGoogle={result.placesAttributed === true}
               scopeText={result.areaScopeText}
+              lead={
+                store.source === "manual"
+                  ? "並べている数字は、入力された値です。Googleの検索結果でも、エリア全体の順位でもありません。"
+                  : undefined
+              }
             />
           ) : null}
 
@@ -494,12 +512,15 @@ export function ReportView({
           <p>{RESULT_ESTIMATE_SENTENCE}</p>
           <p>{metaLine}</p>
           <p>{FINDING_CARD_TEXTS.roleDeclaration}</p>
-          <p>
-            星評価・口コミ数・返信・新しさ・プロフィールなど、公開情報を項目ごとに採点しています。
-          </p>
-          <p>
-            Googleの評価は丸め処理・反映タイミングがあるため、目標までの件数は目安です。
-          </p>
+          {store.source === "manual" ? (
+            <p>
+              この点数と順位は、入力された星と口コミ数から計算しています。Googleが返した順位でも、公開情報の写しでもありません。
+            </p>
+          ) : (
+            <p>
+              星評価・口コミ数・返信・新しさ・プロフィールなど、公開情報を項目ごとに採点しています。Googleの評価は丸め処理・反映タイミングがあるため、目標までの件数は目安です。
+            </p>
+          )}
           {autoCompetitors ? (
             <p>
               周辺の店は、1回の検索が返した中から口コミ数の多い順に最大10件を出しています。エリア全体の順位ではありません。半径は設計上の目安です。

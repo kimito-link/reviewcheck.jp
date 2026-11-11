@@ -139,6 +139,9 @@ describe("診断結果の並び", () => {
         ?.textContent ?? "",
     ).not.toMatch(/円/);
 
+    expect(container.textContent).toContain("入力された数字の計算です");
+    expect(container.textContent).toContain("Googleの公開情報ではありません");
+    expect(container.querySelector("[data-places-attribution]")).toBeNull();
     expect(screen.queryByText(/前回（10\/1）/)).toBeNull();
     await waitFor(() => {
       expect(window.localStorage.getItem(scoreHistoryKey("テスト食堂"))).toBeNull();

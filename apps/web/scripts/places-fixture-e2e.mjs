@@ -104,6 +104,58 @@ async function runWidth(browser, width) {
   await page
     .locator("[data-result-section='area-map']")
     .screenshot({ path: areaShot, animations: "disabled" });
+  const covered = await page.evaluate(() => {
+    const bar = document.querySelector("[data-sticky-consult]");
+    const area = document.querySelector("[data-result-section='area-map']");
+    const credit = area?.querySelector("[data-places-attribution]");
+    if (!bar || !area) return ["追従ボタンか表が無い"];
+    const barRect = bar.getBoundingClientRect();
+    const hidden = bar.classList.contains("invisible");
+    const problems = [];
+    if (!hidden) {
+      for (const [node, name] of [
+        [area, "表"],
+        [credit, "出典"],
+      ]) {
+        if (!node) continue;
+        const rect = node.getBoundingClientRect();
+        if (rect.bottom > barRect.top + 1 && rect.top < barRect.bottom - 1) {
+          problems.push(`${name}が追従ボタンに重なっている`);
+        }
+      }
+    }
+    return problems;
+  });
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(250);
+  const bottomClear = await page.evaluate(() => {
+    const bar = document.querySelector("[data-sticky-consult]");
+    const result = document.querySelector("[data-result-section='result']");
+    const root = result?.parentElement;
+    if (!bar || !root) return ["下端の確認ができない"];
+    const barRect = bar.getBoundingClientRect();
+    const pad = Number.parseFloat(getComputedStyle(root).paddingBottom);
+    const problems = [];
+    if (!(pad + 1 >= barRect.height)) {
+      problems.push(`末尾余白 ${pad}px がボタンの高さ ${barRect.height}px より小さい`);
+    }
+    const last = [...root.children].findLast((el) => !el.hasAttribute("data-sticky-consult"));
+    if (!last) return [...problems, "本文の末尾が無い"];
+    const lastRect = last.getBoundingClientRect();
+    if (!bar.classList.contains("invisible") && lastRect.bottom > barRect.top + 2) {
+      problems.push("本文の末尾が追従ボタンに隠れている");
+    }
+    const footerBody = document.querySelector("footer .mx-auto");
+    if (
+      footerBody &&
+      !bar.classList.contains("invisible") &&
+      footerBody.getBoundingClientRect().bottom > barRect.top + 2
+    ) {
+      problems.push("フッターの本文が追従ボタンに隠れている");
+    }
+    return problems;
+  });
+  const bottomShot = await shot(page, `fixture_places_diagnosis_bottom_${width}`);
   await page.getByRole("link", { name: "15分のご相談ページを開く" }).first().click();
   await page.getByText("15分のご相談（費用はかかりません）").waitFor();
   await page.waitForTimeout(1000);
@@ -136,11 +188,14 @@ async function runWidth(browser, width) {
     funnels,
     hits,
     diagnosisShot,
+    bottomShot,
     areaShot,
     shareShot,
     consultShot,
     monitorShot,
     problems: [
+      ...covered,
+      ...bottomClear,
       ...assertText("diagnosis", diagnosisText),
       ...assertText("share", shareText),
       ...(shareHeading.includes("選ばれやすさ") ? ["share heading に点数が残っている"] : []),

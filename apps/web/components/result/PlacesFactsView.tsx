@@ -12,6 +12,7 @@ import { UnconfirmedList } from "./ResultReading";
 import { supportOffersForPlaces } from "@/lib/supportOffers";
 import { formatDiagnosedAtJst } from "@/lib/resultCopy";
 import { postFunnel } from "@/lib/postFunnel";
+import { StickyConsult, stickyConsultPadding } from "./StickyConsult";
 import type { PublicFacts, PublicPeer } from "@/lib/placesPublic";
 
 /**
@@ -35,10 +36,11 @@ export function PlacesFactsView({
   const when = formatDiagnosedAtJst(facts.diagnosedAt);
 
   return (
-    <div className="space-y-8 pb-28">
+    <div className="space-y-8" style={stickyConsultPadding()}>
       <section
         id="result-score"
         data-result-section="result"
+        data-sticky-protect=""
         className="scroll-mt-20 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
       >
         <p className="text-base font-bold text-slate-900">今回取得できた公開情報</p>
@@ -86,6 +88,7 @@ export function PlacesFactsView({
       {rows.length > 0 ? (
         <section
           data-result-section="area-map"
+          data-sticky-protect=""
           className="rounded-2xl border border-slate-200 bg-white p-5 text-base text-slate-900 shadow-sm sm:p-6"
         >
           <h2 className="text-xl font-extrabold text-slate-900">この検索で比べたお店</h2>
@@ -176,8 +179,8 @@ export function PlacesFactsView({
 
       <OtherMenus suggestHref="/suggest-check/" monitoringPaused />
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="pointer-events-auto mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg">
+      <StickyConsult>
+        <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg">
           <a
             href={offers[0]?.href ?? "/contact/?topic=consult"}
             onClick={() => postFunnel("cta", "consult")}
@@ -186,7 +189,7 @@ export function PlacesFactsView({
             {CONSULT_OPEN_LABEL}
           </a>
         </div>
-      </div>
+      </StickyConsult>
     </div>
   );
 }
