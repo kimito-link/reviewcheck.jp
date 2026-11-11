@@ -42,7 +42,7 @@ reviewcheck.jp/
 - `types/` 診断の共通型（StoreInput / Competitor / DiagnosisResult 等）
 - `scoring/` 選ばれやすさスコア（0〜100・透明な要素別配点）
 - `simulator/` 「あと何件で追いつけるか」（`(rating*count + 5n)/(count+n) >= target` を解く）
-- `competitor/` 競合比較（平均・差・順位、最大5件）
+- `competitor/` 競合比較（平均・差・順位、最大20件）
 - `providers/` 店舗データ取得（`GooglePlacesProvider` / `MockStoreProvider` / `fetchStore`）
 - `diagnose()` これらを束ねる純粋関数。Web・拡張・モバイルで共通利用。
 
@@ -52,7 +52,7 @@ reviewcheck.jp/
 
 - **店舗検索・入力**: 店舗名 / GoogleマップURL / Place ID対応設計。APIキー未設定時はモックで動作。
 - **口コミ診断**: 星評価・口コミ数・選ばれやすさスコア・改善ポイント。
-- **競合比較**: 競合を最大5件追加し、星評価・口コミ数の差と順位を表示。
+- **競合比較**: 同じ商圏の競合を最大20件まで自動で並べ、星評価・口コミ数の差と順位を表示。
 - **シミュレーション**: 目標評価（競合平均/任意）に対し、星5のみ・星4-5混在・星4中心の複数パターンで必要件数を試算。
 - **結果ページ**: `/report/[id]/` はDB不要のステートレス共有（idは入力JSONのbase64url）。
 - **SEOページ群**: `/google-review-check/` `/review-improvement/` `/meo/` `/review-reply/` `/bad-review-measures/` `/competitor-review-comparison/`。
@@ -85,7 +85,8 @@ pnpm ext:zip        # Chrome拡張の提出用zip
 ### 環境変数（任意・未設定でも動作）
 
 ```
-GOOGLE_PLACES_API_KEY=...   # 設定すると実データ取得に自動切替。未設定ならモック。
+GOOGLE_PLACES_API_KEY=...                    # サーバー専用。設定すると実データ。未設定ならモック。
+NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY=...      # ブラウザ専用の Maps JavaScript API。未設定なら一覧だけ。
 ```
 
 詳細は `docs/api-design.md`。
@@ -97,7 +98,7 @@ GOOGLE_PLACES_API_KEY=...   # 設定すると実データ取得に自動切替�
 1. GitHubにpush → Vercelで New Project → このリポジトリを選択。
 2. **Root Directory**: `apps/web` を指定（モノレポ）。Framework は Next.js 自動検出。
 3. Build Command / Install Command は既定でOK（pnpm 自動検出）。
-4. **Environment Variables** に `GOOGLE_PLACES_API_KEY`（使う場合）を設定。
+4. **Environment Variables** に `GOOGLE_PLACES_API_KEY`（サーバー）と、地図を出すときは `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY`（ブラウザ・リファラー制限）を設定。
 5. **ドメイン**: `reviewcheck.jp` を追加。`www.reviewcheck.jp` は `reviewcheck.jp` へリダイレクト（middlewareでwww無し統一）。`http→https` はVercel側で強制。
 6. デプロイ後、`/sitemap.xml` `/robots.txt` `/manifest.webmanifest` を確認。
 

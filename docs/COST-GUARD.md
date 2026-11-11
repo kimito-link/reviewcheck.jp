@@ -8,15 +8,30 @@
 | 呼び出し | どこから | 1回の原価（見積り） | 守り |
 |---|---|---|---|
 | Google Places Text Search＋Place Details（店舗の特定・口コミ） | `/api/diagnose`（匿名） | 9円 | キャッシュ → IP上限 → 日次予算（fail-closed） |
-| Google Places Nearby Search（周辺競合） | `/api/diagnose`（匿名） | 6円 | 同上 |
+| Google Places Text Search（同業の商圏。表に無い業種だけ Nearby） | `/api/diagnose`（匿名） | 6円 | 同上 |
 | Google Places Nearby Search（現在地の候補） | `/api/nearby`（匿名） | 6円 | 同上 |
 | Google Places（監視スキャン） | `/api/monitor/run`・`monthly-report`（cron） | 15円/店 | `CRON_SECRET` 必須（未設定なら拒否） |
 | Groq（AIからの見え方） | `/api/ai-probe` | 0円（無料枠モデル） | キルスイッチ・24h CDN キャッシュ |
 
 見積りの根拠（`packages/core/src/costguard/index.ts` の `PLACES_COST_YEN`。1ドル=150円・切り上げ・Google の月間無料枠は数えない＝保守的）:
-Text Search Pro $32/1000・Place Details Enterprise+Atmosphere $25/1000・Nearby Search Enterprise $35/1000。
-周辺競合の FieldMask に `places.location`（Essentials）を足している。呼び出しは従来どおり Nearby Search 1回で、見積りは 6円のまま（location は rating より下の項目）。競合キャッシュキーは `rc:comp:v2`（v1 には座標が無い。反映後、店ごとに1回だけ取り直す）。
+店舗の Text Search Pro $32/1000・Place Details Enterprise+Atmosphere $25/1000。
+同業は Text Search Enterprise（`rating` / `userRatingCount` を含む）$35/1000 ≒ 6円。FieldMask は `places.id,places.displayName,places.rating,places.userRatingCount,places.googleMapsUri,places.location`。`location` は rating より下の項目なので、この見積りを上げない。口コミ本文は取らない。表に無い業種だけ Nearby Search Enterprise（同じ6円）。
+競合キャッシュキーは `rc:comp:v3`（v2 は半径1.5km・5件。反映後、店ごとに1回だけ取り直す）。
 **未確認**: 実際の請求 SKU（Cloud Console の請求レポートで照合すること）。
+
+### 診断1回の呼び出し（キャッシュが無いとき）
+
+| 入力 | Text Search | Place Details | Nearby Search |
+|---|---|---|---|
+| 店名 | 2（店の特定＋同業） | 1 | 0 |
+| マップURLや placeId（店の特定が不要） | 1（同業だけ） | 1 | 0 |
+| 上に加え、現在地の候補を開いたとき | 同じ | 同じ | +1 |
+
+同じ店の再診断は24時間キャッシュで 0回。同業の再検索も24時間キャッシュで 0回。
+
+運用中の1日上限（Places API (New)、2026-11-11 時点）: Text Search 200、Place Details 100、Nearby 100。
+予算 1,500円/日は新しい店 100件で使い切る。店名診断100件は Text 200 + Details 100 で、いまの上限とちょうど一致する。失敗のやり直し分がない。
+提案: Text Search を **300/日**（100件×2に、特定し直し約100回の余裕）。Place Details は予算と同じ **100/日**のままでよい（余裕を見るなら 120）。Nearby は診断では使わなくなり、現在地の候補だけなので **100/日**のままで足りる。
 
 ## 2. 黒字の式（§A-4 の表・提案値）
 
@@ -37,7 +52,7 @@ Text Search Pro $32/1000・Place Details Enterprise+Atmosphere $25/1000・Nearby
 
 | 層 | 実装 |
 |---|---|
-| L0 提供元の物理上限 | **未設定（運用者の作業）**。Google Cloud Console → Places API (New) → 割り当て で「1日あたりのリクエスト数」を下げる。提案: Text Search 300/日・Place Details 300/日・Nearby Search 600/日（上の予算の約3倍。監視スキャン分を含む余裕）。予算アラートは止めないので割り当てで止める |
+| L0 提供元の物理上限 | Google Cloud Console の Places API (New)。2026-11-11 時点は Text Search 200/日・Place Details 100/日・Nearby 100/日。診断の内訳は上の表。提案は Text Search 300/日（店名診断は1件で2回使う）。Details 100 と Nearby 100 は予算と現在地候補に合っている |
 | L1 キルスイッチ | `PAID_CALLS_DISABLED=1`（Places・Groq とも停止。手入力の診断は動く） |
 | L2 日次予算の予約 | `reserveDailyBudget`（INCRBY で先に積む・超えたら戻して拒否・KV 未接続／env 不正なら拒否） |
 | L3 キャッシュ | KV に正規化キーで保存。店舗 24h・見つからなかった店 6h・競合 24h・現在地候補（座標を約100mに丸めて）24h |

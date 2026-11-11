@@ -392,7 +392,7 @@ export const SEO_PAGES: Record<string, SeoServicePageData> = {
     included: [
       {
         title: "競合との差の見える化",
-        desc: "自店舗と競合（最大5件）の星評価・口コミ数を並べ、差と地域内での見え方を表示します。",
+        desc: "自店舗と競合（1回の検索で最大20件）の星評価・口コミ数を並べ、差と地域内での見え方を表示します。",
       },
       {
         title: "あと何件で追いつけるか",

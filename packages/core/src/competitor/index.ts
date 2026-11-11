@@ -5,11 +5,14 @@ import type {
 } from "../types/index";
 import { round1 } from "../utils/number";
 
-/** 上限件数（UIでもこの数まで） */
-export const MAX_COMPETITORS = 5;
+/**
+ * 比較に残す上限。Places が1回で返す最大20件と同じ。
+ * 5件で切ると、取得できた同じ商圏の店が画面から消える。
+ */
+export const MAX_COMPETITORS = 20;
 
 /**
- * 自店舗と競合（最大5件）を比較し、平均・差・順位を返す。
+ * 自店舗と競合（最大20件）を比較し、平均・差・順位を返す。
  * 競合が無ければ null。
  */
 export function analyzeCompetitors(

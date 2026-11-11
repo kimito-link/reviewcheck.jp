@@ -97,6 +97,26 @@ export function buildAreaComparison(
   };
 }
 
+/**
+ * 一覧の範囲。検索半径そのものではなく、いま並んでいる店のいちばん遠い距離。
+ * 密集地は近く、まばらな地域は広くなり、1回の検索の上限は20件。
+ */
+export function areaScopeMessage(area: Pick<AreaComparison, "places">): string {
+  let farthest = 0;
+  let seen = false;
+  for (const place of area.places) {
+    if (place.isSubject || place.distanceMeters == null) continue;
+    if (!seen || place.distanceMeters > farthest) {
+      farthest = place.distanceMeters;
+      seen = true;
+    }
+  }
+  const reach = seen
+    ? `いま並んでいるお店は、診断したお店から${formatDistanceMeters(farthest)}までの範囲です。`
+    : "";
+  return `${reach}同じ種類のお店を、その業種でお客さんが来る範囲から探しています。店が密集している場所では近い店が並び、まばらな場所ではより広い範囲が並びます。1回の検索で返るのは最大20件です。`;
+}
+
 /** 中央値と、そこに届く件数の目安。結果画面の一文。 */
 export function areaMedianMessage(
   area: Pick<AreaComparison, "medianReviewCount" | "reviewsToReachMedian">,

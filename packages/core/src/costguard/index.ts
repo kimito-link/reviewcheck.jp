@@ -42,7 +42,10 @@ export interface CacheStore {
 export const PLACES_COST_YEN = {
   /** 店舗の特定＋詳細（Text Search＋Place Details）。placeId 指定でも保守的に同額。 */
   store: 9,
-  /** 周辺競合の自動検出（Nearby Search 1回）。 */
+  /**
+   * 同業の自動検出（Text Search 1回。rating を含むので Enterprise の見積り）。
+   * 表に無い業種だけ Nearby Search。どちらも1回・見積りは同じ。
+   */
   competitors: 6,
   /** 現在地周辺の候補（Nearby Search 1回）。 */
   nearby: 6,

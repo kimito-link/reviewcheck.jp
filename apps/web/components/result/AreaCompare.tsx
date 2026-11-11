@@ -2,16 +2,19 @@
 
 import {
   areaMedianMessage,
+  areaScopeMessage,
   formatDistanceMeters,
   type AreaComparison,
   type AreaPlace,
 } from "@reviewcheck/core/areaMap";
 import { useEmbedHidden } from "../diagnosis/useEmbedHidden";
+import { AreaGoogleMap } from "./AreaGoogleMap";
 import { ResultHook } from "./ResultReading";
 
 /**
  * 順位の直下に置く、エリアの根拠。
- * 店の位置は地図タイルに載せず、一覧だけで比べる。
+ * ブラウザ用地図キーがあるときは Google 公式の地図にピンを出す。
+ * キーが無い、または読み込めないときは一覧だけを残す。
  * ?embed=1 では、あとから足したブロックと同じく出さない。
  */
 export function AreaCompare({ area }: { area: AreaComparison }) {
@@ -27,8 +30,12 @@ export function AreaCompare({ area }: { area: AreaComparison }) {
         このエリアで比べたお店
       </h2>
       <p className="mt-2 text-base leading-relaxed text-slate-800">
-        上の順位は、診断したお店と周辺のお店の口コミ数です。店名・星・口コミ数は、この一覧で比べられます。
+        上の順位は、診断したお店と周辺のお店の口コミ数です。店名・星・口コミ数は、地図かこの一覧で比べられます。
       </p>
+      <p className="mt-2 text-base leading-relaxed text-slate-800" data-area-scope="">
+        {areaScopeMessage(area)}
+      </p>
+      <AreaGoogleMap pins={area.pins} />
       <div className="mt-4">
         <AreaPlaceCards places={area.places} />
         <AreaPlaceTable places={area.places} />

@@ -1,3 +1,4 @@
+import { competitorPlacesRequest } from "../catchment/index";
 import type { Competitor, StoreInput } from "../types/index";
 import type { ReviewItem } from "../reviews/index";
 import { readPoint } from "../utils/geo";
@@ -14,15 +15,19 @@ import type { StoreDataProvider, StoreQuery } from "./types";
 export interface StoreContext {
   lat?: number;
   lng?: number;
-  /** Places の primaryType（例: "restaurant"）。競合の同業種絞り込みに使う。 */
+  /** Places の primaryType（例: "ramen_restaurant"）。業種の検索語に使う。 */
   primaryType?: string;
   placeId?: string;
+  /** 日本語の業種表示名。店名に業種が無いときの検索語。 */
+  category?: string;
+  /** 店舗名。業種語（ラーメン等）が含まれるときの検索語。 */
+  name?: string;
 }
 
 export interface FetchCompetitorsOptions {
-  /** 検索半径（メートル）。既定 1500m。 */
+  /** 検索半径（メートル）。省略時は業種ごとの商圏。 */
   radius?: number;
-  /** 返す競合の最大件数。既定 5。 */
+  /** 返す競合の最大件数。省略時は1回の検索が返す最大20件。 */
   limit?: number;
 }
 
@@ -43,7 +48,8 @@ export const COMPETITOR_SEARCH_FIELD_MASK =
  * 取得方針（Places APIの制限内）:
  *   - Text Search で place を特定 → Place Details で rating / userRatingCount /
  *     座標・業種・基本情報を取得する。
- *   - 競合は searchNearby（1回の呼び出しで周辺店舗の評価・口コミ数まで取得）で検出。
+ *   - 競合は業種の語で Text Search を1回（飲食は半径12kmを上限にした関連度）。
+ *     表に無い業種だけ searchNearby。評価・口コミ数はその1回の応答で取る。
  *   - reviews は最大5件程度しか返らないため、口コミの完全取得は前提にしない。
  *
  * 詳細な接続手順は docs/api-design.md を参照。
@@ -86,9 +92,9 @@ export class GooglePlacesProvider implements StoreDataProvider {
   }
 
   /**
-   * 起点店舗の周辺から同業種の競合を自動検出する。
-   * 1回の searchNearby で各店舗の rating / userRatingCount まで取得するため、
-   * 競合件数ぶんの追加リクエストは発生しない（コスト効率が良い）。
+   * 起点店舗の商圏から同業を1回で取る。
+   * 飲食は Text Search（関連度）。半径1.5kmの Nearby だと諏訪の同業が落ちる。
+   * 件数ぶんの追加リクエストはしない。
    */
   async fetchCompetitors(
     context: StoreContext,
@@ -96,32 +102,12 @@ export class GooglePlacesProvider implements StoreDataProvider {
   ): Promise<Competitor[]> {
     const key = this.apiKey;
     if (!key) return [];
-    if (typeof context.lat !== "number" || typeof context.lng !== "number") {
-      return [];
-    }
-
-    const radius = options.radius ?? 1500;
-    const limit = options.limit ?? 5;
+    const request = competitorPlacesRequest(context, options);
+    if (!request) return [];
 
     try {
-      const body: Record<string, unknown> = {
-        maxResultCount: 20,
-        rankPreference: "POPULARITY",
-        languageCode: "ja",
-        regionCode: "JP",
-        locationRestriction: {
-          circle: {
-            center: { latitude: context.lat, longitude: context.lng },
-            radius,
-          },
-        },
-      };
-      if (context.primaryType) {
-        body.includedPrimaryTypes = [context.primaryType];
-      }
-
       const res = await fetch(
-        "https://places.googleapis.com/v1/places:searchNearby",
+        `https://places.googleapis.com/v1/places:${request.endpoint}`,
         {
           method: "POST",
           headers: {
@@ -129,35 +115,13 @@ export class GooglePlacesProvider implements StoreDataProvider {
             "X-Goog-Api-Key": key,
             "X-Goog-FieldMask": COMPETITOR_SEARCH_FIELD_MASK,
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify(request.body),
         },
       );
       if (!res.ok) return [];
 
       const data = (await res.json()) as { places?: NearbyPlace[] };
-      const places = data.places ?? [];
-
-      return places
-        .filter(
-          (p) =>
-            p.id &&
-            p.id !== context.placeId &&
-            typeof p.rating === "number" &&
-            typeof p.userRatingCount === "number",
-        )
-        .sort((a, b) => (b.userRatingCount ?? 0) - (a.userRatingCount ?? 0))
-        .slice(0, limit)
-        .map((p) => {
-          const point = readPoint(p.location?.latitude, p.location?.longitude);
-          return {
-            name: p.displayName?.text,
-            rating: normalizeRating(p.rating as number),
-            reviewCount: toCount(p.userRatingCount ?? 0),
-            mapsUrl: p.googleMapsUri,
-            placeId: p.id,
-            ...(point ? { lat: point.lat, lng: point.lng } : {}),
-          };
-        });
+      return toCompetitors(data.places ?? [], context.placeId, request.limit);
     } catch {
       return [];
     }
@@ -403,6 +367,8 @@ export class GooglePlacesProvider implements StoreDataProvider {
       lng: point?.lng,
       primaryType: p.primaryType,
       placeId: p.id ?? placeId,
+      category: p.primaryTypeDisplayName?.text,
+      name: p.displayName?.text,
     };
 
     const reviews: ReviewItem[] = (p.reviews ?? [])
@@ -441,6 +407,34 @@ interface PlaceReview {
   authorAttribution?: { displayName?: string };
   relativePublishTimeDescription?: string;
   publishTime?: string;
+}
+
+function toCompetitors(
+  places: NearbyPlace[],
+  selfId: string | undefined,
+  limit: number,
+): Competitor[] {
+  return places
+    .filter(
+      (place) =>
+        place.id &&
+        place.id !== selfId &&
+        typeof place.rating === "number" &&
+        typeof place.userRatingCount === "number",
+    )
+    .sort((a, b) => (b.userRatingCount ?? 0) - (a.userRatingCount ?? 0))
+    .slice(0, limit)
+    .map((place) => {
+      const point = readPoint(place.location?.latitude, place.location?.longitude);
+      return {
+        name: place.displayName?.text,
+        rating: normalizeRating(place.rating as number),
+        reviewCount: toCount(place.userRatingCount ?? 0),
+        mapsUrl: place.googleMapsUri,
+        placeId: place.id,
+        ...(point ? { lat: point.lat, lng: point.lng } : {}),
+      };
+    });
 }
 
 interface NearbyPlace {

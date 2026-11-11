@@ -6,6 +6,7 @@ import type { Competitor, StoreInput } from "../types/index.ts";
 import {
   areaCopyIssues,
   areaMedianMessage,
+  areaScopeMessage,
   buildAreaComparison,
   formatDistanceMeters,
 } from "./index.ts";
@@ -58,6 +59,28 @@ describe("buildAreaComparison: 並びと順位", () => {
       area.places.map((place) => place.reviewCount),
       [320, 210, 160, 120, 45],
     );
+  });
+
+  test("取得した店は20件まで残す。5件では切らない", () => {
+    const many: Competitor[] = Array.from({ length: 8 }, (_, index) => ({
+      name: `店${index}`,
+      rating: 4,
+      reviewCount: 10 + index,
+      lat: 36.06 + index * 0.01,
+      lng: 138.05,
+    }));
+    const area = buildAreaComparison(store, many);
+    assert.equal(area?.places.length, 9);
+  });
+
+  test("範囲の説明は、並んでいる店の距離と検索1回の上限", () => {
+    const area = buildAreaComparison(store, peers);
+    assert.ok(area);
+    const text = areaScopeMessage(area);
+    assert.match(text, /までの範囲です/);
+    assert.match(text, /最大20件/);
+    assert.match(text, /まばらな場所ではより広い範囲/);
+    assert.deepEqual(areaCopyIssues(text), []);
   });
 
   test("競合が無ければ地図も一覧も作らない", () => {

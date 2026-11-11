@@ -138,7 +138,7 @@ export async function fetchCompetitors(
 ): Promise<Competitor[]> {
   if (!context) return [];
   // v2: 競合オブジェクトに公開座標を含める。v1 のメモリは座標が無いので使わない。
-  const key = `v2|${context.placeId ?? ""}|${options.limit ?? ""}|${options.radius ?? ""}`;
+  const key = `v3|${context.placeId ?? ""}|${context.primaryType ?? ""}|${context.category ?? ""}|${options.limit ?? ""}|${options.radius ?? ""}`;
   for (const provider of getEnabledProviders()) {
     if (provider instanceof GooglePlacesProvider) {
       const cached = competitorsCache.get(key);

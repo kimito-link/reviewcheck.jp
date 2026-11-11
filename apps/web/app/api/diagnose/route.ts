@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   analyzeReviews,
   diagnose,
+  competitorSearchPlan,
   fetchCompetitors,
   fetchStore,
   getEnabledProviders,
@@ -181,9 +182,12 @@ async function handle(request: Request, body: DiagnoseBody) {
     !demo &&
     context
   ) {
-    // v2 は公開座標つき。v1 の24時間キャッシュには lat/lng が無く、地図のピンが欠ける。
-    // 店ごとに周辺検索が1回だけ増える。SKU は変えない（location は既存 Enterprise より下）。
-    const compKey = context.placeId ? `rc:comp:v2:${context.placeId}:5` : null;
+    // v3 は業種の商圏（飲食はテキスト検索・最大20件）。v2 は半径1.5kmの5件なので使わない。
+    // 店ごとに競合の検索が1回だけ増える。
+    const plan = competitorSearchPlan(context);
+    const compKey = context.placeId
+      ? `rc:comp:v3:${context.placeId}:${plan.mode}:${plan.radiusMeters}:${plan.textQuery ?? plan.includedPrimaryTypes?.[0] ?? "none"}`
+      : null;
     const cachedComp = compKey ? await cacheGet<Competitor[]>(cache, compKey) : null;
     if (cachedComp) {
       competitors = cachedComp;
@@ -191,7 +195,7 @@ async function handle(request: Request, body: DiagnoseBody) {
       const guard = await guardPlacesCall(request, "diagnose", PLACES_COST_YEN.competitors);
       if (guard.ok) {
         try {
-          competitors = await fetchCompetitors(context, { limit: 5 });
+          competitors = await fetchCompetitors(context);
           if (compKey && competitors.length > 0) {
             await cacheSet(cache, compKey, competitors, STORE_CACHE_TTL_SEC);
           }

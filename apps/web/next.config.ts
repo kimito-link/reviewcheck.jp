@@ -31,12 +31,16 @@ const nextConfig: NextConfig = {
     //   区別されており、他の対象サイトと同じ業界標準パターン。
     //   唯一のインラインscript(Service Worker登録)はpublic/sw-register.jsへ
     //   外部化済み。フォーム・外部画像(remotePatterns)も無し。
+    // Maps JavaScript API（診断結果の公式地図）。タイルとスクリプトの出所だけ足す。
+    // 地図のロゴと出典を隠す設定は入れない。
     const csp = [
       `default-src 'self'`,
-      `script-src 'self' 'unsafe-inline'`,
-      `style-src 'self' 'unsafe-inline'`,
-      `img-src 'self' data:`,
-      `font-src 'self'`,
+      `script-src 'self' 'unsafe-inline' https://maps.googleapis.com https://maps.gstatic.com`,
+      `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+      `img-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com https://*.ggpht.com`,
+      `font-src 'self' data: https://fonts.gstatic.com`,
+      `connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com`,
+      `worker-src 'self' blob:`,
       `object-src 'none'`,
       `base-uri 'self'`,
       `form-action 'self'`,

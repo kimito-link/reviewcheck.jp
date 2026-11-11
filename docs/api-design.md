@@ -25,7 +25,7 @@
 | サイト | `websiteUri` | プロフィール充実度に利用 |
 | マップURL | `googleMapsUri` | |
 | 営業時間 | `regularOpeningHours` | 有無のみ充実度に利用 |
-| 座標 | `location` | 公開の緯度経度。Place Details では元から取得し、店舗入力に残す。周辺競合の searchNearby にも `places.location` を足す（追加リクエストなし。rating より下の Essentials なので Nearby Search の SKU は上がらない） |
+| 座標 | `location` | 公開の緯度経度。Place Details では元から取得し、店舗入力に残す。同業の Text Search にも `places.location` を足す（追加リクエストなし。rating より下の項目） |
 | place_id | `id` | |
 
 > 口コミ本文（`reviews`）は最大5件程度しか返らず、課金SKUも上がるため、**口コミの完全取得・大量取得は前提にしない**。
@@ -42,12 +42,14 @@
 ## 必要な環境変数
 
 ```
-GOOGLE_PLACES_API_KEY=xxxxxxxx   # Places API (New) を有効化したキー
+GOOGLE_PLACES_API_KEY=xxxxxxxx                  # サーバー専用。Places API (New) だけ
+NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY=xxxxxxxx    # ブラウザ専用。Maps JavaScript API だけ
 ```
 
 - Vercel の Project → Settings → Environment Variables に設定。
-- キーは **サーバー側（/api/diagnose, /report）でのみ使用**。クライアントには出さない。
-- API キーには「Places API (New)」のみ許可、リファラ/IP 制限を推奨。
+- `GOOGLE_PLACES_API_KEY` は **サーバー側（/api/diagnose）だけ**。クライアントに出さない。許可する API は Places API (New) のみ。
+- `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` は結果画面の公式地図だけに使う。許可する API は Maps JavaScript API のみ。HTTP リファラーは `https://reviewcheck.jp/*` と `https://www.reviewcheck.jp/*`。サイトの Referrer-Policy はオリジンだけを送るので、コンソールで弾かれるときは `https://reviewcheck.jp` と `https://www.reviewcheck.jp` も足す。未設定のときは地図を出さず、出典つきの一覧だけにする。
+- サーバー用のキーを `NEXT_PUBLIC_` に入れない。
 
 ## エンドポイント（参考）
 
@@ -60,5 +62,5 @@ GOOGLE_PLACES_API_KEY=xxxxxxxx   # Places API (New) を有効化したキー
 ## 将来の拡張
 
 - **Google Business Profile API**: オーナー返信状況、未返信口コミ、投稿・写真の充実度などを取得し、選ばれやすさスコアの推定値を実測値に置き換える。
-- **競合の自動取得**: Nearby Search で同カテゴリの近隣店舗を候補表示（手動追加の補助）。
+- **競合の自動取得**: 業種の語で Text Search を1回（飲食は半径12kmを上限にした関連度。最大20件）。表に無い業種だけ Nearby Search。
 - キャッシュ層（短期）で API コール削減。
