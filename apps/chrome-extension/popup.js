@@ -7,6 +7,7 @@ import {
   isDiagnosablePage,
   isMapsUrl,
   mergeCheckEntry,
+  purgeLegacyChecks,
   pickHighlights,
   queryFromManual,
   queryFromTab,
@@ -131,7 +132,10 @@ function showRecheck(iso) {
 
 function showResult(view, previousIso) {
   currentView = view;
-  const placesFacts = view.placesAttributed === true;
+  const placesFacts =
+    view.kind === "facts" ||
+    view.placesAttributed === true ||
+    !Number.isFinite(Number(view.score));
   const band = BAND[view.band] || BAND.fair;
   els.scoreValue.textContent = placesFacts
     ? "—"
@@ -169,12 +173,13 @@ function showResult(view, previousIso) {
 function viewFromApi(result) {
   const store = result?.input?.store ?? {};
   return {
-    score: result.score,
-    band: result.band,
+    kind: result.kind,
+    score: result.kind === "facts" ? undefined : result.score,
+    band: result.kind === "facts" ? undefined : result.band,
     storeName: store.name || "店舗",
     rating: store.rating,
     reviewCount: store.reviewCount,
-    points: result.placesAttributed === true ? [] : pickHighlights(result),
+    points: result.kind === "facts" || result.placesAttributed === true ? [] : pickHighlights(result),
     diagnosedAt: result.diagnosedAt,
     placeId: typeof store.placeId === "string" ? store.placeId : "",
     placesAttributed: result.placesAttributed === true,
@@ -250,7 +255,20 @@ async function copyText(text, success) {
   }
 }
 
+async function purgeStoredChecks() {
+  if (!globalThis.chrome?.storage?.local) return;
+  try {
+    const existing = await loadChecks();
+    await chrome.storage.local.set({
+      [CHECKS_STORAGE_KEY]: purgeLegacyChecks(existing),
+    });
+  } catch {
+    /* 保存領域が使えなくても、診断そのものは続ける */
+  }
+}
+
 async function init() {
+  await purgeStoredChecks();
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     els.webShare.classList.remove("hidden");
   }

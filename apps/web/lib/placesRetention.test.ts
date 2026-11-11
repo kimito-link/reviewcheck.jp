@@ -23,9 +23,8 @@ describe("Google の内容を保存し直さない", () => {
     const image = source("app/report/[id]/opengraph-image.tsx");
     const page = source("app/report/[id]/page.tsx");
     expect(image).not.toMatch(/fetchStore|places\.googleapis|decodeReportId|diagnose\(/);
-    expect(page).not.toMatch(/decodeReportId|publishCohort/);
-    expect(page).toMatch(/isPreviewRequest/);
-    expect(page).toMatch(/loadSharedPlace/);
+    expect(page).not.toMatch(/decodeReportId|publishCohort|loadSharedPlace|fetchStore/);
+    expect(page).toMatch(/query_place_id/);
   });
 
   test("監視は認可のあと Places を呼ばず、0件で返す", () => {

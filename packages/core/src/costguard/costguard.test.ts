@@ -201,7 +201,7 @@ describe("guardMessage（L6・取れなかったものを良好と言わない�
       assert.doesNotMatch(msg, /良好|問題なし|問題ありません|見つかりません/);
       assert.match(msg, /入力/);
     }
-    assert.match(guardMessage("budget_exhausted", "store"), /無料枠が終了/);
+    assert.match(guardMessage("budget_exhausted", "store"), /上限に達しました/);
   });
 });
 

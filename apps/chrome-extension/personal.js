@@ -172,6 +172,18 @@ export function encodeReportId(input) {
   return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+/** 開いたときに、古い星・店名・点数を保存領域から外す。 */
+export function purgeLegacyChecks(existing) {
+  /** @type {Record<string, { placeId?: string, diagnosedAt?: string }>} */
+  const next = {};
+  const source = existing && typeof existing === "object" ? existing : {};
+  for (const [itemKey, item] of Object.entries(source)) {
+    const slim = rememberedCheck(item);
+    if (slim.placeId || slim.diagnosedAt) next[itemKey] = slim;
+  }
+  return next;
+}
+
 /**
  * @param {Record<string, unknown>} existing
  * @param {string} key

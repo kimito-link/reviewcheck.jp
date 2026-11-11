@@ -89,12 +89,32 @@ export function ReportView({
   const { input, comparison, simulation } = result;
   const store = input.store;
   const competitors = input.competitors ?? [];
-  if (store.source === "places") {
+  if (store.source === "places" || store.source === "mock") {
     return (
-      <PlacesFactsView result={result} shareUrl={shareUrl} refLine={refLine} />
+      <PlacesFactsView
+        facts={{
+          kind: "facts",
+          sample: store.source === "mock",
+          diagnosedAt: result.diagnosedAt,
+          placesAttributed: result.placesAttributed === true,
+          ...(result.areaScopeText ? { areaScopeText: result.areaScopeText } : {}),
+          input: {
+            store,
+            competitors: competitors.map((item) => ({
+              ...(item.name ? { name: item.name } : {}),
+              rating: item.rating,
+              reviewCount: item.reviewCount,
+              ...(item.placeId ? { placeId: item.placeId } : {}),
+              ...(typeof item.lat === "number" ? { lat: item.lat } : {}),
+              ...(typeof item.lng === "number" ? { lng: item.lng } : {}),
+            })),
+          },
+        }}
+        shareUrl={shareUrl}
+        refLine={refLine}
+      />
     );
   }
-  const isMock = store.source === "mock";
   const autoCompetitors =
     competitors.length > 0 && competitors.every((c) => Boolean(c.placeId));
   const confirmedFactors = result.factors.filter((factor) => isConfirmedFactor(factor));
@@ -103,7 +123,7 @@ export function ReportView({
 
   const monitoringHref = "";
 
-  const storeQuery = !isMock ? store.mapsUrl || store.name || "" : "";
+  const storeQuery = store.mapsUrl || store.name || "";
   const suggestHref = storeQuery
     ? `/suggest-check/?store=${encodeURIComponent(storeQuery)}`
     : "/suggest-check/";
@@ -111,7 +131,6 @@ export function ReportView({
   const area = buildAreaComparison(store, competitors);
   const countLine = buildCountSummary(store, comparison);
   const fetchedAtRecorded = shareContext ? shareContext.fetchedAtRecorded : true;
-  const saveOnDevice = fetchedAtRecorded;
   const metaLine = fetchedAtRecorded
     ? `採点ルール v${result.ruleVersion} ／ 取得：${formatDiagnosedAtJst(result.diagnosedAt)}（日本時間）`
     : `採点ルール v${result.ruleVersion} ／ 取得：記録なし`;
@@ -144,12 +163,6 @@ export function ReportView({
           className="scroll-mt-20 space-y-6"
         >
           <ScrollToResultScore />
-          {isMock ? (
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-base text-blue-950">
-              <strong className="font-bold">これはサンプル（デモ）です。</strong>
-              結果の見え方を体験いただくための架空の店舗・数値です。あなたのお店を診断するには、上の入力欄に店舗名またはGoogleマップURLを入れて診断してください。
-            </div>
-          ) : null}
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
@@ -161,14 +174,7 @@ export function ReportView({
                 <div className="mt-3">
                   <ScoreBadge band={result.band} />
                 </div>
-                <ScoreHistoryNote
-                  shopName={store.name || ""}
-                  score={result.score}
-                  ruleVersion={result.ruleVersion}
-                  diagnosedAt={result.diagnosedAt}
-                  enabled={saveOnDevice}
-                  className="text-center lg:text-left"
-                />
+                <ScoreHistoryNote />
               </div>
 
               <div data-result-section="estimate" className="min-w-0 flex-1">

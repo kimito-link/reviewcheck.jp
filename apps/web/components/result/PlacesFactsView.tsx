@@ -1,39 +1,38 @@
 "use client";
 
-import type { DiagnosisResult } from "@reviewcheck/core";
 import { FINDING_CARD_TEXTS } from "@reviewcheck/core";
-import { buildAreaComparison } from "@reviewcheck/core/areaMap";
+import { CONSULT_OPEN_LABEL } from "@reviewcheck/config";
 import { Disclaimer } from "../Disclaimer";
 import { ShareReport } from "../ShareReport";
 import { SharerLineConsult } from "../SharerLineConsult";
 import { DiagnosisPerks } from "./DiagnosisPerks";
 import { GoogleMapsCredit } from "./GoogleMapsCredit";
 import { OtherMenus } from "./OtherMenus";
-import { AreaCompare } from "./AreaCompare";
 import { UnconfirmedList } from "./ResultReading";
 import { supportOffersForPlaces } from "@/lib/supportOffers";
-import { collectUnconfirmedLines, formatDiagnosedAtJst } from "@/lib/resultCopy";
+import { formatDiagnosedAtJst } from "@/lib/resultCopy";
 import { postFunnel } from "@/lib/postFunnel";
+import type { PublicFacts, PublicPeer } from "@/lib/placesPublic";
 
 /**
  * Google から取った結果の通常画面。
  * 独自点数・順位・その履歴は、相談の理由にしない。
  */
 export function PlacesFactsView({
-  result,
+  facts,
   shareUrl,
   refLine,
 }: {
-  result: DiagnosisResult;
+  facts: PublicFacts;
   shareUrl?: string;
   refLine?: string;
 }) {
-  const store = result.input.store;
-  const competitors = result.input.competitors ?? [];
+  const store = facts.input.store;
+  const competitors = facts.input.competitors ?? [];
   const offers = supportOffersForPlaces(store);
-  const area = buildAreaComparison(store, competitors);
-  const missed = collectUnconfirmedLines(result);
-  const when = formatDiagnosedAtJst(result.diagnosedAt);
+  const rows = publicRows(store, competitors);
+  const missed = unconfirmedFromStore(store);
+  const when = formatDiagnosedAtJst(facts.diagnosedAt);
 
   return (
     <div className="space-y-8 pb-28">
@@ -72,20 +71,46 @@ export function PlacesFactsView({
             Googleマップで開く
           </a>
         ) : null}
-        {result.placesAttributed ? <GoogleMapsCredit /> : null}
+        {facts.placesAttributed ? <GoogleMapsCredit /> : null}
         <p className="mt-3 text-base leading-relaxed text-slate-800">
           取得時刻 {when}（日本時間）。未確認の項目は、不足や減点としては扱っていません。
         </p>
       </section>
 
-      {area ? (
-        <AreaCompare
-          area={area}
-          attributeToGoogle={result.placesAttributed === true}
-          scopeText={result.areaScopeText}
-          showGap={false}
-          lead="この検索が返したお店の、公開されている星と口コミ数です。第何位かは出していません。エリア全体の順位でもありません。"
-        />
+      {facts.sample ? (
+        <p className="rounded-xl border border-slate-300 bg-slate-50 p-4 text-base leading-relaxed text-slate-900">
+          これはサンプルです。架空の数値で、Googleへは問い合わせていません。
+        </p>
+      ) : null}
+
+      {rows.length > 0 ? (
+        <section
+          data-result-section="area-map"
+          className="rounded-2xl border border-slate-200 bg-white p-5 text-base text-slate-900 shadow-sm sm:p-6"
+        >
+          <h2 className="text-xl font-extrabold text-slate-900">この検索で比べたお店</h2>
+          <p className="mt-2 leading-relaxed text-slate-800">
+            公開されている星と口コミ数です。順位は付けていません。
+          </p>
+          {facts.areaScopeText ? (
+            <p className="mt-2 leading-relaxed text-slate-800">{facts.areaScopeText}</p>
+          ) : null}
+          <ul className="mt-4 space-y-3">
+            {rows.map((row) => (
+              <li key={row.id} className="rounded-xl border border-slate-200 p-4">
+                <p className="font-bold">{row.name}</p>
+                {row.subject ? <p className="font-bold">診断したお店</p> : <p>周辺のお店</p>}
+                <p className="mt-1">
+                  星 {row.rating.toFixed(1)}／口コミ {row.reviewCount}件
+                  {typeof row.distanceMeters === "number"
+                    ? `／${row.distanceMeters}m`
+                    : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+          {facts.placesAttributed ? <GoogleMapsCredit /> : null}
+        </section>
       ) : null}
 
       <section
@@ -115,11 +140,17 @@ export function PlacesFactsView({
         </ul>
       </section>
 
-      <DiagnosisPerks result={result} cohort={null} />
+      <DiagnosisPerks
+        result={{
+          input: { store, competitors: [] },
+          diagnosedAt: facts.diagnosedAt,
+        }}
+        cohort={null}
+      />
 
       {shareUrl ? (
         <div data-result-section="share" className="space-y-4">
-          <ShareReport url={shareUrl} ruleVersion={result.ruleVersion} factsOnly refLine={refLine} />
+          <ShareReport url={shareUrl} factsOnly refLine={refLine} />
           <SharerLineConsult refLine={refLine} />
         </div>
       ) : null}
@@ -134,7 +165,7 @@ export function PlacesFactsView({
         <p>
           半径は業種ごとの設計上の仮定です。調査で確定した商圏ではありません。半径を自動で広げて再検索はしていません。
         </p>
-        {result.areaScopeText ? <p>{result.areaScopeText}</p> : null}
+        {facts.areaScopeText ? <p>{facts.areaScopeText}</p> : null}
         <p>{FINDING_CARD_TEXTS.roleDeclaration}</p>
         <p>ブラウザでこのページを開いたことは、購入でも売上でもありません。</p>
       </section>
@@ -152,12 +183,73 @@ export function PlacesFactsView({
             onClick={() => postFunnel("cta", "consult")}
             className="inline-flex w-full items-center justify-center rounded-lg bg-blue-700 px-4 py-3 text-base font-bold text-white"
           >
-            15分の無料相談ページを開く
+            {CONSULT_OPEN_LABEL}
           </a>
         </div>
       </div>
     </div>
   );
+}
+
+function metersBetween(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const radius = 6371000;
+  const p1 = (a.lat * Math.PI) / 180;
+  const p2 = (b.lat * Math.PI) / 180;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(p1) * Math.cos(p2) * Math.sin(dLng / 2) ** 2;
+  return 2 * radius * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+function unconfirmedFromStore(store: PublicFacts["input"]["store"]): string[] {
+  const lines: string[] = [];
+  if (typeof store.hasPhotos !== "boolean") lines.push("写真：今回は取得していません。点数には入れていません。");
+  if (typeof store.hasOwnerReplies !== "boolean") {
+    lines.push("返信：今回は取得していません。点数には入れていません。");
+  }
+  if (typeof store.daysSinceLastReview !== "number") {
+    lines.push("最新口コミの日付：今回は取得していません。点数には入れていません。");
+  }
+  return lines;
+}
+
+function publicRows(store: PublicFacts["input"]["store"], peers: PublicPeer[]) {
+  const origin =
+    typeof store.lat === "number" && typeof store.lng === "number"
+      ? { lat: store.lat, lng: store.lng }
+      : null;
+  const rows = [
+    {
+      id: store.placeId || "subject",
+      name: store.name || "診断したお店",
+      rating: store.rating,
+      reviewCount: store.reviewCount,
+      subject: true,
+      distanceMeters: undefined as number | undefined,
+    },
+    ...peers.map((peer, index) => {
+      const point =
+        typeof peer.lat === "number" && typeof peer.lng === "number"
+          ? { lat: peer.lat, lng: peer.lng }
+          : null;
+      const distance =
+        origin && point ? Math.round(metersBetween(origin, point)) : undefined;
+      return {
+        id: peer.placeId || `peer-${index}`,
+        name: peer.name || "周辺のお店",
+        rating: peer.rating,
+        reviewCount: peer.reviewCount,
+        subject: false,
+        distanceMeters: distance,
+      };
+    }),
+  ];
+  return rows;
 }
 
 function Fact({ label, value }: { label: string; value: string }) {

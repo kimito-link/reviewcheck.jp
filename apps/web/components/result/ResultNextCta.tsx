@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { buildLineConsultMessage, selectResultCta } from "@reviewcheck/config";
+import { buildLineConsultMessage, CONSULT_OPEN_LABEL, selectResultCta } from "@reviewcheck/config";
 import { postFunnel } from "@/lib/postFunnel";
 import { LineConsultCta } from "../LineConsultCta";
 
@@ -55,7 +55,7 @@ export function ResultNextCta({
           : "px-4 py-2.5 text-base"
       }`}
     >
-      15分の無料相談ページを開く
+      {CONSULT_OPEN_LABEL}
     </a>
   );
 

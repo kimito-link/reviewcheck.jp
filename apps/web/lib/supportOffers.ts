@@ -1,4 +1,4 @@
-import { CTAS, PRICING } from "@reviewcheck/config";
+import { CONSULT_HEADING, CTAS, PRICING } from "@reviewcheck/config";
 
 export interface MeasuredProfile {
   phone?: string | null;
@@ -39,7 +39,7 @@ export function supportOffersForPlaces(store: MeasuredProfile): SupportOffer[] {
       key: "consult",
       href: CTAS.freeConsult.href,
       label: CTAS.freeConsult.label,
-      price: "初回15分は、サイトの既存表記どおり無料です。1時間あたりの料金と見積りの日数は、この料金表にはありません。",
+      price: `${CONSULT_HEADING}。1時間あたりの料金と見積りの日数は、この料金表にはありません。`,
       detail:
         "公開されている星と口コミ数を材料に、任意で次の一手を相談できます。このボタンは相談ページへの到達です。購入の確定ではありません。",
     },

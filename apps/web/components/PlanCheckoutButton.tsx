@@ -74,7 +74,7 @@ export function PlanCheckoutButton({
         href={contactHref}
         className={cls}
       >
-        まず相談する（無料）
+        15分のご相談（費用はかかりません）
       </a>
       <button
         type="button"

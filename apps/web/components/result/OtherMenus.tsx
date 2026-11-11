@@ -59,7 +59,7 @@ export function OtherMenus({
         </ul>
         {monitoringPaused ? (
           <p className="text-base leading-relaxed text-slate-800" data-monitor-paused="">
-            月次モニタリングの新規申込は停止中です。決済ページへはつなぎません。
+            月次モニタリングの新規申込は停止中です。決済ページへはつなぎません。保存してある記録は消しません。巡回もしません。
           </p>
         ) : null}
         <div>

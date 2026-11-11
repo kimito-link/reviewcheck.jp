@@ -13,7 +13,7 @@ export const PRICING: PricePlan[] = [
   {
     key: "free-check",
     name: "簡易診断",
-    price: "無料",
+    price: "費用はかかりません",
     description:
       "店舗名またはGoogleマップURLを入れるだけ。公開されている星と口コミ数を表示します。未確認の項目で購入を勧めず、独自の点数は販売の根拠にしません。",
   },
@@ -67,4 +67,4 @@ export const PRICING: PricePlan[] = [
 ];
 
 export const PRICING_NOTE =
-  "金額は目安です。店舗数・エリア・競合状況・対応範囲により変動します。簡易診断は無料でご利用いただけます。";
+  "金額は目安です。店舗数・エリア・競合状況・対応範囲により変動します。簡易診断に費用はかかりません。";

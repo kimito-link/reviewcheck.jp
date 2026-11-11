@@ -57,7 +57,7 @@ export const CROSS_SELL: CrossSellItem[] = [
     key: "site-health",
     emoji: "🩺",
     title: "WEBサイト健康診断",
-    desc: "サイトのセキュリティ・表示速度・SEOをURLだけで無料チェック。",
+    desc: "サイトのセキュリティ・表示速度・SEOをURLだけで確認する、同チームの関連ツールです。",
     href: "https://web-health-check.link",
     external: true,
   },

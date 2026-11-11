@@ -7,8 +7,8 @@
 
 | 呼び出し | どこから | 1回の原価（見積り） | 守り |
 |---|---|---|---|
-| Google Places Text Search（IDのみ）＋Place Details Enterprise | `/api/diagnose`（匿名）と、人が開いた共有ページ | 3円 | IP上限 → 日次予算（fail-closed）。店名・星は保存しない |
-| Google Places Nearby Search（周辺の店） | `/api/diagnose` と共有ページ | 6円 | 同上。半径の自動拡大はしない |
+| Google Places Text Search（IDのみ）＋Place Details Enterprise | `/api/diagnose`（匿名）。共有ページは呼ばない | 3円 | IP上限 → 日次予算（fail-closed）。店名・星は保存しない |
+| Google Places Nearby Search（周辺の店） | `/api/diagnose`。共有ページは呼ばない | 6円 | 同上。半径の自動拡大はしない |
 | Google Places Nearby Search（現在地の候補） | `/api/nearby`（匿名） | 6円 | 同上。座標は保存しない |
 | Google Places（監視スキャン） | `/api/monitor/run`・`monthly-report` | 呼んでいない | 認可のあと、点数の記録を止めて 0件で返す |
 | Groq（AIからの見え方） | `/api/ai-probe` | 0円（無料枠モデル） | キルスイッチ・24h CDN キャッシュ |
@@ -16,17 +16,17 @@
 見積りの根拠（`packages/core/src/costguard/index.ts` の `PLACES_COST_YEN`。1ドル=150円は換算の定数で、実勢レートでも請求書でもない。切り上げ。月間の無料枠は数えない＝保守的）:
 Text Search Essentials (IDs Only) は $0。Place Details Enterprise は $20/1000 で 3円。Nearby Search Enterprise は $35/1000 で 6円。`reviews` は取らない。
 周辺の FieldMask に `places.location` を足しても、見積りは 6円のまま（location は rating より下）。検索は1回で、`maxResultCount` は 20。
-共有リンクを人が開くたびに、同じ見積りで取り直す。プレビューは呼ばない。
+共有ページは Place ID から地図リンクと相談へ進むだけです。人が開いてもボットが開いても Places は呼びません。
 **未確認**: 実際の請求 SKU、請求先の国、無料枠の残数（Cloud Console の請求レポートで照合すること）。
 
 ## 2. 黒字の式（§A-4 の表・提案値）
 
 | 項目 | 内容 |
 |---|---|
-| 原価 c | 新しい店の診断 1件の見積り = **9円**（店舗 3円＋周辺 6円）。同じ店を共有リンクで開いても、キャッシュでは 0円にならない。現在地候補 6円。円は請求額ではない |
+| 原価 c | 新しい店の診断 1件の見積り = **9円**（店舗 3円＋周辺 6円）。共有ページを開いても Places は呼ばない。現在地候補 6円。円は請求額ではない |
 | 無料枠 F | 匿名は人を数えられないので「人ごと」ではなく**全体で1日の予算**（下の行）。IP ごとに新しい店の診断 約15件/日（上限 30 回＝店舗と競合で1回ずつ）、現在地候補 10回/日 |
 | 有料 P/N | 継続監視の価格は `MONITOR_PLAN_AMOUNT_JPY`。この変更では、Google の点数を記録するスキャンを止めています。売上や成約率の改善は測っていません |
-| 匿名の全体予算 | コードの初期値は見積り1件×100（いまは **900円/日**）。`PLACES_ANON_DAILY_BUDGET_YEN` があればそれを使う。共有を開いた取り直しもこの予算に入る |
+| 匿名の全体予算 | コードの初期値は見積り1件×100（いまは **900円/日**）。`PLACES_ANON_DAILY_BUDGET_YEN` があればそれを使う。共有ページはこの予算を使いません |
 | 最悪の日の損 | 匿名は、設定した日次予算まで。監視スキャンはこの変更では Places を呼ばない。円は請求額ではない |
 
 以前の「15円」「24時間キャッシュで0円」「成約率 0.3%」は、いまの呼び出しと保存には合いません。成約が増えるとは書いていません。

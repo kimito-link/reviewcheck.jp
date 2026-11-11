@@ -206,6 +206,6 @@ describe("端末内レポート", () => {
     expect(html).not.toContain("前回");
     expect(html).not.toContain("62点");
     expect(html).toContain("星 4.2");
-    expect(html).toContain("点数には入れていません");
+    expect(html).toContain("点数と順位は入れていません");
   });
 });

@@ -81,10 +81,16 @@ function cohortParagraphs(cohort: CohortPublic | null): string[] {
 }
 
 /** Google の結果を端末に残すとき。点数・順位・推定の販売文は入れない。 */
-function buildPlacesFactsDocument(result: DiagnosisResult): DiagnosisReportDocument {
-  const store = result.input.store;
-  const when = formatDiagnosedAtJst(result.diagnosedAt);
-  const missed = collectUnconfirmedLines(result);
+function buildPlacesFactsDocument(
+  store: DiagnosisResult["input"]["store"],
+  diagnosedAt: string,
+): DiagnosisReportDocument {
+  const when = formatDiagnosedAtJst(diagnosedAt);
+  const missed = [
+    typeof store.hasPhotos === "boolean" ? "" : "写真：今回は取得していません。",
+    typeof store.hasOwnerReplies === "boolean" ? "" : "返信：今回は取得していません。",
+    typeof store.daysSinceLastReview === "number" ? "" : "最新口コミの日付：今回は取得していません。",
+  ].filter(Boolean);
   return {
     lead: "取得できた公開情報です。点数と順位は入れていません。未確認の項目は、足りないものとしては書いていません。このファイルはこの端末の中に残ります。",
     blocks: [
@@ -105,7 +111,7 @@ function buildPlacesFactsDocument(result: DiagnosisResult): DiagnosisReportDocum
       {
         heading: "任意の相談",
         paragraphs: [
-          "相談は任意です。初回15分は既存の無料相談です。月次の自動巡回は、新規では受けていません。",
+          "相談は任意です。15分のご相談に費用はかかりません。月次の自動巡回は、新規では受けていません。",
         ],
       },
       ...(missed.length > 0
@@ -124,13 +130,17 @@ function buildPlacesFactsDocument(result: DiagnosisResult): DiagnosisReportDocum
 }
 
 export function buildDiagnosisReport(input: {
-  result: DiagnosisResult;
-  previous: StoredScore | null;
+  result: Pick<DiagnosisResult, "input" | "diagnosedAt"> & Partial<DiagnosisResult>;
+  previous?: StoredScore | null;
   cohort: CohortPublic | null;
 }): DiagnosisReportDocument {
-  const { result, previous, cohort } = input;
-  const store = result.input.store;
-  if (store.source === "places") return buildPlacesFactsDocument(result);
+  const store = input.result.input.store;
+  if (store.source === "places" || store.source === "mock") {
+    return buildPlacesFactsDocument(store, input.result.diagnosedAt);
+  }
+  const result = input.result as DiagnosisResult;
+  const previous = input.previous ?? null;
+  const cohort = input.cohort;
   const selection = selectReviewFindings(result);
   const when = formatDiagnosedAtJst(result.diagnosedAt);
   const region = parseCohortRegion(store.address);

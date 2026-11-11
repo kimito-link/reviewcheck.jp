@@ -9,9 +9,9 @@ import { buildMetadata } from "@/lib/seo";
 import { SITE } from "@reviewcheck/config";
 
 export const metadata: Metadata = buildMetadata({
-  title: "口コミ改善 追体験｜無料診断から「選ばれるお店」まで（実画面つき）",
+  title: "口コミ改善の手順｜公開情報の見方から相談まで",
   description:
-    "店舗名やGoogleマップURLを入れるだけ。無料診断 → 結果の見方 → 口コミの増やし方 → 返信・MEO → 継続まで、実際の画面つきで①→⑤の順に追体験できます。会員登録不要・30秒で結果。",
+    "店舗名やGoogleマップURLから、公開されている星と口コミ数の見方、口コミの頼み方、返信・MEO、相談までを①→⑤の順に確認できます。点数と順位は出しません。",
   path: "/walkthrough/",
 });
 
@@ -87,7 +87,7 @@ interface Step {
 
 const ROADMAP: { num: string; label: string; id: string; tone: Who }[] = [
   { num: "準", label: "準備（読むだけ）", id: "step-0", tone: "read" },
-  { num: "①", label: "無料で診断", id: "step-1", tone: "you" },
+  { num: "①", label: "公開情報を見る", id: "step-1", tone: "you" },
   { num: "②", label: "結果の見方", id: "step-2", tone: "you" },
   { num: "③", label: "口コミを増やす", id: "step-3", tone: "you" },
   { num: "④", label: "返信・MEOで底上げ", id: "step-4", tone: "opt" },
@@ -113,26 +113,26 @@ const STEPS: Step[] = [
         text: "https://maps.app.goo.gl/... の短いリンクでも大丈夫。会員登録なしで、だいたい30秒で結果が出るよ。",
       },
     ],
-    next: "準備ができたら → ① 無料で診断",
+    next: "準備ができたら → ① 公開情報を見る",
   },
   {
     num: "①",
     id: "step-1",
     who: "you",
-    title: "無料で口コミ診断する",
-    sub: "店舗名かGoogleマップURLを入れて、ボタンを押すだけ。",
-    nowDo: "入力欄に「店舗名」か「GoogleマップURL」を入れて「無料で診断する」を押す。入力せずに体験したいときは「サンプル結果を見る」。",
+    title: "公開情報を見る",
+    sub: "店舗名かGoogleマップURLを入れて、ボタンを押すだけ。この診断に費用はかかりません。",
+    nowDo: "入力欄に「店舗名」か「GoogleマップURL」を入れて「診断する」を押す。入力せずに見るときは「サンプル結果を見る」。",
     mini: [
       "入力欄に店舗名 または GoogleマップURLを入れる",
-      "「無料で診断する」を押す（30秒ほどで結果が出ます）",
+      "「診断する」を押す",
       "外出先なら「現在地からお店を探す」でも検索できます",
     ],
     shot: {
       src: "/walkthrough/step1-form.jpeg",
       alt: "口コミ診断の入力フォーム",
-      caption: "この画面：/check/（無料で口コミ診断）",
+      caption: "この画面：/check/",
     },
-    actions: [{ href: "/check/", label: "★ 無料で診断する", primary: true }],
+    actions: [{ href: "/check/", label: "公開情報を見る", primary: true }],
     notes: [
       {
         guide: HACK,
@@ -145,27 +145,27 @@ const STEPS: Step[] = [
     num: "②",
     id: "step-2",
     who: "you",
-    title: "結果の見方（スコア・順位・あと何件）",
-    sub: "「今どのくらい選ばれているか」と「あと何件で追いつくか」が分かります。",
-    nowDo: "「選ばれやすさスコア」「この検索の中での順位」「あと何件・何ヶ月で、比べた店の平均に追いつくか」の3つを見てください。",
+    title: "結果の見方（公開されている星と件数）",
+    sub: "取得できた星と口コミ数を見ます。点数と順位は出ていません。",
+    nowDo: "星、口コミ数、電話、ウェブサイト、営業時間と、同じ検索で返ったお店の星と件数を見てください。",
     mini: [
-      "選ばれやすさスコア（0〜100）— お店の現在地",
-      "この検索の中での順位 — 返ってきたお店の口コミ数・星評価。エリア全体の順位ではない",
-      "あと何件・あと何ヶ月 — 競合平均に追いつくまでの目安",
+      "星と口コミ数 — 取得できた公開情報",
+      "電話・ウェブサイト・営業時間 — 公開情報にあるか無いか",
+      "写真・返信・最新の日付 — 今回は取得していません",
     ],
     shot: {
       src: "/walkthrough/step2-result.jpeg",
-      alt: "口コミ診断の結果画面（スコア・順位・あと何件）",
+      alt: "口コミ診断の結果画面（公開されている星と件数）",
       caption: "この画面：診断結果（サンプル）",
     },
     notes: [
       {
         guide: OWNER,
-        text: "「あと◯件」が数字で見えると、毎月のゴールがハッキリします。私は『月5件』を目標にしました。",
+        text: "星と口コミ数が並ぶと、いま公開されている状態が分かります。点数にはしていません。",
       },
       {
         guide: HACK,
-        text: "数値はGoogleの丸めや反映タイミングがあるから、あくまで“目安”だよ。方向性をつかむのに使ってね。",
+        text: "出ているのは、取得できた公開情報だよ。無い項目は、足りないものとしては書いていない。",
       },
     ],
     next: "差が分かったら → ③ 口コミを増やす",
@@ -248,7 +248,7 @@ const STEPS: Step[] = [
     notes: [
       {
         guide: HACK,
-        text: "いきなり契約じゃなくて大丈夫。まず①の無料診断 → ご納得いただいてからのスタートだよ。",
+        text: "いきなり契約じゃなくて大丈夫。まず①で公開情報を見るところからだよ。",
       },
     ],
     next: "ここまでで、追体験は完了。あとは①から実際にやってみよう。",
@@ -266,7 +266,7 @@ const TROUBLE: { symptom: string; fix: string }[] = [
   },
   {
     symptom: "スコアが思ったより低い",
-    fix: "②③へ：「あと何件」と「改善ポイント」を確認し、まず③の口コミ作成ツールから着手します。",
+    fix: "②③へ：公開されている星と件数を確認し、まず③の口コミ作成ツールから着手します。",
   },
   {
     symptom: "口コミがなかなか増えない",
@@ -274,7 +274,7 @@ const TROUBLE: { symptom: string; fix: string }[] = [
   },
   {
     symptom: "何から手をつければいいか分からない",
-    fix: "⑤へ：無料診断 → プランのご提案で、お店に合った優先順位を整理します。",
+    fix: "⑤へ：公開情報の確認のあと、プランのご提案で、お店に合った順番を整理します。",
   },
 ];
 
@@ -302,9 +302,9 @@ export default function WalkthroughPage() {
   const howToJsonLd = {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    name: "口コミ改善 追体験｜無料診断から「選ばれるお店」まで",
+    name: "口コミ改善の手順｜公開情報の見方から相談まで",
     description:
-      "無料診断から結果の見方、口コミの増やし方、返信・MEO、継続までを①→⑤の順で進める手順。",
+      "公開情報の見方、口コミの頼み方、返信・MEO、相談までを①→⑤の順で進める手順。",
     step: STEPS.map((s, i) => ({
       "@type": "HowToStep",
       position: i + 1,
@@ -345,7 +345,7 @@ export default function WalkthroughPage() {
               <strong className="text-white">上から ① → ② → ③ …</strong>
               の順でご案内します。
               <br className="hidden sm:block" />
-              無料診断 → 結果の見方 → 口コミの増やし方 → 返信・MEO → 継続まで。会員登録は不要です。
+              公開情報の見方 → 口コミの頼み方 → 返信・MEO → 相談まで。会員登録は不要です。この診断に費用はかかりません。
             </p>
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
@@ -358,7 +358,7 @@ export default function WalkthroughPage() {
                 href="/check/"
                 className="inline-flex rounded-lg bg-white/10 px-6 py-3.5 text-base font-bold text-white ring-1 ring-white/20 transition hover:bg-white/20"
               >
-                先に無料で診断する
+                先に公開情報を見る
               </Link>
             </div>
           </div>
@@ -577,14 +577,14 @@ export default function WalkthroughPage() {
               次は、あなたのお店で試してみましょう。
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-200">
-              入力は店舗名かGoogleマップURLだけ。30秒で「あと何件で追いつくか」が分かります。
+              入力は店舗名かGoogleマップURLだけ。点数と順位は出しません。この診断に費用はかかりません。
             </p>
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
                 href="/check/"
                 className="inline-flex rounded-lg bg-white px-6 py-3.5 text-base font-bold text-blue-800 transition hover:bg-blue-50"
               >
-                ★ 無料で口コミ診断する
+                公開情報を見る
               </Link>
               <Link
                 href="/plans/"

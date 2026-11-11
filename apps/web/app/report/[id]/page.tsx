@@ -1,21 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { headers } from "next/headers";
-import { encodePlaceReportId } from "@reviewcheck/core";
-import { SITE } from "@reviewcheck/config";
+import { CONSULT_OPEN_LABEL } from "@reviewcheck/config";
 import { Container } from "@/components/Container";
-import { ReportView } from "@/components/ReportView";
 import { AffiliateRefCapture } from "@/components/AffiliateRefCapture";
-import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata } from "@/lib/seo";
-import { breadcrumbJsonLd } from "@/lib/jsonld";
-import { isPreviewRequest } from "@/lib/previewRequest";
 import { reportLoadPlan } from "@/lib/reportLoadPlan";
-import { loadSharedPlace } from "@/lib/loadSharedPlace";
 import { sanitizeRefLine } from "@/lib/refLine";
+import { PLACES_FIXTURE_NOTE, PLACES_FIXTURE_PLACE_ID } from "@/lib/placesFixture";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
 
 type Params = { id: string };
 type SearchParams = { ref?: string; ref_line?: string };
@@ -29,7 +22,7 @@ export async function generateMetadata({
   return buildMetadata({
     title: "口コミ診断の共有",
     description:
-      "共有された口コミ診断です。点数は、開いた人が店舗を取り直したときに出します。",
+      "共有された診断への入口です。このページは店舗を取り直しません。地図と相談へ進めます。",
     path: `/report/${id}/`,
     ogType: "article",
   });
@@ -44,75 +37,64 @@ export default async function ReportPage({
 }) {
   const { id } = await params;
   const { ref, ref_line: refLine } = await searchParams;
-  const headerList = await headers();
-  const preview = isPreviewRequest(headerList);
-  const plan = reportLoadPlan(id, preview);
+  const plan = reportLoadPlan(id);
   const again = checkHref(ref, refLine);
 
-  if (!plan.fetch) {
+  if (!plan.placeId) {
     return (
       <QuietReport
         title={
-          plan.reason === "invalid"
-            ? "レポートが見つかりませんでした"
-            : plan.reason === "preview"
-              ? "このリンクは、開いた人が診断を取り直します"
-              : "このリンクからは、店舗を取り直せません"
+          plan.reason === "no-place"
+            ? "このリンクからは、店舗を特定できません"
+            : "レポートが見つかりませんでした"
         }
         body={
-          plan.reason === "preview"
-            ? "プレビューでは点数を出していません。受け取った人がブラウザで開くと、店舗の識別子から取り直します。"
-            : plan.reason === "no-place"
-              ? "以前のリンクに、取り直すための店舗の識別子がありません。紹介の情報は残しています。店舗名から、もう一度診断してください。"
-              : "URLが正しくない可能性があります。紹介の情報は残しています。もう一度診断してください。"
+          plan.reason === "no-place"
+            ? "以前のリンクに、地図へ進むための店舗の識別子がありません。紹介の情報は残しています。店舗名から、もう一度診断してください。"
+            : "URLが正しくない可能性があります。紹介の情報は残しています。もう一度診断してください。"
         }
         href={again}
       />
     );
   }
 
-  const loaded = await loadSharedPlace(forwardedRequest(headerList), plan.placeId);
-  if (!loaded.ok) {
-    return (
-      <QuietReport
-        title="いまは取り直せませんでした"
-        body={`${loaded.message} 紹介の情報は残しています。`}
-        href={again}
-      />
-    );
-  }
+  const maps = `https://www.google.com/maps/search/?api=1&query_place_id=${encodeURIComponent(plan.placeId)}`;
+  const consult = consultHref(ref, refLine);
+  const fixture = plan.placeId === PLACES_FIXTURE_PLACE_ID;
 
-  const shareUrl = `${SITE.baseUrl}/report/${encodePlaceReportId(plan.placeId)}/`;
   return (
-    <Container className="pb-12 pt-4 sm:pt-6">
+    <Container className="pb-12 pt-8">
       <AffiliateRefCapture />
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "トップ", path: "/" },
-          { name: "口コミ診断", path: "/check/" },
-          { name: "診断結果", path: `/report/${encodePlaceReportId(plan.placeId)}/` },
-        ])}
-      />
-      <h1 className="sr-only">
-        {loaded.result.input.store.source === "places"
-          ? `取得できた公開情報${
-              loaded.result.input.store.name ? `｜${loaded.result.input.store.name}` : ""
-            }`
-          : `選ばれやすさ ${loaded.result.score}点（目安）${
-              loaded.result.input.store.name ? `｜${loaded.result.input.store.name}` : ""
-            }`}
-      </h1>
-      <ReportView
-        result={loaded.result}
-        shareUrl={shareUrl}
-        refCode={ref}
-        refLine={refLine}
-        shareContext={{
-          loadedRuleVersion: loaded.result.ruleVersion,
-          fetchedAtRecorded: true,
-        }}
-        cohort={{ show: false }}
-      />
+      <h1 className="text-2xl font-extrabold text-slate-900">共有された診断への入口</h1>
+      <p className="mt-3 text-base leading-relaxed text-slate-800">
+        このページを開いても、店舗の公開情報は取り直しません。Googleへの問い合わせも、店名・星の保存もしません。
+      </p>
+      {fixture ? <p className="mt-3 text-base text-slate-800">{PLACES_FIXTURE_NOTE}</p> : null}
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <a
+          href={maps}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-base font-bold text-white underline decoration-white underline-offset-2 hover:bg-blue-700"
+        >
+          Googleマップで開く
+        </a>
+        <Link
+          href={consult}
+          className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-base font-bold text-slate-900 underline underline-offset-2 hover:bg-slate-50"
+        >
+          {CONSULT_OPEN_LABEL}
+        </Link>
+        <Link
+          href={again}
+          className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-base font-bold text-slate-900 underline underline-offset-2 hover:bg-slate-50"
+        >
+          もう一度診断する
+        </Link>
+      </div>
+      <p className="mt-6 text-sm leading-relaxed text-slate-700">
+        地図リンクは、共有された店舗の識別子だけから作っています。サイトの運営は株式会社ベストトラストです。
+      </p>
     </Container>
   );
 }
@@ -150,11 +132,11 @@ function checkHref(ref: string | undefined, refLine: string | undefined): string
   return query ? `/check/?${query}` : "/check/";
 }
 
-function forwardedRequest(headerList: Headers): Request {
-  const next = new Headers();
-  for (const name of ["x-forwarded-for", "x-real-ip"]) {
-    const value = headerList.get(name);
-    if (value) next.set(name, value);
-  }
-  return new Request("https://reviewcheck.jp/report/", { headers: next });
+function consultHref(ref: string | undefined, refLine: string | undefined): string {
+  const params = new URLSearchParams();
+  params.set("topic", "consult");
+  if (ref?.trim()) params.set("ref", ref.trim());
+  const line = sanitizeRefLine(refLine);
+  if (line) params.set("ref_line", line);
+  return `/contact/?${params.toString()}`;
 }

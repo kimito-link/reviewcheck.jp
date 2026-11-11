@@ -164,8 +164,8 @@ export const PLANS: Plan[] = [
       { text: "口コミ獲得・評判改善コンサル" },
       { text: "Googleビジネスプロフィール最適化（MEO）" },
       { text: "口コミ作成ツール（タップで投稿）" },
-      { text: "公式WEBサイト（契約中 無料提供）" },
-      { text: "公式LINE ＋ マーケ導線（契約中 無料提供）" },
+      { text: "公式WEBサイト（契約中は追加料金なし）" },
+      { text: "公式LINE ＋ マーケ導線（契約中は追加料金なし）" },
       { text: "★評価・口コミ数の月次レポート" },
     ],
   },
@@ -184,7 +184,7 @@ export const PLANS: Plan[] = [
     features: [
       { text: "Lightの内容すべて", head: true },
       { text: "AI 口コミ対策サポート（申請はご自身で）" },
-      { text: "店舗アプリ iOS / Android（契約中 無料提供）" },
+      { text: "店舗アプリ iOS / Android（契約中は追加料金なし）" },
       { text: "NFC口コミカード" },
       { text: "LINEマーケ導線の運用代行" },
       { text: "提携弁護士の窓口ご案内" },
@@ -208,12 +208,12 @@ export const PLANS: Plan[] = [
 ];
 
 export const PLANS_NOTE =
-  "金額は目安です（税別）。店舗数・口コミの状況により最適なプランをご提案します。口コミ削除・サジェスト改善・検索順位はGoogle等の判断や仕様によるもので、結果を保証するものではありません。当社は削除申請を代行せず、ご自身の申請をAI等で支援します。やらせレビュー・口コミ購入は行いません。";
+  "金額は目安です（税別）。店舗数・口コミの状況により最適なプランをご提案します。口コミ削除・サジェスト改善・検索順位はGoogle等の判断や仕様によるもので、結果は約束しません。当社は削除申請を代行せず、ご自身の申請をAI等で支援します。やらせレビュー・口コミ購入は行いません。";
 
 /** プラン選択時の連絡トピック（ContactForm と対応） */
 export const PLAN_TOPIC_LABELS: Record<string, string> = {
   "plan-light": "Lightプランのお申し込み・ご相談",
   "plan-standard": "Standardプランのお申し込み・ご相談",
   "plan-pro": "Proプランのお申し込み・ご相談",
-  "plan-free-diagnosis": "無料の評判診断",
+  "plan-free-diagnosis": "公開情報の確認（費用はかかりません）",
 };

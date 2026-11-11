@@ -65,7 +65,9 @@ describe("事実表示と到達カウント", () => {
     const result = buildPlacesFixtureResult();
     expect(result.input.store.source).toBe("places");
     expect(result.input.store.name).toContain("架空");
+    expect(result.kind).toBe("facts");
     expect(result.placesAttributed).toBe(true);
+    expect("score" in result).toBe(false);
     expect(result.input.store.hasPhotos).toBeUndefined();
     expect(result.input.store.hasOwnerReplies).toBeUndefined();
     if (previous === undefined) delete process.env.REVIEWCHECK_PLACES_FIXTURE;

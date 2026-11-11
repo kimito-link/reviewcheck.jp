@@ -139,11 +139,10 @@ describe("診断結果の並び", () => {
         ?.textContent ?? "",
     ).not.toMatch(/円/);
 
-    const history = await screen.findByText("前回（10/1）62点 → 今回43点（-19）");
-    expect(history).toBeInTheDocument();
-    expect(
-      container.querySelector('[data-result-section="score"]'),
-    ).toContainElement(history);
+    expect(screen.queryByText(/前回（10\/1）/)).toBeNull();
+    await waitFor(() => {
+      expect(window.localStorage.getItem(scoreHistoryKey("テスト食堂"))).toBeNull();
+    });
     expect(
       await screen.findByText("11のうち1つを確かめました"),
     ).toBeInTheDocument();
@@ -191,10 +190,7 @@ describe("診断結果の並び", () => {
     expect(progress).toBe(JSON.stringify(["check"]));
     expect(progress ?? "").not.toContain("テスト食堂");
 
-    const saved = window.localStorage.getItem(scoreHistoryKey("テスト食堂"));
-    expect(saved).toBeTruthy();
-    expect(saved ?? "").not.toContain("テスト食堂");
-    expect(saved ?? "").not.toContain("岡谷");
+    expect(window.localStorage.getItem(scoreHistoryKey("テスト食堂"))).toBeNull();
   });
 
   test("古い共有URLではルール版の注記を出す", () => {
@@ -340,8 +336,8 @@ describe("特典と比較", () => {
     expect(area?.querySelector("[data-places-attribution] [translate='no']")?.textContent).toBe(
       "Google Maps",
     );
-    expect(area?.textContent).toContain("km");
-    expect(area?.textContent).toContain("基準");
+    expect(area?.textContent).toContain("m");
+    expect(area?.textContent).toContain("順位は付けていません");
     expect(area?.textContent ?? "").not.toMatch(/無料|必ず|保証|今すぐ|緊急/);
     expect(area?.innerHTML ?? "").not.toMatch(/text-(xs|sm)\b/);
     expect(container.querySelector("[data-result-section='method']")?.textContent).toContain(
@@ -455,7 +451,8 @@ describe("共有した人の公式LINE", () => {
     expect(screen.getByText("今回取得できた公開情報")).toBeTruthy();
     expect(document.body.textContent).toContain("4.2");
     expect(document.body.textContent).toContain("12件");
-    expect(document.body.textContent).toContain("15分の無料相談");
+    expect(document.body.textContent).toContain("15分のご相談");
+    expect(document.body.textContent).not.toContain("無料");
     expect(document.body.textContent).toContain("33,000円");
     expect(document.body.textContent).not.toContain("partner.reverse");
     expect(document.body.textContent).not.toContain("選ばれやすさ");

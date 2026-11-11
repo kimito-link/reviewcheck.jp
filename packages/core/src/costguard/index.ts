@@ -198,7 +198,7 @@ export function guardMessage(reason: GuardReason, what: "store" | "nearby"): str
       : "店舗名かGoogleマップのURLで検索してください。";
   switch (reason) {
     case "budget_exhausted":
-      return `本日の自動取得の無料枠が終了しました（明日またご利用いただけます）。${tail}`;
+      return `本日の自動取得の上限に達しました（明日またご利用いただけます）。${tail}`;
     case "rate_limited":
       return `本日の自動取得の回数上限に達しました（明日またご利用いただけます）。${tail}`;
     case "disabled":

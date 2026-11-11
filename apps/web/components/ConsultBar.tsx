@@ -6,7 +6,7 @@ import { LineCtaButton } from "./LineCtaButton";
 
 /**
  * 画面下に常設する固定相談バー。
- * 少しスクロールしたら出現し、離脱前に必ずLINE相談へ到達させる。
+ * 少しスクロールしたら、LINE相談を表示する。
  */
 export function ConsultBar() {
   const pathname = usePathname() ?? "";
@@ -44,7 +44,7 @@ export function ConsultBar() {
       <div className="mx-auto flex max-w-lg flex-col gap-1">
         <LineCtaButton fullWidth className="min-h-11" text="口コミ・MEOをLINEで相談する" />
         <p className="text-center text-[11px] text-slate-300 sm:text-xs">
-          簡易診断は無料／やらせ・口コミ購入は一切なし
+          この診断に費用はかかりません／やらせ・口コミ購入はしません
         </p>
       </div>
     </div>

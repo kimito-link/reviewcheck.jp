@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { SuggestAnalysis, AnalyzedSuggest } from "@reviewcheck/core";
-import { CTAS } from "@reviewcheck/config";
+import { CONSULT_OPEN_LABEL, CTAS } from "@reviewcheck/config";
 import { DiagnosisProgressNote } from "./result/DiagnosisProgressNote";
 import { NextDiagnoses } from "./result/NextDiagnoses";
 import { ResultHook, ResultMethodDetails, UnconfirmedList } from "./result/ResultReading";
@@ -99,7 +99,7 @@ export function SuggestCheckApp({
       : CTAS.freeConsult.href;
   const primaryLabel = hasNegatives
     ? CTAS.suggest.label
-    : "15分の無料相談ページを開く";
+    : CONSULT_OPEN_LABEL;
   const missed =
     data && data.status !== "ok"
       ? ["検索候補の一部：取得が完了していません。判定は取得できた候補についてだけです。"]

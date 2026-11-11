@@ -1,6 +1,7 @@
 /**
  * 監視 cron は Places を呼ばず、点数の新しい記録も書かない。
- * 既存契約の有無はこの応答では分からない。決済の停止・解約・返金はしない。
+ * KV の手動登録は消さない。有効化も、巡回もしない。
+ * 決済の停止・解約・返金はしない。
  */
 export const MONITOR_PLACES_PAUSED = {
   ok: true,
@@ -10,7 +11,7 @@ export const MONITOR_PLACES_PAUSED = {
   errors: [] as string[],
   acceptingSignups: false,
   reason:
-    "月次の自動巡回は止めています。新規の申込は有効化しません。既存の記録は消していません。既存の決済・停止・解約・返金は、この処理では変更しません。",
+    "月次の自動巡回は止めています。新規の申込は有効化しません。KVに残っている手動の監視登録は、消しません。有効化も、巡回もしません。決済の停止・解約・返金は、この処理では変更しません。",
 };
 
 export const MONITOR_SIGNUP_PAUSED_MESSAGE =

@@ -54,7 +54,7 @@ export default async function Image() {
         <div style={{ fontSize: 36, fontWeight: 700 }}>口コミチェック.jp</div>
         <div style={{ fontSize: 64, fontWeight: 700, marginTop: 28 }}>口コミ診断の共有</div>
         <div style={{ fontSize: 28, marginTop: 28, color: "#334155" }}>
-          受け取った人が開くと、店舗を取り直します
+          このページは店舗を取り直しません
         </div>
       </div>
     ),

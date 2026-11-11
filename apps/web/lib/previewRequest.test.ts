@@ -44,8 +44,16 @@ describe("プレビューは Places を呼ばない", () => {
   test("プレビューと古い点数は、取り直しの引数に入らない", () => {
     const placeId = "ChIJbrowser";
     const id = encodePlaceReportId(placeId);
-    expect(reportLoadPlan(id, true)).toEqual({ fetch: false, reason: "preview" });
-    expect(reportLoadPlan(id, false)).toEqual({ fetch: true, placeId });
+    expect(reportLoadPlan(id, true)).toEqual({
+      fetch: false,
+      reason: "link-only",
+      placeId,
+    });
+    expect(reportLoadPlan(id, false)).toEqual({
+      fetch: false,
+      reason: "link-only",
+      placeId,
+    });
 
     const legacy = encodeReportId({
       store: {
@@ -62,7 +70,11 @@ describe("プレビューは Places を呼ばない", () => {
       ruleVersion: "1.0",
     });
     const plan = reportLoadPlan(legacy, false);
-    expect(plan).toEqual({ fetch: true, placeId: "ChIJlegacy" });
+    expect(plan).toEqual({
+      fetch: false,
+      reason: "link-only",
+      placeId: "ChIJlegacy",
+    });
     expect(JSON.stringify(plan)).not.toContain("3.2");
     expect(JSON.stringify(plan)).not.toContain("古い店");
 

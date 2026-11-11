@@ -14,7 +14,7 @@ const TOPICS: Record<string, string> = {
   report: "詳細レポートのご依頼",
   profile: "Googleビジネスプロフィール改善のご相談",
   monthly: "月額MEO・口コミ改善サポートのご相談",
-  consult: "15分の無料相談",
+  consult: "15分のご相談（費用はかかりません）",
   monitoring: "月次モニタリングのお申し込み",
   suggest: "サジェスト（検索候補）対策のご相談",
   web: "ホームページ制作・改善のご相談",
@@ -53,7 +53,7 @@ export function ContactForm() {
       <p className="text-sm font-bold text-blue-700">{topicLabel}</p>
       {isMonitoring ? (
         <p className="mt-2 rounded-lg bg-slate-100 p-3 text-sm leading-relaxed text-slate-900" data-monitor-paused="">
-          月次モニタリングの新規申込は停止中です。この画面から決済は始まりません。次回の自動巡回も約束しません。既存の決済・解約・返金は、ここでは変更しません。
+          月次モニタリングの新規申込は停止中です。この画面から決済は始まりません。次回の自動巡回も約束しません。保存してある監視の記録は消しません。有効化もしません。決済の停止・解約・返金は、ここでは変更しません。
         </p>
       ) : null}
       <div className="mt-4 space-y-4">

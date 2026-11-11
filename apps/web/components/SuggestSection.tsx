@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { SuggestAnalysis } from "@reviewcheck/core";
-import { CTAS } from "@reviewcheck/config";
+import { CONSULT_OPEN_LABEL, CTAS } from "@reviewcheck/config";
 
 const LEVEL_BADGE: Record<string, { label: string; cls: string }> = {
   high: { label: "高リスク", cls: "bg-red-100 text-red-700" },
@@ -145,7 +145,7 @@ export function SuggestSection({
                 href={CTAS.freeConsult.href}
                 className="inline-flex items-center justify-center rounded-xl bg-blue-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800"
               >
-                15分の無料相談ページを開く
+                {CONSULT_OPEN_LABEL}
               </Link>
             </div>
           </div>

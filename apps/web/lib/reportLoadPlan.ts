@@ -1,18 +1,15 @@
 import { readReportReference } from "@reviewcheck/core";
 
 export type ReportLoadPlan =
-  | { fetch: false; reason: "invalid" | "preview" | "no-place" }
-  | { fetch: true; placeId: string };
+  | { fetch: false; reason: "invalid" | "no-place" | "link-only"; placeId?: string };
 
 /**
- * 共有ページが Places を呼ぶかどうか。
- * プレビューと、place ID の無い古いリンクは呼ばない。
- * 呼ぶときも place ID だけを渡す。古いIDに入っていた星や店名は使わない。
+ * 共有ページは Place ID から地図リンクと相談へ進むだけ。
+ * 人でもボットでも Places は呼ばない。費用も、店名・星の保存も発生しない。
  */
-export function reportLoadPlan(id: string, preview: boolean): ReportLoadPlan {
+export function reportLoadPlan(id: string, _preview = false): ReportLoadPlan {
   const ref = readReportReference(id);
   if (!ref) return { fetch: false, reason: "invalid" };
-  if (preview) return { fetch: false, reason: "preview" };
   if (ref.kind === "legacy-no-place") return { fetch: false, reason: "no-place" };
-  return { fetch: true, placeId: ref.placeId };
+  return { fetch: false, reason: "link-only", placeId: ref.placeId };
 }

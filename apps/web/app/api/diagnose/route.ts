@@ -20,6 +20,7 @@ import { incrementDiagnosisCount } from "@/lib/diagnosisCounter";
 import { incrementFunnel } from "@/lib/funnelCount";
 import { corsHeaders, guardPlacesCall } from "@/lib/costGuard";
 import { buildPlacesFixtureResult, isPlacesFixtureRequest } from "@/lib/placesFixture";
+import { buildPublicFacts, buildSampleFacts } from "@/lib/placesPublic";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,7 +60,10 @@ async function handle(request: Request, body: DiagnoseBody) {
   const demo = body.demo === true;
   const query = body.query ?? {};
   // 画面確認用。環境変数が無い本番ではここへ入らない。Google も Redis も呼ばない。
-  if (!demo && isPlacesFixtureRequest(query)) {
+  if (demo) {
+    return NextResponse.json(buildSampleFacts(), { headers: CORS_HEADERS });
+  }
+  if (isPlacesFixtureRequest(query)) {
     incrementFunnel({ event: "diagnosis_complete" }).catch(() => {});
     return NextResponse.json(buildPlacesFixtureResult(), {
       headers: {
@@ -179,6 +183,36 @@ async function handle(request: Request, body: DiagnoseBody) {
     }
   }
 
+  const manualNumbers =
+    typeof override.rating === "number" || typeof override.reviewCount === "number";
+  const userListedCompetitors = (body.competitors ?? []).length > 0;
+  const placesAttributed =
+    store.source === "places" && !manualNumbers && !userListedCompetitors;
+  const scopeText = searchedPeers
+    ? areaScopeText({
+        primaryType: context?.primaryType,
+        shown: competitors.length,
+      })
+    : undefined;
+
+  if (store.source === "places" || store.source === "mock") {
+    if (store.source === "places") {
+      incrementDiagnosisCount().catch(() => {});
+      incrementFunnel({ event: "diagnosis_complete" }).catch(() => {});
+    }
+    return NextResponse.json(
+      buildPublicFacts({
+        store,
+        competitors,
+        placesAttributed,
+        sample: store.source === "mock",
+        areaScopeText: scopeText,
+        notices,
+      }),
+      { headers: CORS_HEADERS },
+    );
+  }
+
   try {
     const result = diagnose(
       {
@@ -188,21 +222,8 @@ async function handle(request: Request, body: DiagnoseBody) {
       },
       { providers },
     );
-    if (!demo) {
-      incrementDiagnosisCount().catch(() => {});
-      incrementFunnel({ event: "diagnosis_complete" }).catch(() => {});
-    }
-    const manualNumbers =
-      typeof override.rating === "number" || typeof override.reviewCount === "number";
-    const userListedCompetitors = (body.competitors ?? []).length > 0;
-    const placesAttributed =
-      !demo && store.source === "places" && !manualNumbers && !userListedCompetitors;
-    const scopeText = searchedPeers
-      ? areaScopeText({
-          primaryType: context?.primaryType,
-          shown: competitors.length,
-        })
-      : undefined;
+    incrementDiagnosisCount().catch(() => {});
+    incrementFunnel({ event: "diagnosis_complete" }).catch(() => {});
     return NextResponse.json(
       {
         ...result,

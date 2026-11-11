@@ -42,7 +42,8 @@ function assertText(name, text) {
 async function shot(page, name, selector) {
   if (selector) {
     const target = page.locator(selector).first();
-    await target.evaluate((el) => el.scrollIntoView({ block: "start" }));
+    await target.evaluate((el) => el.scrollIntoView({ block: "start", behavior: "instant" }));
+    await page.waitForTimeout(200);
   }
   const file = `${outDir}/${name}.png`;
   await page.screenshot({ path: file, fullPage: false, animations: "disabled" });
@@ -87,7 +88,7 @@ async function runWidth(browser, width) {
       response.request().method() === "POST" &&
       response.status() === 200,
   );
-  await page.getByRole("button", { name: "無料で診断する" }).click();
+  await page.getByRole("button", { name: "診断する" }).click();
   const diagnosed = await diagnoseResponse;
   const diagnoseJson = await diagnosed.json();
   const funnelHeader = diagnosed.headers()["x-funnel-counted"] ?? "";
@@ -103,8 +104,8 @@ async function runWidth(browser, width) {
   await page
     .locator("[data-result-section='area-map']")
     .screenshot({ path: areaShot, animations: "disabled" });
-  await page.getByRole("link", { name: "15分の無料相談ページを開く" }).click();
-  await page.getByText("15分の無料相談").waitFor();
+  await page.getByRole("link", { name: "15分のご相談ページを開く" }).first().click();
+  await page.getByText("15分のご相談（費用はかかりません）").waitFor();
   await page.waitForTimeout(1000);
   const consultText = await page.locator("body").innerText();
   const consultShot = await shot(page, `fixture_places_consult_${width}`);
@@ -112,7 +113,7 @@ async function runWidth(browser, width) {
   const placeId = diagnoseJson?.input?.store?.placeId;
   const reportId = encodePlaceReportId(placeId);
   await page.goto(`${base}/report/${reportId}/`, { waitUntil: "networkidle" });
-  await page.getByRole("heading", { name: "架空フィクスチャ食堂", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "共有された診断への入口" }).waitFor();
   const shareText = await page.locator("body").innerText();
   const shareHeading = await page.locator("h1").first().innerText();
   const shareShot = await shot(page, `fixture_places_share_${width}`);
@@ -143,7 +144,11 @@ async function runWidth(browser, width) {
       ...assertText("diagnosis", diagnosisText),
       ...assertText("share", shareText),
       ...(shareHeading.includes("選ばれやすさ") ? ["share heading に点数が残っている"] : []),
-      ...(consultText.includes("15分の無料相談") ? [] : ["consult: 15分の無料相談が無い"]),
+      ...(consultText.includes("15分のご相談（費用はかかりません）")
+        ? []
+        : ["consult: 15分のご相談が無い"]),
+      ...(typeof diagnoseJson?.score === "number" ? ["diagnosis: score が残っている"] : []),
+      ...(diagnoseJson?.kind === "facts" ? [] : ["diagnosis: kind が facts ではない"]),
       ...(consultText.includes("1時間") && consultText.includes("5,000")
         ? ["consult: 料金表に無い金額が出ている"]
         : []),
