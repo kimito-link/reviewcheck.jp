@@ -32,16 +32,16 @@ export interface CacheStore {
 // 原価の見積り（円・整数・切り上げ）。
 // ★見積りと既定の上限は同じこのファイルから導く（別ファイルに数字を置くと
 //   上限が見積りより小さくなり「必ず拒否」になる。budget.ts の教訓）。
-// 見積り（請求額そのものではない。1ドル=150円は換算の定数で、実勢レートではない。
-// 無料枠は数えない＝保守的。2026-11-10 の価格表）:
-//   Text Search Essentials (IDs Only) は回数無制限の $0。店の特定では店名を取らない。
-//   Place Details Enterprise（rating など。reviews は取らない） $20/1000 → 3円
-//   Nearby Search Enterprise（rating）                         $35/1000 → 6円
-//   競合の location は Enterprise より下なので、見積りは変えない。
+// 根拠（Places API (New) の SKU 単価・1ドル=150円で切り上げ。無料枠は数えない＝保守的）:
+//   Text Search Pro（displayName を取る）          $32/1000 → 5円
+//   Place Details Enterprise+Atmosphere（reviews） $25/1000 → 4円
+//   Nearby Search Enterprise（rating を取る）       $35/1000 → 6円
+//   競合の FieldMask に location（Essentials）を足しても、この見積りは変えない。
+//   追加リクエストは無く、SKU は rating の Enterprise のまま。
 // ---------------------------------------------------------------------------
 export const PLACES_COST_YEN = {
-  /** 店舗の詳細（Place Details Enterprise）。IDだけの Text Search は $0。 */
-  store: 3,
+  /** 店舗の特定＋詳細（Text Search＋Place Details）。placeId 指定でも保守的に同額。 */
+  store: 9,
   /** 周辺競合の自動検出（Nearby Search 1回）。 */
   competitors: 6,
   /** 現在地周辺の候補（Nearby Search 1回）。 */
@@ -53,7 +53,7 @@ export const DIAGNOSE_COST_YEN = PLACES_COST_YEN.store + PLACES_COST_YEN.competi
 
 /**
  * 匿名プールの日次予算の既定（円）。★提案値。最終決定は運用者（env で上書き）。
- * 見積りの1診断×100件/日。円は請求額ではない。
+ * 1,500円/日 ＝ キャッシュに無い新しい店の診断 100件/日。
  */
 export const DEFAULT_ANON_DAILY_BUDGET_YEN = DIAGNOSE_COST_YEN * 100;
 
@@ -198,7 +198,7 @@ export function guardMessage(reason: GuardReason, what: "store" | "nearby"): str
       : "店舗名かGoogleマップのURLで検索してください。";
   switch (reason) {
     case "budget_exhausted":
-      return `本日の自動取得の上限に達しました（明日またご利用いただけます）。${tail}`;
+      return `本日の自動取得の無料枠が終了しました（明日またご利用いただけます）。${tail}`;
     case "rate_limited":
       return `本日の自動取得の回数上限に達しました（明日またご利用いただけます）。${tail}`;
     case "disabled":

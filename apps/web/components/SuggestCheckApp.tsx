@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { SuggestAnalysis, AnalyzedSuggest } from "@reviewcheck/core";
-import { CONSULT_OPEN_LABEL, CTAS } from "@reviewcheck/config";
+import { CTAS } from "@reviewcheck/config";
 import { DiagnosisProgressNote } from "./result/DiagnosisProgressNote";
 import { NextDiagnoses } from "./result/NextDiagnoses";
 import { ResultHook, ResultMethodDetails, UnconfirmedList } from "./result/ResultReading";
@@ -92,14 +92,13 @@ export function SuggestCheckApp({
           loss: "取得が完了していない分は、この一覧に含まれていません。",
         }
       : STORY.safe!;
-  const primaryHref = unverified
-    ? null
-    : hasNegatives
-      ? CTAS.suggest.href
-      : CTAS.freeConsult.href;
+  const consultHref = query.trim()
+    ? `${CTAS.suggest.href}&store=${encodeURIComponent(query.trim())}`
+    : CTAS.suggest.href;
+  const primaryHref = unverified ? null : hasNegatives ? consultHref : CTAS.monitoring.href;
   const primaryLabel = hasNegatives
     ? CTAS.suggest.label
-    : CONSULT_OPEN_LABEL;
+    : "検索候補を月次モニタリングする";
   const missed =
     data && data.status !== "ok"
       ? ["検索候補の一部：取得が完了していません。判定は取得できた候補についてだけです。"]

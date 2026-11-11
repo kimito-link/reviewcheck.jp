@@ -7,7 +7,7 @@ import { buildMetadata } from "@/lib/seo";
 export const metadata: Metadata = buildMetadata({
   title: "口コミ作成サポートツール｜タップだけで口コミが完成",
   description:
-    "来店されたお客様が、質問にタップで答えるだけで自然な口コミの下書きが完成。コピーしてGoogleに貼るだけ。やらせ・サクラはしません。このツールに費用はかかりません。",
+    "来店されたお客様が、質問にタップで答えるだけで自然な口コミの下書きが完成。コピーしてGoogleに貼るだけ。やらせ・サクラは一切なし、ご本人の率直な感想を正しく集めるための無料ツールです。",
   path: "/review-tool/",
 });
 
@@ -70,7 +70,7 @@ export default async function ReviewToolPage({
               href="/check/"
               className="inline-flex rounded-xl border-2 border-blue-600 bg-white px-6 py-3 text-sm font-bold text-blue-700 transition hover:bg-blue-50"
             >
-              公開情報を見る
+              まず無料で口コミ診断する
             </Link>
           </div>
         </div>

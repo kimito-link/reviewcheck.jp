@@ -43,7 +43,7 @@ describe("エリアの比較", () => {
   test("座標があっても地図は出さず、距離つきの一覧と出典を出す", () => {
     window.history.pushState(null, "", "/check/");
     document.documentElement.dataset.areaMap = "fallback";
-    const { container } = render(<AreaCompare area={areaOf()} attributeToGoogle />);
+    const { container } = render(<AreaCompare area={areaOf()} />);
     const section = container.querySelector("[data-result-section='area-map']");
     expect(section?.querySelector("[data-area-map-frame]")).toBeNull();
     expect(section?.querySelector("[data-area-map-canvas]")).toBeNull();
@@ -67,14 +67,16 @@ describe("エリアの比較", () => {
     expect(section?.innerHTML ?? "").not.toContain("#06C755");
   });
 
-  test("出典を明示しない一覧は Google Maps と書かず、地図の枠も出ない", () => {
+  test("座標が無くても一覧と出典は残り、地図の枠は出ない", () => {
     const area = areaOf(
       { name: "テスト食堂", rating: 4, reviewCount: 45 },
       [{ name: "競合A", rating: 4.2, reviewCount: 80 }],
     );
     const { container } = render(<AreaCompare area={area} />);
     expect(container.querySelector("[data-area-map-frame]")).toBeNull();
-    expect(container.querySelector("[data-places-attribution]")).toBeNull();
+    expect(container.querySelector("[data-places-attribution] [translate='no']")?.textContent).toBe(
+      "Google Maps",
+    );
     expect(container).toHaveTextContent("競合A");
     expect(container).toHaveTextContent("未取得");
     expect(container).toHaveTextContent("中央値は62.5件");
@@ -118,7 +120,7 @@ describe("エリアの比較", () => {
     render(<AreaCompare area={areaOf()} />);
     await waitFor(() => {
       expect(
-        screen.queryByRole("heading", { name: "この検索で比べたお店" }),
+        screen.queryByRole("heading", { name: "このエリアで比べたお店" }),
       ).not.toBeInTheDocument();
     });
     cleanup();

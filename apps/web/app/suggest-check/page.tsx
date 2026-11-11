@@ -15,9 +15,9 @@ import {
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
-  title: "サジェスト診断｜検索候補に悪い言葉が出ていないか確認する",
+  title: "サジェスト診断｜店名・会社名・活動ネームで検索候補(オートコンプリート)の悪評を無料チェック",
   description:
-    "店舗名・会社名・活動ネームを入れると、Google検索の予測候補に悪い言葉が出ていないかを表示します。この確認に費用はかかりません。順位が変わることは約束しません。",
+    "店舗名・会社名・活動ネーム（配信者・インフルエンサー）を入れるだけで、Google検索の予測候補（サジェスト）に『詐欺』『最悪』などのネガティブな言葉が出ていないかを無料診断。来店前のお客様が最初に目にする検索候補の状態を確認し、正当な方法でのサジェスト対策につなげます。",
   path: "/suggest-check/",
   keywords: [
     "サジェスト 対策",
@@ -50,7 +50,7 @@ const WHY = [
 const STEPS = [
   {
     title: "今の状態を診断",
-    desc: "店名・会社名・活動ネームを入れて、実際に出る検索候補とネガティブ候補の有無を確認します。この確認に費用はかかりません。",
+    desc: "店名・会社名・活動ネームを入れて、実際に出る検索候補とネガティブ候補の有無を確認します（無料）。",
   },
   {
     title: "リスクを見極め",
@@ -73,7 +73,7 @@ const FAQ = [
       "Googleの検索窓に文字を入れたときに自動で表示される予測候補（オートコンプリート）のことです。よく検索される語の組み合わせが表示される仕組みで、店名と一緒に『最悪』『詐欺』などが出ると、来店前のお客様の不安につながります。",
   },
   {
-    question: "ネガティブな候補は消せますか？",
+    question: "ネガティブな候補は必ず消せますか？",
     answer:
       "確実に消すことをお約束するものではありません。Googleの仕様変更の影響を受けるためです。私たちは、ポジティブな情報を増やし、健全な検索行動を促すことで相対的に目立たなくする取り組みを、正当な範囲で継続的に行います。",
   },
@@ -110,7 +110,7 @@ export default async function SuggestCheckPage({
           professionalServiceJsonLd({
             name: "サジェスト診断・サジェスト対策",
             description:
-              "Google検索の予測候補（サジェスト）に出る言葉を確認し、正当な方法での相談につなげるサービス。この確認に費用はかかりません。",
+              "Google検索の予測候補（サジェスト）に出るネガティブな言葉を無料診断し、正当な方法での対策につなげるサービス。",
             path: "/suggest-check/",
             serviceType: "Reputation management / Suggest countermeasure",
           }),
@@ -133,7 +133,7 @@ export default async function SuggestCheckPage({
             <p className="mt-4 text-sm leading-relaxed text-slate-200 sm:text-base">
               店名・会社名・<span className="font-bold text-amber-300">活動ネーム</span>を入れるだけ。Google検索の予測候補（サジェスト）に
               <br className="hidden sm:block" />
-              「最悪」「詐欺」などのネガティブ候補が出ていないかを確認します。この確認に費用はかかりません。
+              「最悪」「詐欺」などのネガティブ候補が出ていないかを、無料でチェックします。
             </p>
             {/* ★2026-08-19 追加: インフルエンサー・配信者の需要に対応。
                 既存のSEO軸（店名・会社名）は消さずに「活動ネーム」を足す形にする。
@@ -192,7 +192,7 @@ export default async function SuggestCheckPage({
         </ol>
         <p className="mt-4 text-xs leading-relaxed text-slate-500">
           ※
-          私たちは検索結果・サジェストを不正に操作する行為は行いません。ポジティブな情報の整備など、Googleのポリシーに反しない方法で取り組みます。効果や反映は約束しません。
+          私たちは検索結果・サジェストを不正に操作する行為は行いません。ポジティブな情報の整備など、Googleのポリシーに反しない正当な方法のみで取り組みます。効果や反映を保証するものではありません。
         </p>
       </Section>
 
@@ -200,7 +200,7 @@ export default async function SuggestCheckPage({
       <Section title="検索の評判が気になったら、まずはご相談ください">
         <div className="flex flex-col items-start gap-4 rounded-2xl bg-navy-gradient p-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-bold text-white sm:text-base">
-            ネガティブ候補の見極めから、既存の相談メニューへ進めます。15分のご相談に費用はかかりません。
+            ネガティブ候補の見極めから対策の進め方まで、無料でご相談いただけます。
             <span className="block text-slate-200">
               総合パッケージ（Pro）にはサジェスト対策も含まれます。
             </span>

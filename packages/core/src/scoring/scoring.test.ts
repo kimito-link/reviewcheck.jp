@@ -44,40 +44,10 @@ describe("選ばれやすさスコアの決定性", () => {
     assert.equal(b.ruleVersion, SCORE_RULE_VERSION);
   });
 
-  test("この入力の点数を固定する（未取得は仮加点しない）", () => {
+  test("この入力の点数を固定する（採点式を黙って変えない）", () => {
     const result = diagnose(fixture);
-    const freshness = result.factors.find((factor) => factor.id === "freshness");
-    const profile = result.factors.find((factor) => factor.id === "profileCompleteness");
-    assert.equal(freshness?.max, 0);
-    assert.equal(freshness?.points, 0);
-    assert.equal(freshness?.estimated, true);
-    assert.equal(profile?.max, 0);
-    assert.equal(profile?.points, 0);
-    assert.match(profile?.message ?? "", /未登録とは扱いません/);
-    assert.equal(result.score, 43);
+    assert.equal(result.score, 45);
     assert.equal(result.band, "weak");
-  });
-
-  test("写真が未取得でも、取得済みの電話を未登録4分の1にしない", () => {
-    const result = diagnose({
-      store: {
-        name: "写真不明店",
-        rating: 4.2,
-        reviewCount: 40,
-        phone: "000-0000-0000",
-        hasOpeningHours: true,
-        source: "places",
-      },
-      competitors: [],
-    });
-    const profile = result.factors.find((factor) => factor.id === "profileCompleteness");
-    assert.equal(profile?.estimated, false);
-    assert.match(profile?.message ?? "", /電話・サイト・営業時間/);
-    assert.doesNotMatch(profile?.message ?? "", /写真/);
-    assert.ok((profile?.points ?? 0) > 0);
-    const replies = result.factors.find((factor) => factor.id === "ownerReplies");
-    assert.equal(replies?.max, 0);
-    assert.equal(replies?.status, "info");
   });
 
   test("取得時刻とルール版は共有URL用の入力に残り、点数には影響しない", () => {

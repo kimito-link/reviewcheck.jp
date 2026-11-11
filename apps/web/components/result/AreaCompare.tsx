@@ -7,7 +7,6 @@ import {
   type AreaPlace,
 } from "@reviewcheck/core/areaMap";
 import { useEmbedHidden } from "../diagnosis/useEmbedHidden";
-import { GoogleMapsCredit } from "./GoogleMapsCredit";
 import { ResultHook } from "./ResultReading";
 
 /**
@@ -15,62 +14,35 @@ import { ResultHook } from "./ResultReading";
  * 店の位置は地図タイルに載せず、一覧だけで比べる。
  * ?embed=1 では、あとから足したブロックと同じく出さない。
  */
-export function AreaCompare({
-  area,
-  attributeToGoogle = false,
-  scopeText,
-  showGap = true,
-  lead = "上の順位は、この検索が返したお店の口コミ数です。エリア全体の順位ではありません。",
-}: {
-  area: AreaComparison;
-  /** Places の応答そのものを並べているときだけ出典を出す。 */
-  attributeToGoogle?: boolean;
-  scopeText?: string;
-  /** 中央値までの件数は、順位を販売理由にしない画面では出さない。 */
-  showGap?: boolean;
-  lead?: string;
-}) {
+export function AreaCompare({ area }: { area: AreaComparison }) {
   const hidden = useEmbedHidden();
   if (hidden || area.places.length === 0) return null;
 
   return (
     <section
       data-result-section="area-map"
-      data-sticky-protect=""
       className="rounded-2xl border border-slate-200 bg-white p-5 text-base text-slate-900 shadow-sm sm:p-6"
     >
       <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
-        この検索で比べたお店
+        このエリアで比べたお店
       </h2>
-      <p className="mt-2 text-base leading-relaxed text-slate-800">{lead}</p>
-      {scopeText ? (
-        <p className="mt-2 text-base leading-relaxed text-slate-800">{scopeText}</p>
-      ) : null}
+      <p className="mt-2 text-base leading-relaxed text-slate-800">
+        上の順位は、診断したお店と周辺のお店の口コミ数です。店名・星・口コミ数は、この一覧で比べられます。
+      </p>
       <div className="mt-4">
-        <AreaPlaceCards places={area.places} showRank={showGap} />
-        <AreaPlaceTable places={area.places} showRank={showGap} />
+        <AreaPlaceCards places={area.places} />
+        <AreaPlaceTable places={area.places} />
       </div>
-      {attributeToGoogle ? <GoogleMapsCredit /> : null}
-      {showGap ? (
-        <p className="mt-4 text-base leading-relaxed text-slate-800">
-          {areaMedianMessage(area)}{" "}
-          <a
-            href="#result-next-step"
-            className="font-bold text-blue-800 underline decoration-blue-800 underline-offset-2"
-          >
-            次の一歩を見る
-          </a>
-        </p>
-      ) : (
-        <p className="mt-4 text-base leading-relaxed text-slate-800">
-          <a
-            href="#result-next-step"
-            className="font-bold text-blue-800 underline decoration-blue-800 underline-offset-2"
-          >
-            任意の支援を見る
-          </a>
-        </p>
-      )}
+      <GoogleMapsAttribution />
+      <p className="mt-4 text-base leading-relaxed text-slate-800">
+        {areaMedianMessage(area)}{" "}
+        <a
+          href="#result-next-step"
+          className="font-bold text-blue-800 underline decoration-blue-800 underline-offset-2"
+        >
+          次の一歩を見る
+        </a>
+      </p>
       <div className="mt-3">
         <ResultHook>主な所見は、この次です。</ResultHook>
       </div>
@@ -78,15 +50,9 @@ export function AreaCompare({
   );
 }
 
-function AreaPlaceCards({
-  places,
-  showRank,
-}: {
-  places: AreaPlace[];
-  showRank: boolean;
-}) {
+function AreaPlaceCards({ places }: { places: AreaPlace[] }) {
   return (
-    <ol className="space-y-3 sm:hidden" data-area-map-list="cards" aria-label="この検索で比べたお店">
+    <ol className="space-y-3 sm:hidden" data-area-map-list="cards" aria-label="このエリアで比べたお店">
       {places.map((place) => (
         <li
           key={place.id}
@@ -102,7 +68,7 @@ function AreaPlaceCards({
             <p className="mt-1 text-base text-slate-800">周辺のお店</p>
           )}
           <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
-            {showRank ? <Fact term="順位" value={`第${place.reviewCountRank}位`} /> : null}
+            <Fact term="順位" value={`第${place.reviewCountRank}位`} />
             <Fact term="星" value={place.rating.toFixed(1)} />
             <Fact term="口コミ数" value={`${place.reviewCount}件`} />
             <Fact term="距離" value={distanceLabel(place)} />
@@ -116,20 +82,14 @@ function AreaPlaceCards({
   );
 }
 
-function AreaPlaceTable({
-  places,
-  showRank,
-}: {
-  places: AreaPlace[];
-  showRank: boolean;
-}) {
+function AreaPlaceTable({ places }: { places: AreaPlace[] }) {
   return (
     <div className="hidden overflow-x-auto sm:block" data-area-map-list="table">
       <table className="w-full border-collapse text-left text-base">
-        <caption className="sr-only">この検索で比べたお店</caption>
+        <caption className="sr-only">このエリアで比べたお店</caption>
         <thead>
           <tr className="border-b border-slate-300 text-slate-900">
-            {showRank ? <th scope="col" className="px-2 py-2 font-bold">順位</th> : null}
+            <th scope="col" className="px-2 py-2 font-bold">順位</th>
             <th scope="col" className="px-2 py-2 font-bold">店名</th>
             <th scope="col" className="px-2 py-2 font-bold">星</th>
             <th scope="col" className="px-2 py-2 font-bold">口コミ数</th>
@@ -146,11 +106,9 @@ function AreaPlaceTable({
                 place.isSubject ? "bg-slate-50" : "bg-white"
               }`}
             >
-              {showRank ? (
-                <td className="px-2 py-3 font-bold text-slate-900">
-                  第{place.reviewCountRank}位
-                </td>
-              ) : null}
+              <td className="px-2 py-3 font-bold text-slate-900">
+                第{place.reviewCountRank}位
+              </td>
               <td className="px-2 py-3 text-slate-900">
                 <span className="font-bold">{place.name}</span>
                 {place.isSubject ? (
@@ -172,6 +130,20 @@ function AreaPlaceTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+function GoogleMapsAttribution() {
+  return (
+    <p
+      className="mt-3 text-base leading-relaxed text-slate-800"
+      data-places-attribution=""
+    >
+      店名・星・口コミ数の出典{" "}
+      <span translate="no" className="gmp-attribution">
+        Google Maps
+      </span>
+    </p>
   );
 }
 

@@ -8,7 +8,6 @@ import { ConsultBar } from "@/components/ConsultBar";
 import { AffiliateRefCapture } from "@/components/AffiliateRefCapture";
 import { JsonLd } from "@/components/JsonLd";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/jsonld";
-import { ForgetLocalScores } from "@/components/ForgetLocalScores";
 
 const notoSansJp = Noto_Sans_JP({
   subsets: ["latin"],
@@ -68,7 +67,6 @@ export default function RootLayout({
             帰属が落ちていた（malwarecheck.site は最初から layout 常駐で対応済み。
             本家が劣後していた点。DESIGN-funnel-brushup-2026-07-06.md CPA-2）。 */}
         <AffiliateRefCapture />
-        <ForgetLocalScores />
         <Header />
         <main>{children}</main>
         <Footer />

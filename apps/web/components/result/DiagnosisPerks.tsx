@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { DiagnosisResult } from "@reviewcheck/core";
 import type { CohortPublic } from "@/lib/cohort/public";
 import { buildRecheckIcs } from "@/lib/perk/ics";
@@ -9,7 +9,7 @@ import {
   reportToHtml,
   type DiagnosisReportDocument,
 } from "@/lib/perk/reportDocument";
-import type { StoredScore } from "@/lib/scoreHistory";
+import { parseStoredScore, scoreHistoryKey, type StoredScore } from "@/lib/scoreHistory";
 
 function downloadText(filename: string, content: string, type: string) {
   const blob = new Blob([content], { type });
@@ -34,11 +34,20 @@ export function DiagnosisPerks({
   result,
   cohort,
 }: {
-  result: Pick<DiagnosisResult, "input" | "diagnosedAt"> & Partial<DiagnosisResult>;
+  result: DiagnosisResult;
   cohort: CohortPublic | null;
 }) {
   const [open, setOpen] = useState(false);
-  const previous: StoredScore | null = null;
+  const [previous, setPrevious] = useState<StoredScore | null>(null);
+  const shopName = result.input.store.name ?? "";
+
+  useEffect(() => {
+    try {
+      setPrevious(parseStoredScore(window.localStorage.getItem(scoreHistoryKey(shopName))));
+    } catch {
+      setPrevious(null);
+    }
+  }, [shopName, result.score, result.ruleVersion, result.diagnosedAt]);
 
   const doc = useMemo(
     () => buildDiagnosisReport({ result, previous, cohort }),

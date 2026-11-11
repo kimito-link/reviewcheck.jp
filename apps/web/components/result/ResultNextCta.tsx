@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { buildLineConsultMessage, CONSULT_OPEN_LABEL, selectResultCta } from "@reviewcheck/config";
-import { postFunnel } from "@/lib/postFunnel";
+import {
+  areaFromAddress,
+  buildAiHearingMessage,
+  resolveAiHearingHref,
+  selectResultCta,
+} from "@reviewcheck/config";
 import { LineConsultCta } from "../LineConsultCta";
-import { StickyConsult } from "./StickyConsult";
+import { useIncludeShop } from "./ResultActionContext";
 
 interface ResultNextCtaProps {
   score: number;
@@ -25,54 +29,73 @@ interface ResultNextCtaProps {
  */
 export function ResultNextCta({
   score,
+  ruleVersion,
+  shopName,
+  category,
+  address,
+  monitoringHref,
+  shopToggle = false,
   placement = "block",
 }: ResultNextCtaProps) {
   const copy = selectResultCta(score);
-  const paused = copy.kind === "monitoring";
-  const isLine = !paused;
-  const headline = paused ? "月次の自動巡回は、いま新規では受けていません" : copy.headline;
-  const body = paused
-    ? "既存の決済・解約・返金は、この画面では変更しません。相談は、初回15分の既存メニューです。購入の確定ではありません。"
-    : copy.body;
-  const message = buildLineConsultMessage();
+  const { includeShop, setIncludeShop } = useIncludeShop();
+  const isLine = copy.kind !== "monitoring";
+  const message = buildAiHearingMessage({
+    score,
+    ruleVersion,
+    shopName: includeShop ? shopName : undefined,
+    category,
+    area: areaFromAddress(address),
+  });
+  const { href } = resolveAiHearingHref(message);
 
   const action = isLine ? (
-    <div onClick={() => postFunnel("cta", "consult")}>
-      <LineConsultCta
-        text={copy.label}
-        message={message}
-        fullWidth={placement === "block"}
-        size={placement === "block" ? "lg" : "default"}
-      />
-    </div>
+    <LineConsultCta
+      text={copy.label}
+      message={message}
+      href={href}
+      fullWidth={placement === "block"}
+      size={placement === "block" ? "lg" : "default"}
+    />
   ) : (
     <a
-      href="/contact/?topic=consult"
-      data-funnel="cta:consult"
-      onClick={() => postFunnel("cta", "consult")}
+      href={monitoringHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-destination={monitoringHref}
       className={`inline-flex items-center justify-center rounded-lg bg-blue-700 font-bold text-white shadow-sm transition hover:bg-blue-800 ${
         placement === "block"
           ? "w-full px-7 py-4 text-base"
           : "px-4 py-2.5 text-base"
       }`}
     >
-      {CONSULT_OPEN_LABEL}
+      {copy.label}
     </a>
   );
 
   if (placement === "sticky") {
-    return <StickyBar headline={headline} action={action} />;
+    return <StickyBar headline={copy.headline} action={action} />;
   }
 
   return (
-    <div data-cta-kind={paused ? "consult-paused-monitor" : copy.kind}>
+    <div data-cta-kind={copy.kind}>
       <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
-        {headline}
+        {copy.headline}
       </h2>
-      <p className="mt-2 text-base leading-relaxed text-slate-800">{body}</p>
-      <p className="mt-2 text-base leading-relaxed text-slate-800">
-        送る文面に、店名と点数は入れません。
-      </p>
+      <p className="mt-2 text-base leading-relaxed text-slate-800">{copy.body}</p>
+      {shopToggle && isLine ? (
+        <label className="mt-3 flex items-start gap-2 text-sm leading-relaxed text-slate-800">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 shrink-0"
+            checked={includeShop}
+            onChange={(e) => setIncludeShop(e.target.checked)}
+          />
+          <span>
+            店名もメッセージに含める（選んだときだけ送信します。送るのは点数・採点ルール・業種・エリアと、選んだ場合の店名だけです）
+          </span>
+        </label>
+      ) : null}
       <div className="mt-4 max-w-xl">{action}</div>
     </div>
   );
@@ -88,8 +111,8 @@ function StickyBar({
   const [closed, setClosed] = useState(false);
   if (closed) return null;
   return (
-    <StickyConsult>
-      <div className="relative mx-auto flex max-w-3xl flex-col gap-2 rounded-2xl border border-slate-200 bg-white/95 p-3 pr-10 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:pr-3">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="pointer-events-auto relative mx-auto flex max-w-3xl flex-col gap-2 rounded-2xl border border-slate-200 bg-white/95 p-3 pr-10 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:pr-3">
         <p className="min-w-0 flex-1 text-base font-bold leading-snug text-slate-900">
           {headline}
         </p>
@@ -103,6 +126,6 @@ function StickyBar({
           ×
         </button>
       </div>
-    </StickyConsult>
+    </div>
   );
 }

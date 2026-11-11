@@ -227,26 +227,13 @@ textarea:focus-visible {
 }
 .store-name {
   margin: 6px 0 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
 }
 .store-stats {
   margin: 2px 0 0;
-  font-size: 16px;
-  color: #1e293b;
-}
-.maps-credit {
-  margin: 8px 0 0;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #1f1f1f;
-}
-.gmp-attribution {
-  font-family: Roboto, "Hiragino Sans", sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  white-space: nowrap;
-  color: #1f1f1f;
+  font-size: 13px;
+  color: #334155;
 }
 .points-title {
   margin-top: 14px;
@@ -255,7 +242,7 @@ textarea:focus-visible {
   margin: 8px 0 0;
   padding-left: 1.2rem;
   color: #0f172a;
-  font-size: 16px;
+  font-size: 13px;
   line-height: 1.5;
 }
 .points li + li {
@@ -313,8 +300,8 @@ textarea:focus-visible {
 }
 .disclaimer {
   margin-top: 14px;
-  font-size: 16px;
-  color: #1e293b;
+  font-size: 12px;
+  color: #334155;
   line-height: 1.5;
 }
 .other-dx {

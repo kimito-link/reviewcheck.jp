@@ -56,7 +56,7 @@ export function SeoServicePage({ data }: { data: SeoServicePageData }) {
               href="/check/"
               className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3.5 text-base font-bold text-white hover:bg-blue-700"
             >
-              公開情報を見る
+              無料で口コミ診断する
             </Link>
             {data.primaryCtaKeys.map((k) => {
               const cta = CTAS[k];
@@ -140,17 +140,17 @@ export function SeoServicePage({ data }: { data: SeoServicePageData }) {
         <Container>
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-xl font-extrabold text-white">
-              公開されている星と口コミ数を見る
+              まずは無料で口コミ診断
             </h2>
             <p className="mt-2 text-sm text-slate-200">
-              店舗名またはGoogleマップURLを入れるだけ。点数と順位は出しません。この診断に費用はかかりません。
+              店舗名またはGoogleマップURLを入れるだけ。競合との差と「あと何件で追いつけるか」が分かります。
             </p>
             <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
                 href="/check/"
                 className="inline-flex rounded-xl bg-white px-6 py-3.5 font-bold text-blue-800 hover:bg-blue-50"
               >
-                公開情報を見る
+                無料で口コミ診断する
               </Link>
               <LineCtaButton size="lg" />
             </div>
