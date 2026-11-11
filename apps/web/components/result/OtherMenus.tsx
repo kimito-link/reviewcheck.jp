@@ -15,7 +15,7 @@ export function OtherMenus({
   suggestHref: string;
 }) {
   const links: { href: string; label: string; external?: boolean }[] = [
-    { href: "/security-diagnosis/", label: "サイトの安全性を見る" },
+    { href: "https://malwarecheck.site/check/", label: "サイトの安全性を見る", external: true },
     { href: "/review-tool/", label: "口コミ作成ツール" },
     { href: "/plans/", label: "総合パッケージを見る" },
     { href: suggestHref, label: "検索の評判（サジェスト）を確認" },
