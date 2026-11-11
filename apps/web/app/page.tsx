@@ -31,14 +31,14 @@ const WORRIES = [
 ];
 
 const CAN_DIAGNOSE = [
-  "公開されている星",
-  "公開されている口コミ数",
-  "電話の有無",
-  "ウェブサイトの有無",
-  "営業時間の有無",
-  "同じ検索で返ったお店の星と件数",
-  "出典の表示",
-  "任意の相談",
+  "現在の星評価",
+  "現在の口コミ数",
+  "競合との差",
+  "あと何件の口コミが必要か",
+  "選ばれやすさスコア",
+  "口コミ改善ポイント",
+  "MEO改善ポイント",
+  "悪評対策の必要性",
 ];
 
 const AFTER = [
@@ -53,15 +53,15 @@ const AFTER = [
 
 const NOTES = [
   "診断は公開情報や入力情報をもとにした簡易診断です。",
-  "Googleの評価反映や表示順位は約束しません。",
+  "Googleの評価反映や表示順位を保証するものではありません。",
   "不正な口コミ投稿・口コミ購入・やらせレビューは行いません。",
   "Googleのポリシーに違反しない正当な口コミ改善を前提にします。",
 ];
 
 const STEPS = [
   { title: "店舗を入力", desc: "店舗名またはGoogleマップURLを入れるだけ。" },
-  { title: "公開情報を表示", desc: "取得できた星と口コミ数を、出典つきで表示します。" },
-  { title: "同じ検索のお店", desc: "返ってきたお店の星と件数を並べます。順位は付けません。" },
+  { title: "状態を診断", desc: "星評価・口コミ数・選ばれやすさスコアを表示。" },
+  { title: "競合と比較", desc: "あと何件・何点で競合に追いつけるかを見える化。" },
   { title: "改善を相談", desc: "口コミ改善・返信・MEO対策を正当な方法でサポート。" },
 ];
 
@@ -79,8 +79,8 @@ interface FeatureCard {
 const FEATURES: FeatureCard[] = [
   {
     icon: "🔍",
-    title: "口コミの公開情報を見る",
-    desc: "公開されている星と口コミ数を表示します。点数と順位は出しません。",
+    title: "無料で口コミ診断",
+    desc: "星評価・口コミ数・競合との差・「あと何件で追いつけるか」を30秒で。",
     href: "/check/",
     badge: "まずはココ",
   },
@@ -94,13 +94,13 @@ const FEATURES: FeatureCard[] = [
   {
     icon: "💬",
     title: "サジェスト診断",
-    desc: "検索の予測候補（サジェスト）に悪い言葉が出ていないか、店名を入れて確認します。",
+    desc: "検索の予測候補（サジェスト）に悪い言葉が出ていないか、店名を入れて無料チェック。",
     href: "/suggest-check/",
   },
   {
     icon: "📊",
     title: "競合と比較",
-    desc: "同じ検索で返ったお店の、公開されている星と口コミ数を並べます。順位は付けません。",
+    desc: "周辺店舗との順位・星評価・口コミ数の差を見える化します。",
     href: "/check/#competitors",
   },
   {
@@ -112,7 +112,7 @@ const FEATURES: FeatureCard[] = [
   {
     icon: "🩺",
     title: "WEBサイト健康診断",
-    desc: "DNS・SSL・表示速度・SEO・なりすまし対策を見る、同チームの関連ツールです。",
+    desc: "DNS・SSL・表示速度・SEO・なりすまし対策まで無料チェック（同チームの関連ツール）。",
     href: WEB_HEALTH_URL,
     external: true,
     badge: "関連ツール",
@@ -149,9 +149,9 @@ export default function HomePage() {
               選ばれるお店ですか？
             </h1>
             <p className="mt-4 text-sm leading-relaxed text-slate-200 sm:text-base">
-              Googleマップの公開情報を、出典つきで表示します。
+              Google口コミの星評価・口コミ数・競合との差を見える化。
               <br className="hidden sm:block" />
-              点数と順位は出しません。この診断に費用はかかりません。
+              あと何件の高評価口コミで競合に近づけるか、無料で診断できます。
             </p>
             <TrustBadges onDark className="mt-5 justify-center" />
             <DiagnosisCounter className="mt-2 justify-center text-slate-200" />
@@ -169,7 +169,7 @@ export default function HomePage() {
               rel="noopener noreferrer"
               className="font-bold text-amber-300 underline underline-offset-2 hover:text-amber-200"
             >
-              LINEで相談する
+              LINEで無料相談
             </a>{" "}
             もできます
           </p>
@@ -233,15 +233,18 @@ export default function HomePage() {
         <div className="max-w-3xl space-y-3 text-sm leading-relaxed text-slate-600 sm:text-base">
           <p>
             <strong className="text-slate-900">口コミチェック.jp</strong>{" "}
-            は、店舗名またはGoogleマップURLから、
-            <strong className="text-slate-900">Googleマップの公開情報</strong>
-            （星と口コミ数、電話、ウェブサイト、営業時間）を表示します。
-            点数、順位、追いつくまでの件数は作りません。
+            は、店舗名またはGoogleマップURLを入れるだけで、
+            <strong className="text-slate-900">Google口コミ</strong>
+            （星評価・口コミ数）の状態と、競合店舗との差を診断できる無料ツールです。
+            <strong className="text-slate-900">Googleマップ</strong>
+            やローカル検索では、星評価と口コミ数で「選ばれるかどうか」が大きく変わります。
           </p>
           <p>
-            確認したいときは、
+            現在の<strong className="text-slate-900">選ばれやすさスコア</strong>、
+            競合に追いつくために<strong className="text-slate-900">あと何件の高評価口コミが必要か</strong>
+            の目安を表示。改善が必要な場合は、
             <strong className="text-slate-900">口コミ改善・レビュー返信・MEO対策・悪評対策</strong>
-            の既存メニューへ進めます。相談は任意です。
+            まで、Googleのポリシーに沿った正当な方法でご相談いただけます。
           </p>
         </div>
       </Section>
@@ -262,7 +265,7 @@ export default function HomePage() {
           ))}
         </ul>
         <p className="mt-4 text-sm text-slate-500">
-          一つでも当てはまるなら、公開されている星と口コミ数から確認できます。
+          一つでも当てはまるなら、まずは無料診断で「選ばれやすさ」を確認しましょう。
         </p>
       </Section>
 
@@ -369,20 +372,20 @@ export default function HomePage() {
         <Container>
           <div className="mx-auto max-w-2xl text-center">
             <span className="section-label justify-center text-amber-300 before:bg-amber-300">
-              Public facts
+              Free Diagnosis
             </span>
             <h2 className="mt-3 text-xl font-extrabold text-white sm:text-2xl">
-              公開されている星と口コミ数を見る
+              まずは無料で口コミ診断
             </h2>
             <p className="mt-2 text-sm text-slate-200">
-              点数と順位は出しません。確認したいときは、既存の相談メニューへ進めます。
+              競合との差と「あと何件で追いつけるか」が分かります。改善が必要なら、正当な方法でサポートします。
             </p>
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
                 href="/check/"
                 className="inline-flex rounded-lg bg-white px-6 py-3.5 text-base font-bold text-blue-800 transition hover:bg-blue-50"
               >
-                口コミの公開情報を見る
+                無料で口コミ診断する
               </Link>
               <LineCtaButton size="lg" />
             </div>

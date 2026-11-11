@@ -2,11 +2,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
-import { encodePlaceReportId as coreEncodePlace } from "@reviewcheck/core";
+import { encodeReportId as coreEncode } from "@reviewcheck/core";
 import {
   buildExtensionShareText,
   domainOf,
-  encodePlaceReportId as extensionEncodePlace,
+  encodeReportId as extensionEncode,
   mergeCheckEntry,
   queryFromManual,
   queryFromTab,
@@ -108,42 +108,24 @@ describe("拡張の点検日と診断対象", () => {
       storeName: "テスト食堂",
       points: ["口コミが少ない", "返信が無い"],
     });
-    expect(text).not.toContain("45");
-    expect(text).not.toContain("テスト食堂");
-    expect(text).not.toContain("口コミが少ない");
+    expect(text.startsWith("選ばれやすさ 45点（目安）｜テスト食堂")).toBe(true);
+    expect(text).toContain("・口コミが少ない");
     expect(text).not.toMatch(/無料|必ず|保証/);
   });
 
-  test("結果URLのIDは place ID だけで、Web版と同じ", () => {
-    expect(extensionEncodePlace(" ChIJtest ")).toBe(coreEncodePlace("ChIJtest"));
-    expect(extensionEncodePlace("ChIJtest")).not.toContain("4.2");
-  });
-
-  test("保存から星・店名・点数を落とす", () => {
-    const next = mergeCheckEntry(
-      {
-        old: {
-          diagnosedAt: "2026-01-02T00:00:00.000Z",
-          rating: 4.8,
-          storeName: "古い店",
-          score: 80,
-        },
+  test("結果URLのIDはWeb版と同じ", () => {
+    const input = {
+      store: {
+        name: "テスト食堂",
+        rating: 4,
+        reviewCount: 45,
+        source: "manual" as const,
       },
-      "new",
-      {
-        diagnosedAt: "2026-10-27T01:06:00.000Z",
-        placeId: "ChIJtest",
-        rating: 3,
-        storeName: "新しい店",
-        score: 40,
-      },
-    );
-    expect(next.new).toEqual({
+      competitors: [],
       diagnosedAt: "2026-10-27T01:06:00.000Z",
-      placeId: "ChIJtest",
-    });
-    expect(next.old).toEqual({ diagnosedAt: "2026-01-02T00:00:00.000Z" });
-    expect(JSON.stringify(next)).not.toMatch(/rating|storeName|score/);
+      ruleVersion: "1.0",
+    };
+    expect(extensionEncode(input)).toBe(coreEncode(input));
   });
 
   test("保存は新しい30件まで", () => {

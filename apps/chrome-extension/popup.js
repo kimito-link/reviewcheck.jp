@@ -3,11 +3,10 @@ import {
   CHECKS_STORAGE_KEY,
   buildExtensionShareText,
   domainOf,
-  encodePlaceReportId,
+  encodeReportId,
   isDiagnosablePage,
   isMapsUrl,
   mergeCheckEntry,
-  purgeLegacyChecks,
   pickHighlights,
   queryFromManual,
   queryFromTab,
@@ -47,7 +46,6 @@ const els = {
   shareStatus: document.getElementById("shareStatus"),
   shareFallback: document.getElementById("shareFallback"),
   detailBtn: document.getElementById("detailBtn"),
-  mapsCredit: document.getElementById("mapsCredit"),
 };
 
 let currentTabUrl = "";
@@ -130,22 +128,14 @@ function showRecheck(iso) {
   els.recheck.classList.remove("hidden");
 }
 
-function showResult(view, previousIso) {
+function showResult(view) {
   currentView = view;
-  const placesFacts =
-    view.kind === "facts" ||
-    view.placesAttributed === true ||
-    !Number.isFinite(Number(view.score));
   const band = BAND[view.band] || BAND.fair;
-  els.scoreValue.textContent = placesFacts
-    ? "—"
-    : String(Math.round(Number(view.score)));
-  els.scoreCircle.style.borderColor = placesFacts ? "#1e293b" : band.border;
-  els.bandBadge.textContent = placesFacts
-    ? "公開の星と件数"
-    : `選ばれやすさ: ${band.label}`;
-  els.bandBadge.style.background = placesFacts ? "#f8fafc" : band.badgeBg;
-  els.bandBadge.style.color = placesFacts ? "#0f172a" : band.badgeFg;
+  els.scoreValue.textContent = String(Math.round(Number(view.score)));
+  els.scoreCircle.style.borderColor = band.border;
+  els.bandBadge.textContent = `選ばれやすさ: ${band.label}`;
+  els.bandBadge.style.background = band.badgeBg;
+  els.bandBadge.style.color = band.badgeFg;
   els.storeName.textContent = view.storeName || "店舗";
   const rating = Number(view.rating);
   const count = Number(view.reviewCount);
@@ -160,10 +150,7 @@ function showResult(view, previousIso) {
     item.textContent = point;
     els.points.append(item);
   }
-  showRecheck(previousIso || "");
-  if (els.mapsCredit) {
-    els.mapsCredit.classList.toggle("hidden", view.placesAttributed !== true);
-  }
+  showRecheck(view.diagnosedAt);
   els.detailBtn.dataset.url = view.reportUrl || "";
   els.shareStatus.textContent = "";
   els.shareFallback.classList.add("hidden");
@@ -173,19 +160,14 @@ function showResult(view, previousIso) {
 function viewFromApi(result) {
   const store = result?.input?.store ?? {};
   return {
-    kind: result.kind,
-    score: result.kind === "facts" ? undefined : result.score,
-    band: result.kind === "facts" ? undefined : result.band,
+    score: result.score,
+    band: result.band,
     storeName: store.name || "店舗",
     rating: store.rating,
     reviewCount: store.reviewCount,
-    points: result.kind === "facts" || result.placesAttributed === true ? [] : pickHighlights(result),
+    points: pickHighlights(result),
     diagnosedAt: result.diagnosedAt,
-    placeId: typeof store.placeId === "string" ? store.placeId : "",
-    placesAttributed: result.placesAttributed === true,
-    reportUrl: store.placeId
-      ? `${CONFIG.API_BASE}/report/${encodePlaceReportId(store.placeId)}/`
-      : `${CONFIG.API_BASE}/check/`,
+    reportUrl: `${CONFIG.API_BASE}/report/${encodeReportId(result.input)}/`,
   };
 }
 
@@ -230,9 +212,8 @@ async function diagnose(query, key, manualStore) {
       showError(data.message || "店舗データを取得できませんでした。星評価と口コミ数を入力してください。");
       return;
     }
-    const previous = key ? (await loadChecks())[key] : null;
     const view = viewFromApi(data);
-    showResult(view, previous?.diagnosedAt);
+    showResult(view);
     await saveCheck(key, view);
   } catch {
     showError("通信エラーが発生しました。時間をおいて再度お試しください。");
@@ -255,20 +236,7 @@ async function copyText(text, success) {
   }
 }
 
-async function purgeStoredChecks() {
-  if (!globalThis.chrome?.storage?.local) return;
-  try {
-    const existing = await loadChecks();
-    await chrome.storage.local.set({
-      [CHECKS_STORAGE_KEY]: purgeLegacyChecks(existing),
-    });
-  } catch {
-    /* 保存領域が使えなくても、診断そのものは続ける */
-  }
-}
-
 async function init() {
-  await purgeStoredChecks();
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     els.webShare.classList.remove("hidden");
   }
@@ -277,9 +245,14 @@ async function init() {
   prefillFromTab(currentTabUrl);
 
   const key = storageTargetKey(currentTabUrl, "");
+  const saved = key ? (await loadChecks())[key] : null;
+  if (saved?.diagnosedAt && Array.isArray(saved.points)) showResult(saved);
+
   const query = queryFromTab(currentTabUrl);
   if (!query) {
-    showError("このページは診断できません。店舗名かGoogleマップのURLを入力してください。");
+    if (!saved) {
+      showError("このページは診断できません。店舗名かGoogleマップのURLを入力してください。");
+    }
     return;
   }
   await diagnose(query, key);

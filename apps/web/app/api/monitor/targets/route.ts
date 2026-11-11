@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { isBearerAuthorized } from "@reviewcheck/core";
-import { stableTargetId } from "@reviewcheck/monitor";
+import { stableTargetId, type MonitorTarget } from "@reviewcheck/monitor";
 import { getMonitorStore, hasPersistentStore } from "@/lib/monitorStore";
-import { MONITOR_SIGNUP_PAUSED_MESSAGE } from "@/lib/monitorPause";
 import { normalizePlaceId } from "@/lib/monitorTarget";
 
 export const runtime = "nodejs";
@@ -48,21 +47,62 @@ export async function GET(request: Request) {
   });
 }
 
-/**
- * 新規の有効化はしない。既存 target は読まない・書き換えない・消さない。
- * 一覧と解除は、既存の記録を確認するため残す。解除は Stripe の返金ではない。
- */
+interface RegisterBody {
+  placeId?: unknown;
+  label?: unknown;
+  notifyTo?: unknown;
+}
+
+/** 監視対象を登録（同一 placeId は同一IDで upsert）。 */
 export async function POST(request: Request) {
   if (!isAuthorized(request)) return unauthorized();
-  void request;
-  return NextResponse.json(
-    {
-      ok: false,
-      paused: true,
-      error: MONITOR_SIGNUP_PAUSED_MESSAGE,
-    },
-    { status: 503, headers: { "Cache-Control": "private, no-store" } },
-  );
+
+  let body: RegisterBody;
+  try {
+    body = (await request.json()) as RegisterBody;
+  } catch {
+    return NextResponse.json(
+      { error: "リクエストボディがJSONとして解釈できません。" },
+      { status: 400 },
+    );
+  }
+
+  const placeId = normalizePlaceId(body.placeId);
+  if (!placeId) {
+    return NextResponse.json(
+      { error: "placeId（Googleの店舗ID）が必要です。" },
+      { status: 400 },
+    );
+  }
+
+  const store = getMonitorStore();
+  const id = stableTargetId(placeId);
+
+  const existing = await store.getTarget(id);
+  const target: MonitorTarget = {
+    id,
+    // monitor の url 欄に監視対象識別子（reviewcheck では placeId）を入れる。
+    url: placeId,
+    label:
+      typeof body.label === "string" && body.label.trim()
+        ? body.label.trim()
+        : existing?.label,
+    notifyTo:
+      typeof body.notifyTo === "string" && body.notifyTo.trim()
+        ? body.notifyTo.trim()
+        : existing?.notifyTo,
+    enabled: true,
+    createdAt: existing?.createdAt ?? new Date().toISOString(),
+  };
+
+  await store.saveTarget(target);
+
+  return NextResponse.json({
+    ok: true,
+    persistentStore: hasPersistentStore(),
+    note: persistenceNote(),
+    target,
+  });
 }
 
 /** 監視対象を解除。?id=<id> または ?placeId=<placeId> で指定。 */

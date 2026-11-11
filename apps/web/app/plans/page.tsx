@@ -30,8 +30,8 @@ const TAG_TONE: Record<string, string> = {
 
 const STEPS = [
   {
-    title: "公開情報の確認",
-    desc: "公開されている星と口コミ数を表示します。点数と順位は出しません。この確認に費用はかかりません。",
+    title: "無料の評判診断",
+    desc: "現在のGoogle口コミ・★評価・競合との差・サジェストを診断。改善ポイントを無料でお伝えします。",
   },
   {
     title: "プランのご提案",
@@ -79,8 +79,8 @@ const PLAN_FAQ = [
     a: "いいえ。月額プランに含まれており、契約期間中は制作費なしでずっとご利用いただけます。買い切りではなくサブスクリプション型のため、初期費用を抑えてスタートできます。",
   },
   {
-    q: "サジェスト対策・逆SEOは効果がありますか？",
-    a: "検索エンジンの仕様変更などの影響を受けるため、結果は約束しません。公開されている情報を増やす取り組みで、状況を見ながら進めます（Proプランに含まれます）。",
+    q: "サジェスト対策・逆SEOは必ず効果がありますか？",
+    a: "検索エンジンの仕様変更などの影響を受けるため、結果を保証するものではありません。ポジティブな情報を増やし相対的に改善を図る取り組みで、状況を見ながら継続的に進めます（Proプランに含まれます）。",
   },
 ];
 
@@ -120,7 +120,7 @@ export default function PlansPage() {
                 href="/check/"
                 className="inline-flex rounded-lg bg-white px-6 py-3.5 text-base font-bold text-blue-800 transition hover:bg-blue-50"
               >
-                公開情報を見る
+                ★ まずは無料で評判診断
               </Link>
               <Link
                 href="#pricing"
@@ -130,7 +130,7 @@ export default function PlansPage() {
               </Link>
             </div>
             <p className="mt-4 text-xs text-slate-300">
-              ※ 公開情報の確認に費用はかかりません。
+              ※ 初回の評判診断は無料です。しつこい営業は一切いたしません。
             </p>
           </div>
         </Container>
@@ -139,7 +139,7 @@ export default function PlansPage() {
       {/* 消す＝手段／上げる＝ゴール */}
       <Section title="口コミを「消す」ことが、ゴールではありません。">
         <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-          削除は手段のひとつです。消えることは約束しません。公開情報の整理と、既存の相談メニューを案内します。
+          削除はあくまで手段。しかも消える保証はありません。私たちが目指すのは、★評価そのものを上げ、ネット全体の評判を整えて
           <strong className="text-slate-900">「選ばれ続けるお店」</strong>
           になること。だから、消えても・消えなくても前に進めます。
         </p>
@@ -177,7 +177,7 @@ export default function PlansPage() {
             >
               {item.freeBadge ? (
                 <span className="absolute right-3 top-3 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                  契約中は追加料金なし
+                  契約中 無料
                 </span>
               ) : null}
               <div className="flex items-center gap-3">
@@ -211,12 +211,9 @@ export default function PlansPage() {
       <Section
         id="pricing"
         title="料金プラン"
-        lead="守備範囲に合わせて3プランです。公開情報の確認に費用はかかりません。"
+        lead="守備範囲に合わせて3プラン。束ねるほど割安です。まずは無料診断からどうぞ。"
       >
         <PlanCards />
-        <p className="mt-4 text-sm leading-relaxed text-slate-800" data-monitor-paused="">
-          Light に書いてある月次レポートの自動巡回は、いま新規では動いていません。表示の金額と、カード決済の額は変えていません。既存契約の停止・返金は、このページでは行いません。
-        </p>
         <p className="mt-4 text-xs leading-relaxed text-slate-500">
           Light・Standardは
           <strong className="text-slate-700">クレジットカード（Stripe）</strong>
@@ -288,7 +285,7 @@ export default function PlansPage() {
               月次の完了レポート
             </h3>
             <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-              その月に実施した施策（口コミ獲得導線・返信・MEO・サジェスト等）をまとめます。星や順位の自動巡回は、新規では受けていません。
+              その月に実施した施策（口コミ獲得導線・返信・MEO・サジェスト等）と、★評価・口コミ数・順位の推移をまとめてお渡しします。
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -311,7 +308,7 @@ export default function PlansPage() {
           </div>
         </div>
         <p className="mt-4 text-xs leading-relaxed text-slate-500">
-          ※ 口コミは実際にご利用いただいたお客様による正規の投稿に限ります。やらせ・サクラ・口コミ購入は行いません。投稿数や★評価の増加・検索順位は約束しません。
+          ※ 口コミは実際にご利用いただいたお客様による正規の投稿に限ります。やらせ・サクラ・口コミ購入は行いません。投稿数や★評価の増加・検索順位は保証するものではありません。
         </p>
       </Section>
 
@@ -348,20 +345,20 @@ export default function PlansPage() {
         <Container>
           <div className="mx-auto max-w-2xl text-center">
             <span className="section-label justify-center text-amber-300 before:bg-amber-300">
-              Public facts
+              Free Diagnosis
             </span>
             <h2 className="mt-3 text-xl font-extrabold text-white sm:text-2xl">
-              公開されている星と口コミ数から。
+              まずは「無料の評判診断」から。
             </h2>
             <p className="mt-2 text-sm text-slate-200">
-              点数と順位は出しません。この確認に費用はかかりません。
+              しつこい営業はいたしません。口コミ・競合との差・サジェストの状況を、無料で診断します。
             </p>
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
                 href="/check/"
                 className="inline-flex rounded-lg bg-white px-6 py-3.5 text-base font-bold text-blue-800 transition hover:bg-blue-50"
               >
-                公開情報を見る
+                無料で評判診断する
               </Link>
               <LineCtaButton size="lg" />
             </div>

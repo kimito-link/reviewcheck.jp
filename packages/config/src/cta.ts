@@ -2,10 +2,6 @@
  * CTA（行動喚起）文言と遷移先の単一情報源。
  * 相談系はすべて /contact/ に集約（後でフォーム/チャット/LINEに差し替え可能）。
  */
-/** 結果・共有・相談ボタン。禁止語の「無料」は使わない。費用が無いことは文で示す。 */
-export const CONSULT_HEADING = "15分のご相談（費用はかかりません）";
-export const CONSULT_OPEN_LABEL = "15分のご相談ページを開く";
-
 export interface Cta {
   key: string;
   label: string;
@@ -65,7 +61,7 @@ export function withRefCode(href: string, refCode?: string | null): string {
 export const CTAS: Record<string, Cta> = {
   freeCheck: {
     key: "freeCheck",
-    label: "公開情報を見る",
+    label: "無料で口コミ診断する",
     href: "/check/",
     emphasis: "primary",
   },
@@ -119,7 +115,7 @@ export const CTAS: Record<string, Cta> = {
   },
   freeConsult: {
     key: "freeConsult",
-    label: CONSULT_OPEN_LABEL,
+    label: "15分の無料相談で改善策を聞く",
     href: "/contact/?topic=consult",
     emphasis: "cta",
   },

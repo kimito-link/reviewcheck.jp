@@ -1,37 +1,33 @@
 import { NextResponse } from "next/server";
 import {
-  areaScopeText,
+  analyzeReviews,
   diagnose,
+  competitorSearchPlan,
   fetchCompetitors,
   fetchStore,
   getEnabledProviders,
   withPublicPoint,
   guardMessage,
   InvalidInputError,
-  MAX_COMPETITORS,
   MockStoreProvider,
+  normalizeStoreQueryKey,
+  cacheGet,
+  cacheSet,
   PLACES_COST_YEN,
   type FetchStoreResult,
   type Competitor,
+  type ReviewItem,
   type StoreContext,
   type StoreInput,
 } from "@reviewcheck/core";
 import { incrementDiagnosisCount } from "@/lib/diagnosisCounter";
-import { incrementFunnel } from "@/lib/funnelCount";
-import { corsHeaders, guardPlacesCall } from "@/lib/costGuard";
-import { buildPlacesFixtureResult, isPlacesFixtureRequest } from "@/lib/placesFixture";
-import { buildPublicFacts, buildSampleFacts } from "@/lib/placesPublic";
+import { publishCohort, shouldRecordCohort } from "@/lib/cohort/service";
+import type { CohortPublic } from "@/lib/cohort/public";
+import { corsHeaders, getCacheStore, guardPlacesCall } from "@/lib/costGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
-
-/**
- * Google の店名・星・口コミ数・URL・座標は Redis に書かないし、古いキーも読まない。
- * 既存キー（rc:store:v1:*、rc:comp:v1:*、rc:comp:v2:*、rc:nearby:v1:*、rc:cohort:v1:*）は
- * この変更では消さない。本番反映の承認後に、運用者が期限を見て削除する。
- * 同時リクエストのまとめは core の処理中だけ。完了後は残さない。
- */
 
 // 公開診断API。CORS は自社ドメインだけ（Chrome拡張は host_permissions で CORS の外から呼ぶ）。
 const CORS_METHODS = "GET, POST, OPTIONS";
@@ -39,6 +35,12 @@ const CORS_METHODS = "GET, POST, OPTIONS";
 export function OPTIONS(request: Request) {
   return new NextResponse(null, { status: 204, headers: corsHeaders(request, CORS_METHODS) });
 }
+
+// 永続キャッシュ（L3）。星評価・口コミ数は日次でほぼ変わらない。
+const STORE_CACHE_TTL_SEC = 24 * 60 * 60;
+// 「見つからなかった」も覚える（同じ打ち間違いで二度払わない）。
+const NOT_FOUND_CACHE_TTL_SEC = 6 * 60 * 60;
+type CachedStore = { notFound: true } | { notFound?: false; result: FetchStoreResult };
 
 interface DiagnoseBody {
   query?: { text?: string; mapsUrl?: string; placeId?: string };
@@ -53,25 +55,9 @@ interface DiagnoseBody {
 }
 
 async function handle(request: Request, body: DiagnoseBody) {
-  const CORS_HEADERS = {
-    ...corsHeaders(request, CORS_METHODS),
-    "Cache-Control": "private, no-store",
-  };
+  const CORS_HEADERS = corsHeaders(request, CORS_METHODS);
   const demo = body.demo === true;
   const query = body.query ?? {};
-  // 画面確認用。環境変数が無い本番ではここへ入らない。Google も Redis も呼ばない。
-  if (demo) {
-    return NextResponse.json(buildSampleFacts(), { headers: CORS_HEADERS });
-  }
-  if (isPlacesFixtureRequest(query)) {
-    incrementFunnel({ event: "diagnosis_complete" }).catch(() => {});
-    return NextResponse.json(buildPlacesFixtureResult(), {
-      headers: {
-        ...CORS_HEADERS,
-        "x-funnel-counted": "diagnosis_complete",
-      },
-    });
-  }
   const hasQuery = Boolean(
     query.text?.trim() || query.mapsUrl?.trim() || query.placeId?.trim(),
   );
@@ -81,38 +67,64 @@ async function handle(request: Request, body: DiagnoseBody) {
   let base: StoreInput | null = null;
   let providers: string[] = [];
   let context: StoreContext | undefined;
+  let reviews: ReviewItem[] = [];
   // 原価の守りで取得しなかった理由（利用者に正直に見せる。L6）。
   let storeGuardReason: Parameters<typeof guardMessage>[0] | null = null;
   const notices: string[] = [];
   // Places の鍵が無い環境（開発・mock）は費用が出ないので関所を通さない。
   const placesEnabled = getEnabledProviders().length > 0;
+  const cache = getCacheStore();
 
   // 1) クエリがあれば実プロバイダで店舗データを取得。
   //    実データが取れず手入力もない場合、デモ指定のときだけ mock を許可する。
-  //    応答は今の画面に出すだけ。Redis には書かない。
   if (hasQuery) {
     const storeQuery = {
       text: query.text,
       mapsUrl: query.mapsUrl,
       placeId: query.placeId,
     };
+    const normKey = normalizeStoreQueryKey(storeQuery);
+    const cacheKey = normKey ? `rc:store:v1:${normKey}` : null;
+    const cached =
+      placesEnabled && cacheKey ? await cacheGet<CachedStore>(cache, cacheKey) : null;
+
     let fetched: FetchStoreResult | null = null;
-    const guard = placesEnabled
-      ? await guardPlacesCall(request, "diagnose", PLACES_COST_YEN.store)
-      : ({ ok: true } as const);
-    if (guard.ok) {
-      fetched = await fetchStore(storeQuery, { allowMock: demo });
+    if (cached && !cached.notFound) {
+      fetched = cached.result;
+    } else if (cached?.notFound) {
+      fetched = { store: null, providers: [], isMock: false };
     } else {
-      storeGuardReason = guard.reason;
-      if (demo) {
-        const store = await new MockStoreProvider().fetchStore(storeQuery);
-        fetched = { store, providers: [], isMock: true };
+      const guard = placesEnabled
+        ? await guardPlacesCall(request, "diagnose", PLACES_COST_YEN.store)
+        : ({ ok: true } as const);
+      if (guard.ok) {
+        fetched = await fetchStore(storeQuery, { allowMock: demo });
+        if (placesEnabled && cacheKey && !fetched.isMock) {
+          const value: CachedStore = fetched.store
+            ? { result: fetched }
+            : { notFound: true };
+          await cacheSet(
+            cache,
+            cacheKey,
+            value,
+            fetched.store ? STORE_CACHE_TTL_SEC : NOT_FOUND_CACHE_TTL_SEC,
+          );
+        }
+      } else {
+        storeGuardReason = guard.reason;
+        if (demo) {
+          // デモは架空の値と明示した体験なので、Places を呼ばずに mock で見せる。
+          const store = await new MockStoreProvider().fetchStore(storeQuery);
+          fetched = { store, providers: [], isMock: true };
+        }
       }
     }
     if (fetched) {
+      // KV の v1 は store 本体に座標が無く、context にだけ残っている。
       base = fetched.store ? withPublicPoint(fetched.store, fetched.context) : null;
       providers = fetched.providers;
       context = fetched.context;
+      reviews = fetched.reviews ?? [];
     }
   }
 
@@ -164,53 +176,39 @@ async function handle(request: Request, body: DiagnoseBody) {
 
   // 4) 競合：手動入力があればそれを優先。無ければ周辺競合を自動検出（実データ取得時のみ）。
   let competitors: Competitor[] = body.competitors ?? [];
-  const autoCompetitors =
-    competitors.length === 0 && !body.noAutoCompetitors && !demo && Boolean(context);
-  let searchedPeers = false;
-  if (autoCompetitors && context) {
-    const guard = await guardPlacesCall(request, "diagnose", PLACES_COST_YEN.competitors);
-    if (guard.ok) {
-      searchedPeers = true;
-      try {
-        competitors = await fetchCompetitors(context, { limit: MAX_COMPETITORS });
-      } catch {
-        competitors = [];
-      }
+  if (
+    competitors.length === 0 &&
+    !body.noAutoCompetitors &&
+    !demo &&
+    context
+  ) {
+    // v3 は業種の商圏（飲食はテキスト検索・最大20件）。v2 は半径1.5kmの5件なので使わない。
+    // 店ごとに競合の検索が1回だけ増える。
+    const plan = competitorSearchPlan(context);
+    const compKey = context.placeId
+      ? `rc:comp:v3:${context.placeId}:${plan.mode}:${plan.radiusMeters}:${plan.textQuery ?? plan.includedPrimaryTypes?.[0] ?? "none"}`
+      : null;
+    const cachedComp = compKey ? await cacheGet<Competitor[]>(cache, compKey) : null;
+    if (cachedComp) {
+      competitors = cachedComp;
     } else {
-      notices.push(
-        "本日の自動取得の上限に達したため、周辺の店との比較は取得していません（未取得）。",
-      );
+      const guard = await guardPlacesCall(request, "diagnose", PLACES_COST_YEN.competitors);
+      if (guard.ok) {
+        try {
+          competitors = await fetchCompetitors(context);
+          if (compKey && competitors.length > 0) {
+            await cacheSet(cache, compKey, competitors, STORE_CACHE_TTL_SEC);
+          }
+        } catch {
+          competitors = [];
+        }
+      } else {
+        // 取得しなかった。競合比較は「無し」ではなく「未取得」と伝える。
+        notices.push(
+          "本日の自動取得の上限に達したため、周辺競合との比較は取得していません（未取得）。",
+        );
+      }
     }
-  }
-
-  const manualNumbers =
-    typeof override.rating === "number" || typeof override.reviewCount === "number";
-  const userListedCompetitors = (body.competitors ?? []).length > 0;
-  const placesAttributed =
-    store.source === "places" && !manualNumbers && !userListedCompetitors;
-  const scopeText = searchedPeers
-    ? areaScopeText({
-        primaryType: context?.primaryType,
-        shown: competitors.length,
-      })
-    : undefined;
-
-  if (store.source === "places" || store.source === "mock") {
-    if (store.source === "places") {
-      incrementDiagnosisCount().catch(() => {});
-      incrementFunnel({ event: "diagnosis_complete" }).catch(() => {});
-    }
-    return NextResponse.json(
-      buildPublicFacts({
-        store,
-        competitors,
-        placesAttributed,
-        sample: store.source === "mock",
-        areaScopeText: scopeText,
-        notices,
-      }),
-      { headers: CORS_HEADERS },
-    );
   }
 
   try {
@@ -222,16 +220,43 @@ async function handle(request: Request, body: DiagnoseBody) {
       },
       { providers },
     );
-    incrementDiagnosisCount().catch(() => {});
-    incrementFunnel({ event: "diagnosis_complete" }).catch(() => {});
+    // 5) 取得できた代表口コミを簡易分析して付与（共有用IDには含めない）。
+    //    デモ時は雰囲気が伝わるようサンプル口コミで分析を見せる（価値の先出し）。
+    const reviewSource = demo ? DEMO_REVIEWS : reviews;
+    result.reviewAnalysis = analyzeReviews(reviewSource);
+    // 累計診断件数のカウント（石川氏の指摘対応）。デモ診断は実利用でないため数えない。
+    if (!demo) {
+      incrementDiagnosisCount().catch(() => {});
+    }
+    let cohort: CohortPublic = { show: false };
+    if (!demo && store.source !== "mock") {
+      const touched =
+        typeof override.rating === "number" ||
+        typeof override.reviewCount === "number" ||
+        typeof override.hasOwnerReplies === "boolean" ||
+        typeof override.category === "string" ||
+        typeof override.address === "string" ||
+        typeof override.name === "string";
+      cohort = await publishCohort({
+        category: store.category,
+        address: store.address,
+        score: result.score,
+        rating: store.rating,
+        reviewCount: store.reviewCount,
+        hasOwnerReplies: store.hasOwnerReplies,
+        ruleVersion: result.ruleVersion,
+        record: shouldRecordCohort({
+          demo,
+          source: store.source,
+          manualTouch: touched,
+        }),
+      });
+    }
     return NextResponse.json(
       {
         ...result,
-        placesAttributed,
-        ...(scopeText ? { areaScopeText: scopeText } : {}),
         ...(notices.length > 0 ? { notices } : {}),
-        // 業種×地域の集計は、確認が終わるまで読まない・書かない。
-        cohort: { show: false },
+        cohort,
       },
       { headers: CORS_HEADERS },
     );
@@ -248,6 +273,15 @@ async function handle(request: Request, body: DiagnoseBody) {
     );
   }
 }
+
+// デモ体験用のサンプル口コミ（「サンプル整体院（デモ）」に対応）。
+const DEMO_REVIEWS: ReviewItem[] = [
+  { rating: 5, text: "先生の施術がとても丁寧で、スタッフの対応も親切でした。説明もわかりやすく安心して通えます。", relativeTime: "2週間前" },
+  { rating: 5, text: "腰痛が楽になりました。院内も清潔で雰囲気が良いです。また行きたいです。", relativeTime: "1か月前" },
+  { rating: 4, text: "技術は満足ですが、人気で予約が取りにくく待ち時間が少し長いのが残念。", relativeTime: "1か月前" },
+  { rating: 2, text: "受付の対応が少し冷たく感じました。料金もやや高い印象です。", relativeTime: "2か月前" },
+  { rating: 5, text: "駐車場があり通いやすいです。リーズナブルでコスパが良いと思います。", relativeTime: "3か月前" },
+];
 
 function stripUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
   const out: Record<string, unknown> = {};

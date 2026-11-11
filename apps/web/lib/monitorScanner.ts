@@ -98,9 +98,7 @@ export function createReviewcheckScanner(): Scanner<DiagnosisResult | null> {
       return { scan: null, snapshot };
     }
 
-    const competitors = await fetchCompetitors(fetched.context, {
-      limit: 5,
-    }).catch(() => []);
+    const competitors = await fetchCompetitors(fetched.context).catch(() => []);
 
     const result = diagnose(
       { store: fetched.store, competitors },

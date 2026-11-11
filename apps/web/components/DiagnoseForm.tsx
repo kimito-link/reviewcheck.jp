@@ -2,15 +2,11 @@
 
 import { useEffect, useState } from "react";
 import type { Competitor, DiagnosisResult, NearbyStore } from "@reviewcheck/core";
-import { encodePlaceReportId } from "@reviewcheck/core";
+import { encodeReportId } from "@reviewcheck/core";
 import { SITE, POLICY_NOTE } from "@reviewcheck/config";
 import { ReportView } from "./ReportView";
-import { PlacesFactsView } from "./result/PlacesFactsView";
-import { isPublicFacts, type PublicFacts } from "@/lib/placesPublic";
-import { GoogleMapsCredit } from "./result/GoogleMapsCredit";
 import { Disclaimer } from "./Disclaimer";
 import { resolveRefCode } from "@/lib/affiliateRef";
-import { postFunnel } from "@/lib/postFunnel";
 import { parseCohortPublic, type CohortPublic } from "@/lib/cohort/public";
 
 interface CompetitorRow {
@@ -42,7 +38,6 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [result, setResult] = useState<DiagnosisResult | null>(null);
-  const [facts, setFacts] = useState<PublicFacts | null>(null);
   const [cohort, setCohort] = useState<CohortPublic | null>(null);
 
   // アフィリエイター紹介コード（?ref=RH-XXXX で着地時）。監視サブスクの橋URLに伝搬し、
@@ -136,7 +131,20 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
 
   function buildPayload(demo = false, place?: PlaceQuery) {
     // 追体験用デモ：順位・競合比較・あと何件・到達期間がすべて出るサンプルを固定で渡す
-    if (demo) return { demo: true };
+    if (demo) {
+      return {
+        demo: true,
+        query: { text: "サンプル整体院（デモ）" },
+        store: { rating: 4.0, reviewCount: 45, hasOwnerReplies: false },
+        competitors: [
+          { name: "競合A整体院", rating: 4.7, reviewCount: 320 },
+          { name: "競合B整骨院", rating: 4.6, reviewCount: 210 },
+          { name: "競合Cカイロ", rating: 4.5, reviewCount: 160 },
+          { name: "競合D整体", rating: 4.4, reviewCount: 120 },
+        ] as Competitor[],
+        targetRating: undefined,
+      };
+    }
 
     const comps: Competitor[] = competitors
       .filter((r) => r.rating.trim() !== "" || r.reviewCount.trim() !== "")
@@ -172,14 +180,12 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
     setError(null);
     setNotice(null);
     setResult(null);
-    setFacts(null);
     setCohort(null);
     if (!demo && !place && !query.trim() && rating.trim() === "") {
       setError("店舗名またはGoogleマップURLを入力してください（または「デモで試す」）。");
       return;
     }
     setLoading(true);
-    if (!demo) postFunnel("diagnosis_start");
     try {
       const res = await fetch("/api/diagnose", {
         method: "POST",
@@ -199,12 +205,8 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
       if (!res.ok) {
         setError(data.error ?? "診断に失敗しました。");
       } else {
-        if (isPublicFacts(data)) {
-          setFacts(data);
-        } else {
-          setResult(data as DiagnosisResult);
-          setCohort(parseCohortPublic(data?.cohort));
-        }
+        setResult(data as DiagnosisResult);
+        setCohort(parseCohortPublic(data?.cohort));
         // 予算切れ等で取得しなかった項目（例: 競合比較）を「未取得」と伝える。
         if (Array.isArray(data?.notices) && data.notices.length > 0) {
           setNotice(data.notices.join(" "));
@@ -217,12 +219,9 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
     }
   }
 
-  const placeId = (facts?.input.store.placeId ?? result?.input.store.placeId)?.trim();
-  const shareUrl = placeId
-    ? `${SITE.baseUrl}/report/${encodePlaceReportId(placeId)}/`
-    : facts || result
-      ? `${SITE.baseUrl}/check/`
-      : undefined;
+  const shareUrl = result
+    ? `${SITE.baseUrl}/report/${encodeReportId(result.input)}/`
+    : undefined;
 
   return (
     <div className="space-y-8">
@@ -251,12 +250,12 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
             disabled={loading}
             className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-base font-bold text-white transition hover:bg-blue-700 disabled:opacity-60"
           >
-            {loading ? "診断中…" : "診断する"}
+            {loading ? "診断中…" : "無料で診断する"}
           </button>
         </div>
 
         {/* 摩擦ゼロの入口：入力せず現在地からワンタップで診断 */}
-        {!result && !facts ? (
+        {!result ? (
           <div className="mt-3">
             <div className="flex items-center gap-3">
               <span className="h-px flex-1 bg-slate-200" />
@@ -279,9 +278,9 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
 
             {nearby && nearby.length > 0 ? (
               <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50/50 p-3">
-                <p className="text-base font-bold text-slate-900">
+                <p className="text-xs font-bold text-slate-700">
                   現在地周辺{areaHint ? `（${areaHint}付近）` : ""}のお店
-                  <span className="ml-1 font-normal text-slate-800">
+                  <span className="ml-1 font-normal text-slate-500">
                     ／ タップで診断
                   </span>
                 </p>
@@ -292,26 +291,26 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
                         type="button"
                         onClick={() => diagnoseNearby(s)}
                         disabled={loading}
-                        className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-base transition hover:border-blue-400 hover:bg-blue-50 disabled:opacity-60"
+                        className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-blue-400 hover:bg-blue-50 disabled:opacity-60"
                       >
                         <span className="min-w-0">
-                          <span className="block truncate font-bold text-slate-900">
+                          <span className="block truncate text-sm font-bold text-slate-900">
                             {s.name ?? "店舗"}
                           </span>
                           {s.category ? (
-                            <span className="block truncate text-slate-800">
+                            <span className="block truncate text-xs text-slate-500">
                               {s.category}
                             </span>
                           ) : null}
                         </span>
                         <span className="flex shrink-0 items-center gap-3">
                           {typeof s.rating === "number" ? (
-                            <span className="font-bold text-slate-900">
+                            <span className="text-xs font-bold text-slate-700">
                               ★{s.rating.toFixed(1)}
                             </span>
                           ) : null}
                           {typeof s.reviewCount === "number" ? (
-                            <span className="font-mono text-slate-800">
+                            <span className="font-mono text-xs text-slate-500">
                               {s.reviewCount}件
                             </span>
                           ) : null}
@@ -323,9 +322,8 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
                     </li>
                   ))}
                 </ul>
-                <GoogleMapsCredit />
-                <p className="mt-2 text-base text-slate-800">
-                  位置情報はお店候補の表示にだけ使い、このあと保存しません。問い合わせは約100mに丸めています。
+                <p className="mt-2 text-[11px] text-slate-500">
+                  ※ 位置情報はお店候補の表示にのみ使用し、保存しません。
                 </p>
               </div>
             ) : null}
@@ -333,15 +331,16 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
         ) : null}
 
         {/* 追体験：入力前に結果イメージを体験してもらい、入力ハードルを下げる */}
-        {!result && !facts ? (
+        {!result ? (
           <div className="mt-4 rounded-xl border border-dashed border-blue-300 bg-blue-50/60 p-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-bold text-slate-900">
-                  入力せずに、まず結果サンプルを見る
+                  入力せずに、まず結果サンプルを体験
                 </p>
                 <p className="mt-0.5 text-xs text-slate-600">
-                  架空の星と口コミ数の見え方です。点数と順位は出しません。Googleへは問い合わせません。
+                  サンプル店舗で「順位・あと何件・追いつくまでの目安」が
+                  どう表示されるか30秒で確認できます。
                 </p>
               </div>
               <button
@@ -526,13 +525,10 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
         ) : null}
 
         <p className="mt-3 text-xs text-slate-500">{POLICY_NOTE}</p>
-        <p className="mt-2 text-sm text-slate-800">この診断に費用はかかりません。</p>
       </form>
 
       {loading ? <LoadingCard /> : null}
-      {facts ? (
-        <PlacesFactsView facts={facts} shareUrl={shareUrl} refLine={refCode} />
-      ) : result ? (
+      {result ? (
         <ReportView
           result={result}
           shareUrl={shareUrl}
@@ -541,7 +537,9 @@ export function DiagnoseForm({ initialQuery = "" }: { initialQuery?: string }) {
         />
       ) : null}
 
-      {!facts && !result ? <Disclaimer /> : null}
+      {/* 結果表示時は ReportView 内の Disclaimer に一本化（二重表示を防ぐ）。
+          フォームのみのときだけ、ここで免責文を出す。 */}
+      {!result ? <Disclaimer /> : null}
     </div>
   );
 }
@@ -563,7 +561,7 @@ function LoadingCard() {
         口コミの状態を診断しています…
       </p>
       <p className="text-xs text-slate-500">
-        公開されている星と口コミ数を確認しています
+        星評価・口コミ数・競合との差・選ばれやすさスコアを計算中
       </p>
     </div>
   );

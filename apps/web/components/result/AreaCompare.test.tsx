@@ -2,10 +2,29 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test, vi } from "vitest";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { buildAreaComparison, type AreaComparison } from "@reviewcheck/core/areaMap";
 import type { Competitor, StoreInput } from "@reviewcheck/core";
 import { AreaCompare } from "./AreaCompare";
+
+const mapsMock = vi.hoisted(() => {
+  let listener: (() => void) | null = null;
+  return {
+    loadGoogleMaps: () => new Promise(() => {}),
+    onGoogleMapsAuthFailure: (fn: () => void) => {
+      listener = fn;
+      return () => {
+        listener = null;
+      };
+    },
+    failAuth: () => listener?.(),
+  };
+});
+
+vi.mock("@/lib/googleMaps", () => ({
+  loadGoogleMaps: mapsMock.loadGoogleMaps,
+  onGoogleMapsAuthFailure: mapsMock.onGoogleMapsAuthFailure,
+}));
 
 vi.mock("next/link", () => ({
   default: ({
@@ -40,10 +59,11 @@ function areaOf(nextStore: StoreInput = store, nextPeers: Competitor[] = peers):
 }
 
 describe("エリアの比較", () => {
-  test("座標があっても地図は出さず、距離つきの一覧と出典を出す", () => {
+  test("地図キーが無いときは一覧と出典だけ。距離と商圏の説明は残す", () => {
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY", "");
     window.history.pushState(null, "", "/check/");
     document.documentElement.dataset.areaMap = "fallback";
-    const { container } = render(<AreaCompare area={areaOf()} attributeToGoogle />);
+    const { container } = render(<AreaCompare area={areaOf()} />);
     const section = container.querySelector("[data-result-section='area-map']");
     expect(section?.querySelector("[data-area-map-frame]")).toBeNull();
     expect(section?.querySelector("[data-area-map-canvas]")).toBeNull();
@@ -58,6 +78,7 @@ describe("エリアの比較", () => {
     expect(section?.textContent).toContain("基準");
     expect(section?.textContent).toContain("未取得");
     expect(section?.textContent).toMatch(/km/);
+    expect(section?.textContent).toContain("最大20件");
     expect(section?.textContent).toContain("中央値は210件");
     expect(section?.textContent).toContain("あと165件");
     expect(section?.querySelector("a[href='#result-next-step']")).toBeTruthy();
@@ -65,16 +86,54 @@ describe("エリアの比較", () => {
     expect(section?.innerHTML ?? "").toContain("underline");
     expect(section?.textContent ?? "").not.toMatch(/無料|必ず|保証|今すぐ|緊急/);
     expect(section?.innerHTML ?? "").not.toContain("#06C755");
+    vi.unstubAllEnvs();
   });
 
-  test("出典を明示しない一覧は Google Maps と書かず、地図の枠も出ない", () => {
+  test("ブラウザ用のキーがあるときは Google の地図を出す", () => {
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY", "browser-test-key");
+    try {
+      window.history.pushState(null, "", "/check/");
+      const { container } = render(<AreaCompare area={areaOf()} />);
+      const frame = container.querySelector("[data-area-map-frame]");
+      expect(frame?.getAttribute("data-google-map")).toBe("js");
+      expect(frame?.querySelector("[data-area-map-canvas]")).toBeTruthy();
+      expect(frame?.querySelector("[data-google-map-credit] [translate='no']")?.textContent).toBe(
+        "Google Maps",
+      );
+      expect(frame?.innerHTML ?? "").not.toMatch(/leaflet|openstreetmap/i);
+      expect(container).toHaveTextContent("競合A");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  test("地図キーが拒否されたときは枠を外して一覧を残す", () => {
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY", "browser-test-key");
+    try {
+      window.history.pushState(null, "", "/check/");
+      const { container } = render(<AreaCompare area={areaOf()} />);
+      expect(container.querySelector("[data-area-map-frame]")).toBeTruthy();
+      act(() => {
+        mapsMock.failAuth();
+      });
+      expect(container.querySelector("[data-area-map-frame]")).toBeNull();
+      expect(container).toHaveTextContent("競合A");
+      expect(container.querySelector("[data-places-attribution]")).toBeTruthy();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  test("座標が無くても一覧と出典は残り、地図の枠は出ない", () => {
     const area = areaOf(
       { name: "テスト食堂", rating: 4, reviewCount: 45 },
       [{ name: "競合A", rating: 4.2, reviewCount: 80 }],
     );
     const { container } = render(<AreaCompare area={area} />);
     expect(container.querySelector("[data-area-map-frame]")).toBeNull();
-    expect(container.querySelector("[data-places-attribution]")).toBeNull();
+    expect(container.querySelector("[data-places-attribution] [translate='no']")?.textContent).toBe(
+      "Google Maps",
+    );
     expect(container).toHaveTextContent("競合A");
     expect(container).toHaveTextContent("未取得");
     expect(container).toHaveTextContent("中央値は62.5件");
@@ -118,7 +177,7 @@ describe("エリアの比較", () => {
     render(<AreaCompare area={areaOf()} />);
     await waitFor(() => {
       expect(
-        screen.queryByRole("heading", { name: "この検索で比べたお店" }),
+        screen.queryByRole("heading", { name: "このエリアで比べたお店" }),
       ).not.toBeInTheDocument();
     });
     cleanup();

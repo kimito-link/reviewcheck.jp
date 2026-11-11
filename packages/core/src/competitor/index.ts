@@ -6,14 +6,13 @@ import type {
 import { round1 } from "../utils/number";
 
 /**
- * 画面に残す周辺店の上限。
- * Nearby Search の maxResultCount は 20。自店がその中に入ると周辺は最大 19。
- * ここはそれより少ない 10 で、結果の先頭が点数と相談のまま読めるようにする。
+ * 比較に残す上限。Places が1回で返す最大20件と同じ。
+ * 5件で切ると、取得できた同じ商圏の店が画面から消える。
  */
-export const MAX_COMPETITORS = 10;
+export const MAX_COMPETITORS = 20;
 
 /**
- * 自店舗と競合（最大5件）を比較し、平均・差・順位を返す。
+ * 自店舗と競合（最大20件）を比較し、平均・差・順位を返す。
  * 競合が無ければ null。
  */
 export function analyzeCompetitors(

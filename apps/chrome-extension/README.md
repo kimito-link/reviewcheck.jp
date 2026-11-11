@@ -4,8 +4,8 @@
 
 ## 設計方針
 
-- **権限**: `activeTab` と `storage`。`host_permissions` は自社API (`https://reviewcheck.jp/*`) だけ。`storage` は前回の点検日時と Place ID を `chrome.storage.local` に残すために必要です。これ以外の権限は足していません。
-- **常時収集しない**: ポップアップを開いたページと、手入力した対象だけを自社API (`/api/diagnose`) に送ります。閲覧履歴の監視・常時収集は行いません。前回の点検日時と Place ID だけを、この端末の拡張の保存領域に残します。星・店名・点数は残しません。
+- **権限**: `activeTab` と `storage`。`host_permissions` は自社API (`https://reviewcheck.jp/*`) だけ。`storage` は前回の点検を `chrome.storage.local` に残すために必要です。これ以外の権限は足していません。
+- **常時収集しない**: ポップアップを開いたページと、手入力した対象だけを自社API (`/api/diagnose`) に送ります。閲覧履歴の監視・常時収集は行いません。前回の点検日時と要点は、この端末の拡張の保存領域だけに残します。
 - **自分用**: お金の案内や、外部のトークアプリへのリンクは出しません。
 - **診断ロジックはWeb版と共通**: 計算はサーバー側 (`@reviewcheck/core`) で実行。拡張は結果を表示するだけ。
 

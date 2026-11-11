@@ -1,20 +1,68 @@
 "use client";
 
-import { useEffect } from "react";
-import { forgetLocalScoreKeys } from "../ForgetLocalScores";
+import { useEffect, useState } from "react";
+import {
+  SCORE_HISTORY_FIRST,
+  parseStoredScore,
+  planScoreHistory,
+  scoreHistoryKey,
+} from "@/lib/scoreHistory";
 
 /**
- * 以前はこの端末の前回点数を読んで差分を出していた。
- * いまは読まず、残っていればこのブラウザから消す。サーバは触らない。
+ * 前回との比較。localStorage の1件だけを読み書きし、通信はしない。
  */
-export function ScoreHistoryNote() {
-  useEffect(() => {
-    forgetLocalScoreKeys();
-  }, []);
+export function ScoreHistoryNote({
+  shopName,
+  score,
+  ruleVersion,
+  diagnosedAt,
+  enabled,
+  className = "",
+}: {
+  shopName: string;
+  score: number;
+  ruleVersion: string;
+  diagnosedAt: string;
+  /** 取得時刻が共有URLに無いときは保存しない（見るたびに時刻が変わるため） */
+  enabled: boolean;
+  className?: string;
+}) {
+  const [message, setMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!enabled) {
+      setMessage(SCORE_HISTORY_FIRST);
+      return;
+    }
+    const key = scoreHistoryKey(shopName);
+    let prev = null;
+    try {
+      prev = parseStoredScore(window.localStorage.getItem(key));
+    } catch {
+      prev = null;
+    }
+    const plan = planScoreHistory(prev, {
+      score,
+      date: diagnosedAt,
+      ruleVersion,
+    });
+    if (plan.store) {
+      try {
+        window.localStorage.setItem(key, JSON.stringify(plan.store));
+      } catch {
+        /* 保存できない端末でも表示は続ける */
+      }
+    }
+    setMessage(plan.message);
+  }, [shopName, score, ruleVersion, diagnosedAt, enabled]);
+
+  if (!message) return null;
   return (
-    <p className="text-sm leading-relaxed text-slate-700">
-      このブラウザに残っていた前回の点数は、次回このサイトを開いたときに消します。サーバには送っていません。
+    <p
+      className={`mt-3 text-base font-medium leading-relaxed text-slate-900 ${className}`.trim()}
+      data-score-history=""
+    >
+      {message}
     </p>
   );
 }
