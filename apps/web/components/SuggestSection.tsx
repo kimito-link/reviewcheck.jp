@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { SuggestAnalysis } from "@reviewcheck/core";
-import { CTAS } from "@reviewcheck/config";
+import { CONSULT_OPEN_LABEL, CTAS } from "@reviewcheck/config";
 
 const LEVEL_BADGE: Record<string, { label: string; cls: string }> = {
   high: { label: "高リスク", cls: "bg-red-100 text-red-700" },
@@ -17,7 +17,7 @@ const LEVEL_BADGE: Record<string, { label: string; cls: string }> = {
  */
 export function SuggestSection({
   storeName,
-  storeQuery,
+  storeQuery: _storeQuery,
 }: {
   storeName: string;
   storeQuery?: string;
@@ -48,12 +48,7 @@ export function SuggestSection({
     };
   }, [storeName]);
 
-  const suggestHref = storeQuery
-    ? `${CTAS.suggest.href}&store=${encodeURIComponent(storeQuery)}`
-    : CTAS.suggest.href;
-  const monitorHref = storeQuery
-    ? `${CTAS.monitoring.href}&store=${encodeURIComponent(storeQuery)}`
-    : CTAS.monitoring.href;
+  const suggestHref = CTAS.suggest.href;
 
   const negatives = data?.negatives ?? [];
   const hasNegatives = negatives.length > 0;
@@ -143,14 +138,14 @@ export function SuggestSection({
             <p className="mt-1 text-sm leading-relaxed text-slate-600">
               良い状態です。ただしサジェストは、悪い口コミやネット上の話題で
               <strong className="text-slate-900">ある日突然</strong>
-              ネガティブ候補が出ることがあります。月次モニタリングで、出た瞬間に気づける状態にしておくと安心です。
+              ネガティブ候補が出ることがあります。月次の自動巡回は、いま新規では受けていません。
             </p>
             <div className="mt-4">
               <Link
-                href={monitorHref}
-                className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
+                href={CTAS.freeConsult.href}
+                className="inline-flex items-center justify-center rounded-xl bg-blue-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800"
               >
-                検索候補も月次モニタリングする
+                {CONSULT_OPEN_LABEL}
               </Link>
             </div>
           </div>

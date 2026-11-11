@@ -1,11 +1,10 @@
 import type { DiagnosisInput } from "../types/index";
 
 /**
- * 診断結果ページ /report/[id]/ の id を、診断入力からステートレスに生成・復元する。
- * DB不要・共有URL可。id は base64url(JSON(診断入力))。
- * 入力には採点ルールの版（ruleVersion）と取得時刻（diagnosedAt）を含める。
- * 無いURLは版を記録する前のもの。結果画面はいまのルールで計算し直し、その旨を注記する。
- * （点数そのものはレポートページ側で診断ロジックを再実行して描画する設計）
+ * 古い共有ID。base64url(JSON(診断入力))。
+ * 新しい共有は encodePlaceReportId を使う。この関数は、AI診断など
+ * Googleの店舗データを載せない既存のIDと、古いリンクの読み取りに残す。
+ * 口コミ診断の画面は、ここから復元した星・店名・座標を表示に使わない。
  */
 export function encodeReportId(input: DiagnosisInput): string {
   const json = JSON.stringify(compact(input));
@@ -53,4 +52,61 @@ function base64Encode(bin: string): string {
 function base64Decode(b64: string): string {
   if (typeof atob === "function") return atob(b64);
   return Buffer.from(b64, "base64").toString("binary");
+}
+
+const PLACE_REPORT_PREFIX = "p1.";
+
+/**
+ * 口コミ診断の共有ID。place ID だけを載せる。
+ * 店名・星・口コミ数・座標・電話は入れない。
+ */
+export function encodePlaceReportId(placeId: string): string {
+  const id = placeId.trim();
+  const json = JSON.stringify({ placeId: id });
+  const bytes = new TextEncoder().encode(json);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  const b64 = base64Encode(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return `${PLACE_REPORT_PREFIX}${b64}`;
+}
+
+export type ReportReference =
+  | { kind: "place"; placeId: string }
+  | { kind: "legacy-place"; placeId: string }
+  | { kind: "legacy-no-place" };
+
+/**
+ * 共有IDから、取り直すための place ID だけを読む。
+ * 古いIDに星や店名が入っていても、戻り値には載せない。
+ */
+export function readReportReference(id: string): ReportReference | null {
+  if (id.startsWith(PLACE_REPORT_PREFIX)) {
+    return readPlacePayload(id.slice(PLACE_REPORT_PREFIX.length));
+  }
+  const legacy = decodeReportId(id);
+  if (!legacy) return null;
+  const placeId = legacy.store.placeId?.trim();
+  if (placeId) return { kind: "legacy-place", placeId };
+  return { kind: "legacy-no-place" };
+}
+
+function readPlacePayload(encoded: string): ReportReference | null {
+  try {
+    let b64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    const bin = base64Decode(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const parsed = JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    const record = parsed as Record<string, unknown>;
+    const keys = Object.keys(record);
+    if (keys.length !== 1 || keys[0] !== "placeId") return null;
+    if (typeof record.placeId !== "string") return null;
+    const placeId = record.placeId.trim();
+    if (!placeId || placeId.length > 512) return null;
+    return { kind: "place", placeId };
+  } catch {
+    return null;
+  }
 }

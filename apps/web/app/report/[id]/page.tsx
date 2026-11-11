@@ -1,21 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  diagnose,
-  decodeReportId,
-  SCORE_RULE_VERSION,
-} from "@reviewcheck/core";
-import { SITE } from "@reviewcheck/config";
+import { CONSULT_OPEN_LABEL } from "@reviewcheck/config";
 import { Container } from "@/components/Container";
-import { ReportView } from "@/components/ReportView";
 import { AffiliateRefCapture } from "@/components/AffiliateRefCapture";
-import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata } from "@/lib/seo";
-import { breadcrumbJsonLd } from "@/lib/jsonld";
-import { publishCohort } from "@/lib/cohort/service";
+import { reportLoadPlan } from "@/lib/reportLoadPlan";
+import { sanitizeRefLine } from "@/lib/refLine";
+import { PLACES_FIXTURE_NOTE, PLACES_FIXTURE_PLACE_ID } from "@/lib/placesFixture";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
 
 type Params = { id: string };
 type SearchParams = { ref?: string; ref_line?: string };
@@ -26,36 +19,12 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const input = decodeReportId(id);
-  if (!input) {
-    return buildMetadata({
-      title: "Google口コミ診断結果",
-      description:
-        "Googleマップの公開情報から計算した選ばれやすさの目安です。",
-      path: `/report/${id}/`,
-      ogType: "article",
-      omitOgImage: true,
-    });
-  }
-  let title = "Google口コミ診断結果";
-  let description =
-    "Googleマップの公開情報（星・口コミ数・返信・新しさ・プロフィール）を、決まった採点ルールで計算した目安です。";
-  try {
-    const result = diagnose(input, {
-      providers: input.store.source === "places" ? ["google-places"] : [],
-    });
-    const name = result.input.store.name ? `｜${result.input.store.name}` : "";
-    title = `選ばれやすさ ${result.score}点（目安）${name}`;
-    description = `選ばれやすさ ${result.score}点（目安）。採点ルール v${SCORE_RULE_VERSION}。Googleマップの公開情報から計算した目安で、断定ではありません。`;
-  } catch {
-    /* タイトルは汎用のまま */
-  }
   return buildMetadata({
-    title,
-    description,
+    title: "口コミ診断の共有",
+    description:
+      "共有された診断への入口です。このページは店舗を取り直しません。地図と相談へ進めます。",
     path: `/report/${id}/`,
     ogType: "article",
-    omitOgImage: true,
   });
 }
 
@@ -68,91 +37,106 @@ export default async function ReportPage({
 }) {
   const { id } = await params;
   const { ref, ref_line: refLine } = await searchParams;
-  const input = decodeReportId(id);
+  const plan = reportLoadPlan(id);
+  const again = checkHref(ref, refLine);
 
-  if (!input) {
+  if (!plan.placeId) {
     return (
-      <Container className="py-16 text-center">
-        <h1 className="text-xl font-bold text-slate-900">
-          レポートが見つかりませんでした
-        </h1>
-        <p className="mt-2 text-slate-600">
-          URLが正しくない可能性があります。もう一度診断してください。
-        </p>
-        <Link
-          href="/check/"
-          className="mt-6 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700"
-        >
-          口コミ診断へ
-        </Link>
-      </Container>
+      <QuietReport
+        title={
+          plan.reason === "no-place"
+            ? "このリンクからは、店舗を特定できません"
+            : "レポートが見つかりませんでした"
+        }
+        body={
+          plan.reason === "no-place"
+            ? "以前のリンクに、地図へ進むための店舗の識別子がありません。紹介の情報は残しています。店舗名から、もう一度診断してください。"
+            : "URLが正しくない可能性があります。紹介の情報は残しています。もう一度診断してください。"
+        }
+        href={again}
+      />
     );
   }
 
-  let result;
-  let failed = false;
-  try {
-    result = diagnose(input, {
-      providers: input.store.source === "places" ? ["google-places"] : [],
-    });
-  } catch {
-    failed = true;
-  }
+  const maps = `https://www.google.com/maps/search/?api=1&query_place_id=${encodeURIComponent(plan.placeId)}`;
+  const consult = consultHref(ref, refLine);
+  const fixture = plan.placeId === PLACES_FIXTURE_PLACE_ID;
 
-  if (failed || !result) {
-    return (
-      <Container className="py-16 text-center">
-        <h1 className="text-xl font-bold text-slate-900">診断に失敗しました</h1>
+  return (
+    <Container className="pb-12 pt-8">
+      <AffiliateRefCapture />
+      <h1 className="text-2xl font-extrabold text-slate-900">共有された診断への入口</h1>
+      <p className="mt-3 text-base leading-relaxed text-slate-800">
+        このページを開いても、店舗の公開情報は取り直しません。Googleへの問い合わせも、店名・星の保存もしません。
+      </p>
+      {fixture ? <p className="mt-3 text-base text-slate-800">{PLACES_FIXTURE_NOTE}</p> : null}
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <a
+          href={maps}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-base font-bold text-white underline decoration-white underline-offset-2 hover:bg-blue-700"
+        >
+          Googleマップで開く
+        </a>
         <Link
-          href="/check/"
-          className="mt-6 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700"
+          href={consult}
+          className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-base font-bold text-slate-900 underline underline-offset-2 hover:bg-slate-50"
+        >
+          {CONSULT_OPEN_LABEL}
+        </Link>
+        <Link
+          href={again}
+          className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-base font-bold text-slate-900 underline underline-offset-2 hover:bg-slate-50"
         >
           もう一度診断する
         </Link>
-      </Container>
-    );
-  }
-
-  const shareUrl = `${SITE.baseUrl}/report/${id}/`;
-  const fetchedAtRecorded =
-    typeof input.diagnosedAt === "string" &&
-    !Number.isNaN(Date.parse(input.diagnosedAt));
-  const cohort = await publishCohort({
-    category: result.input.store.category,
-    address: result.input.store.address,
-    score: result.score,
-    rating: result.input.store.rating,
-    reviewCount: result.input.store.reviewCount,
-    hasOwnerReplies: result.input.store.hasOwnerReplies,
-    ruleVersion: result.ruleVersion,
-    record: false,
-  });
-
-  return (
-    <Container className="pb-12 pt-4 sm:pt-6">
-      <AffiliateRefCapture />
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "トップ", path: "/" },
-          { name: "口コミ診断", path: "/check/" },
-          { name: "診断結果", path: `/report/${id}/` },
-        ])}
-      />
-      <h1 className="sr-only">
-        選ばれやすさ {result.score}点（目安）
-        {result.input.store.name ? `｜${result.input.store.name}` : ""}
-      </h1>
-      <ReportView
-        result={result}
-        shareUrl={shareUrl}
-        refCode={ref}
-        refLine={refLine}
-        shareContext={{
-          loadedRuleVersion: input.ruleVersion,
-          fetchedAtRecorded,
-        }}
-        cohort={cohort}
-      />
+      </div>
+      <p className="mt-6 text-sm leading-relaxed text-slate-700">
+        地図リンクは、共有された店舗の識別子だけから作っています。サイトの運営は株式会社ベストトラストです。
+      </p>
     </Container>
   );
+}
+
+function QuietReport({
+  title,
+  body,
+  href,
+}: {
+  title: string;
+  body: string;
+  href: string;
+}) {
+  return (
+    <Container className="py-16 text-center">
+      <AffiliateRefCapture />
+      <h1 className="text-xl font-bold text-slate-900">{title}</h1>
+      <p className="mt-3 text-base leading-relaxed text-slate-800">{body}</p>
+      <Link
+        href={href}
+        className="mt-6 inline-flex rounded-xl bg-blue-600 px-5 py-3 text-base font-bold text-white underline decoration-white underline-offset-2 hover:bg-blue-700"
+      >
+        口コミ診断へ
+      </Link>
+    </Container>
+  );
+}
+
+function checkHref(ref: string | undefined, refLine: string | undefined): string {
+  const params = new URLSearchParams();
+  if (ref?.trim()) params.set("ref", ref.trim());
+  const line = sanitizeRefLine(refLine);
+  if (line) params.set("ref_line", line);
+  const query = params.toString();
+  return query ? `/check/?${query}` : "/check/";
+}
+
+function consultHref(ref: string | undefined, refLine: string | undefined): string {
+  const params = new URLSearchParams();
+  params.set("topic", "consult");
+  if (ref?.trim()) params.set("ref", ref.trim());
+  const line = sanitizeRefLine(refLine);
+  if (line) params.set("ref_line", line);
+  return `/contact/?${params.toString()}`;
 }

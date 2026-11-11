@@ -117,12 +117,11 @@ export function computeSelectabilityScore(
     });
   }
 
-  // 4. オーナー返信の有無
+  // 4. オーナー返信の有無。未取得は満点にも分子にも入れない。
   {
-    const max = SCORE_MAX.ownerReplies;
     const known = typeof store.hasOwnerReplies === "boolean";
     const has = store.hasOwnerReplies === true;
-    const points = known ? (has ? max : 0) : round2(max * 0.5);
+    const max = known ? SCORE_MAX.ownerReplies : 0;
     factors.push({
       id: "ownerReplies",
       title: "オーナーの口コミ返信",
@@ -131,21 +130,21 @@ export function computeSelectabilityScore(
         ? has
           ? "口コミへの返信が確認できます。誠実な対応は信頼につながります。"
           : "口コミへの返信が見当たりません。返信は信頼を高め、低評価の影響も和らげます。"
-        : "返信状況は未確認です（推定値で加点）。実際の返信状況の確認をおすすめします。",
-      points,
+        : "返信の有無は今回の取得項目にありません。点数には入れていません。",
+      points: known ? (has ? max : 0) : 0,
       max,
       estimated: !known,
     });
   }
 
-  // 5. 最新口コミの鮮度
+  // 5. 最新口コミの鮮度。未取得は仮の半分を足さない。
   {
-    const max = SCORE_MAX.freshness;
     const known = typeof store.daysSinceLastReview === "number";
-    let points = round2(max * 0.5);
+    const max = known ? SCORE_MAX.freshness : 0;
+    let points = 0;
     let status: ScoreFactor["status"] = "info";
     let message =
-      "最新口コミの鮮度は未確認です（推定値で加点）。定期的な口コミ獲得が理想です。";
+      "最新口コミの日付は今回の取得項目にありません。点数には入れていません。";
     if (known) {
       const d = store.daysSinceLastReview as number;
       const ratio = clamp(
@@ -171,29 +170,29 @@ export function computeSelectabilityScore(
     });
   }
 
-  // 6. プロフィール充実度（電話/サイト/営業時間/写真）
+  // 6. プロフィール。取得していない項目は「未登録」に数えない。
   {
-    const max = SCORE_MAX.profileCompleteness;
-    const flags = [
-      store.phone ? 1 : 0,
-      store.website ? 1 : 0,
-      store.hasOpeningHours ? 1 : 0,
-      store.hasPhotos ? 1 : 0,
-    ];
-    const known = flags.some((f) => f === 1) || hasAnyProfileSignal(store);
-    const filled = flags.reduce((a, b) => a + b, 0);
-    const ratio = filled / 4;
-    const points = known ? round2(ratio * max) : round2(max * 0.5);
+    const checks = profileChecks(store);
+    const max = checks.length > 0 ? SCORE_MAX.profileCompleteness : 0;
+    const filled = checks.filter((item) => item.filled).length;
+    const ratio = checks.length > 0 ? filled / checks.length : 0;
+    const points = checks.length > 0 ? round2(ratio * max) : 0;
     factors.push({
       id: "profileCompleteness",
       title: "ビジネスプロフィールの充実度",
-      status: filled >= 3 ? "good" : filled >= 1 ? "warn" : known ? "bad" : "info",
-      message: known
-        ? `電話・サイト・営業時間・写真のうち ${filled} / 4 が登録済みです。充実させるほど選ばれやすくなります。`
-        : "プロフィールの登録状況は未確認です（推定値で加点）。情報の充実は選ばれやすさを高めます。",
+      status:
+        checks.length === 0
+          ? "info"
+          : filled === checks.length
+            ? "good"
+            : "warn",
+      message:
+        checks.length > 0
+          ? `確認できた${checks.map((item) => item.label).join("・")}のうち ${filled} / ${checks.length} が登録されています。確認していない項目は数えていません。`
+          : "電話・サイト・営業時間・写真は、今回確認できた項目がありません。未確認を未登録とは扱いません。点数には入れていません。",
       points,
       max,
-      estimated: !known,
+      estimated: checks.length === 0,
     });
   }
 
@@ -264,11 +263,25 @@ function round2(v: number): number {
   return Math.round(v * 100) / 100;
 }
 
-function hasAnyProfileSignal(store: StoreInput): boolean {
-  return (
-    typeof store.hasOpeningHours === "boolean" ||
-    typeof store.hasPhotos === "boolean" ||
-    Boolean(store.phone) ||
-    Boolean(store.website)
-  );
+/**
+ * 取得した項目だけを数える。
+ * Places は電話とサイトをフィールドに含めているので、無いことは「公開情報に無い」。
+ * 写真はフィールドに無いので、boolean が来るまで項目にしない。
+ */
+function profileChecks(store: StoreInput): { label: string; filled: boolean }[] {
+  const places = store.source === "places";
+  const checks: { label: string; filled: boolean }[] = [];
+  if (places || typeof store.phone === "string") {
+    checks.push({ label: "電話", filled: Boolean(store.phone?.trim()) });
+  }
+  if (places || typeof store.website === "string") {
+    checks.push({ label: "サイト", filled: Boolean(store.website?.trim()) });
+  }
+  if (typeof store.hasOpeningHours === "boolean") {
+    checks.push({ label: "営業時間", filled: store.hasOpeningHours });
+  }
+  if (typeof store.hasPhotos === "boolean") {
+    checks.push({ label: "写真", filled: store.hasPhotos });
+  }
+  return checks;
 }

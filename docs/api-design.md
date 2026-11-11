@@ -28,7 +28,7 @@
 | 座標 | `location` | 公開の緯度経度。Place Details では元から取得し、店舗入力に残す。周辺競合の searchNearby にも `places.location` を足す（追加リクエストなし。rating より下の Essentials なので Nearby Search の SKU は上がらない） |
 | place_id | `id` | |
 
-> 口コミ本文（`reviews`）は最大5件程度しか返らず、課金SKUも上がるため、**口コミの完全取得・大量取得は前提にしない**。
+> 口コミ本文（`reviews`）は取得しない。点数は本文を使わず、付けると Place Details が Enterprise + Atmosphere に上がる。店の特定は Text Search の `places.id` だけ。
 
 ## クエリ解決フロー
 

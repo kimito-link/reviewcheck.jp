@@ -6,9 +6,9 @@ import { buildMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 
 export const metadata: Metadata = buildMetadata({
-  title: "お店のAI第一印象診断｜あなたの店はAIにどう見られている？無料チェック",
+  title: "お店のAI第一印象｜AIにどう見られているかを確認する",
   description:
-    "店名を入れるだけ。AIに聞いたときあなたのお店が出てくるか、どう説明されるかを実測。口コミ・検索・サイトの見え方も含めてAI・ネット第一印象スコアを無料で診断します。",
+    "店名を入れると、AIに聞いたときの見え方を確認します。この確認に費用はかかりません。順位や点数が上がることは約束しません。",
   path: "/ai-check/",
 });
 
@@ -26,7 +26,7 @@ export default function AiCheckPage() {
       </h1>
       <p className="mt-2 text-slate-600">
         あなたのお店、AIに聞くとどう答えられているでしょうか。店名を入れるだけで、
-        AI・検索・口コミ・サイトの「見られ方」を無料でチェックします。
+        AI・検索・口コミ・サイトの「見られ方」を確認します。この確認に費用はかかりません。
       </p>
       <div className="mt-8 max-w-md">
         <AiCheckForm />

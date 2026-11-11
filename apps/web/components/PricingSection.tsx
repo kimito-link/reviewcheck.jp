@@ -21,6 +21,11 @@ export function PricingSection() {
             <p className="mt-3 text-sm leading-relaxed text-slate-600">
               {p.description}
             </p>
+            {p.key === "monthly" ? (
+              <p className="mt-2 text-sm leading-relaxed text-slate-800" data-monitor-paused="">
+                自動の月次巡回の新規申込は停止中です。表示の「要相談」は金額の変更ではありません。
+              </p>
+            ) : null}
           </div>
         ))}
       </div>

@@ -69,7 +69,7 @@ export function AiCheckForm() {
         type="submit"
         className="w-full rounded-xl bg-emerald-600 px-5 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-emerald-700"
       >
-        無料でAI第一印象を診断する
+        AI第一印象を診断する
       </button>
       <p className="text-xs text-slate-500">
         ※ 公開情報とAIへの質問をもとにした簡易診断です。ログインやパスワードは不要です。

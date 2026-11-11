@@ -1,5 +1,6 @@
+import { catchmentAssumption, NEARBY_SAMPLE_CAP } from "../catchment/index";
+import { MAX_COMPETITORS } from "../competitor/index";
 import type { Competitor, StoreInput } from "../types/index";
-import type { ReviewItem } from "../reviews/index";
 import { readPoint } from "../utils/geo";
 import {
   parseMapsUrl,
@@ -27,11 +28,35 @@ export interface FetchCompetitorsOptions {
 }
 
 /**
+ * 店名検索は place ID だけ。
+ * Text Search Essentials (IDs Only)。displayName を足すと Pro になるが、応答の id 以外は使わない。
+ */
+export const TEXT_SEARCH_FIELD_MASK = "places.id";
+
+/**
+ * Place Details。reviews は付けない（Enterprise + Atmosphere に上がる。点数は本文を使わない）。
+ * rating があるので、この呼び出しは Enterprise。電話・営業時間は同じ段で、別料金にはならない。
+ */
+export const PLACE_DETAILS_FIELD_MASK = [
+  "id",
+  "displayName",
+  "formattedAddress",
+  "rating",
+  "userRatingCount",
+  "primaryType",
+  "primaryTypeDisplayName",
+  "internationalPhoneNumber",
+  "websiteUri",
+  "googleMapsUri",
+  "regularOpeningHours",
+  "location",
+].join(",");
+
+/**
  * 周辺競合の FieldMask。
  * rating / userRatingCount で Nearby Search は Enterprise になる。
- * location はそれより下の Essentials なので、この1項目を足しても SKU は上がらない。
- * 呼び出し回数も増えない（同じ searchNearby の応答に座標が入る）。
- * reviews は足さない（SKU が上がるため）。
+ * location はそれより下なので、この1項目を足しても SKU は上がらない。
+ * reviews は足さない。
  */
 export const COMPETITOR_SEARCH_FIELD_MASK =
   "places.id,places.displayName,places.rating,places.userRatingCount,places.googleMapsUri,places.location";
@@ -41,10 +66,9 @@ export const COMPETITOR_SEARCH_FIELD_MASK =
  * 環境変数 GOOGLE_PLACES_API_KEY が設定されているときのみ有効。
  *
  * 取得方針（Places APIの制限内）:
- *   - Text Search で place を特定 → Place Details で rating / userRatingCount /
- *     座標・業種・基本情報を取得する。
- *   - 競合は searchNearby（1回の呼び出しで周辺店舗の評価・口コミ数まで取得）で検出。
- *   - reviews は最大5件程度しか返らないため、口コミの完全取得は前提にしない。
+ *   - Text Search は place ID だけ → Place Details で rating / userRatingCount /
+ *     座標・業種・基本情報を取得する。口コミ本文は取らない。
+ *   - 競合は searchNearby を1回だけ。半径の自動拡大はしない。
  *
  * 詳細な接続手順は docs/api-design.md を参照。
  */
@@ -66,13 +90,12 @@ export class GooglePlacesProvider implements StoreDataProvider {
     return detailed?.store ?? null;
   }
 
-  /** 店舗本体＋座標・業種（競合検索の起点）＋代表口コミをまとめて取得 */
+  /** 店舗本体＋座標・業種（競合検索の起点）を取得する。口コミ本文は取らない。 */
   async fetchStoreDetailed(
     query: StoreQuery,
   ): Promise<{
     store: StoreInput;
     context: StoreContext;
-    reviews: ReviewItem[];
   } | null> {
     const key = this.apiKey;
     if (!key) return null;
@@ -100,12 +123,12 @@ export class GooglePlacesProvider implements StoreDataProvider {
       return [];
     }
 
-    const radius = options.radius ?? 1500;
-    const limit = options.limit ?? 5;
+    const radius = options.radius ?? catchmentAssumption(context.primaryType).radiusMeters;
+    const limit = options.limit ?? MAX_COMPETITORS;
 
     try {
       const body: Record<string, unknown> = {
-        maxResultCount: 20,
+        maxResultCount: NEARBY_SAMPLE_CAP,
         rankPreference: "POPULARITY",
         languageCode: "ja",
         regionCode: "JP",
@@ -192,7 +215,7 @@ export class GooglePlacesProvider implements StoreDataProvider {
               "places.id,places.displayName,places.rating,places.userRatingCount,places.primaryTypeDisplayName,places.formattedAddress,places.googleMapsUri",
           },
           body: JSON.stringify({
-            maxResultCount: 20,
+            maxResultCount: NEARBY_SAMPLE_CAP,
             // 現在地に近い順（自分の店を見つけやすくする）
             rankPreference: "DISTANCE",
             languageCode: "ja",
@@ -291,7 +314,7 @@ export class GooglePlacesProvider implements StoreDataProvider {
         headers: {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": key,
-          "X-Goog-FieldMask": "places.id,places.displayName",
+          "X-Goog-FieldMask": TEXT_SEARCH_FIELD_MASK,
         },
         body: JSON.stringify(body),
       },
@@ -338,31 +361,15 @@ export class GooglePlacesProvider implements StoreDataProvider {
     }
   }
 
-  /** Place Details を取得して StoreInput＋座標・業種＋代表口コミに変換 */
+  /** Place Details を取得して StoreInput＋座標・業種に変換する。 */
   private async fetchDetails(
     placeId: string,
     key: string,
   ): Promise<{
     store: StoreInput;
     context: StoreContext;
-    reviews: ReviewItem[];
   } | null> {
-    const fields = [
-      "id",
-      "displayName",
-      "formattedAddress",
-      "rating",
-      "userRatingCount",
-      "primaryType",
-      "primaryTypeDisplayName",
-      "internationalPhoneNumber",
-      "websiteUri",
-      "googleMapsUri",
-      "regularOpeningHours",
-      "location",
-      // 代表口コミ（最大5件程度）。口コミ分析に使う。
-      "reviews",
-    ].join(",");
+    const fields = PLACE_DETAILS_FIELD_MASK;
 
     // languageCode=ja を付けないと displayName / primaryTypeDisplayName が英語で返る
     // （例: "Ramen restaurant"）。カテゴリ等を日本語にするため必須。
@@ -380,8 +387,7 @@ export class GooglePlacesProvider implements StoreDataProvider {
     const p = (await res.json()) as PlaceDetails;
     if (typeof p.rating !== "number") return null;
 
-    // 注: Places API では「最新口コミの鮮度」「オーナー返信の網羅」「低評価比率」は
-    // 安定して取得できないため未確認（undefined）のままにし、スコア側で推定値扱いにする。
+    // 返信・鮮度・低評価比率・写真は、このフィールドに無い。未確認のままにし、点数の仮加点には使わない。
     const point = readPoint(p.location?.latitude, p.location?.longitude);
     const store: StoreInput = {
       name: p.displayName?.text,
@@ -405,16 +411,7 @@ export class GooglePlacesProvider implements StoreDataProvider {
       placeId: p.id ?? placeId,
     };
 
-    const reviews: ReviewItem[] = (p.reviews ?? [])
-      .map((r) => ({
-        rating: typeof r.rating === "number" ? r.rating : undefined,
-        text: r.text?.text ?? r.originalText?.text,
-        authorName: r.authorAttribution?.displayName,
-        relativeTime: r.relativePublishTimeDescription,
-      }))
-      .filter((r) => typeof r.rating === "number" || (r.text && r.text.trim() !== ""));
-
-    return { store, context, reviews };
+    return { store, context };
   }
 }
 
@@ -431,16 +428,6 @@ interface PlaceDetails {
   googleMapsUri?: string;
   regularOpeningHours?: unknown;
   location?: { latitude?: number; longitude?: number };
-  reviews?: PlaceReview[];
-}
-
-interface PlaceReview {
-  rating?: number;
-  text?: { text?: string; languageCode?: string };
-  originalText?: { text?: string; languageCode?: string };
-  authorAttribution?: { displayName?: string };
-  relativePublishTimeDescription?: string;
-  publishTime?: string;
 }
 
 interface NearbyPlace {

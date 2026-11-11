@@ -14,7 +14,7 @@ export function buildCountSummary(
   const parts = [`星${store.rating.toFixed(1)}`, `口コミ${store.reviewCount}件`];
   if (comparison && comparison.total > 0) {
     parts.push(
-      `周辺${comparison.total}店中 口コミ数 第${comparison.reviewCountRank}位`,
+      `この検索の${comparison.total}店中 口コミ数 第${comparison.reviewCountRank}位`,
     );
   }
   return parts.join("／");
@@ -38,7 +38,12 @@ export function formatDiagnosedAtJst(iso: string): string {
   return `${g("year")}-${g("month")}-${g("day")} ${g("hour")}:${g("minute")}`;
 }
 
-/** シェア文。点数を先頭にする。「無料」は入れない。 */
+/** Google の内容を外部の共有文に載せない。点数も店名も入れない。 */
+export function buildFactsShareText(): string {
+  return "口コミチェック.jp で、Googleマップの公開情報を確認しました。点数と店名はこの文面に入れていません。";
+}
+
+/** シェア文。点数を先頭にする。「無料」は入れない。手入力の結果用。 */
 export function buildShareText(opts: {
   score?: number;
   storeName?: string;
@@ -64,12 +69,12 @@ export function leftAloneParagraphs(input: {
   const lines: string[] = [];
   if (input.reviewCountDiff != null && input.reviewCountDiff < 0) {
     lines.push(
-      `口コミの件数は、周辺の平均より約${Math.abs(input.reviewCountDiff)}件少ない状態です。新しい口コミの増え方が今のままだと、この差は残ります。来店前に地図で見比べる人には、件数の多い店の方が材料が多く見えます。`,
+      `口コミの件数は、この検索で比べた店の平均より約${Math.abs(input.reviewCountDiff)}件少ない状態です。新しい口コミの増え方が今のままだと、この差は残ります。来店前に地図で見比べる人には、件数の多い店の方が材料が多く見えます。`,
     );
   }
   if (input.ratingDiff != null && input.ratingDiff < -0.05) {
     lines.push(
-      `星評価は周辺の平均を${Math.abs(input.ratingDiff).toFixed(1)}下回っています。低評価への返信が無い状態が続くと、その星の並びが地図上に残ります。`,
+      `星評価は、この検索で比べた店の平均を${Math.abs(input.ratingDiff).toFixed(1)}下回っています。低評価への返信が無い状態が続くと、その星の並びが地図上に残ります。`,
     );
   }
   if (lines.length === 0) {

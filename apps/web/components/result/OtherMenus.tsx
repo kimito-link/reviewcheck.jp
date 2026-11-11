@@ -8,18 +8,17 @@ import { ReverseHackPromo } from "../ReverseHackPromo";
  * ここに出す文面にも「無料」は使わない。
  */
 export function OtherMenus({
-  monitoringHref,
   suggestHref,
+  monitoringPaused = false,
 }: {
-  monitoringHref: string;
   suggestHref: string;
+  monitoringPaused?: boolean;
 }) {
   const links: { href: string; label: string; external?: boolean }[] = [
     { href: "https://malwarecheck.site/check/", label: "サイトの安全性を見る", external: true },
     { href: "/review-tool/", label: "口コミ作成ツール" },
     { href: "/plans/", label: "総合パッケージを見る" },
     { href: suggestHref, label: "検索の評判（サジェスト）を確認" },
-    { href: monitoringHref, label: "月次モニタリング", external: true },
     { href: CTAS.meo.href, label: "MEOの相談ページ" },
   ];
 
@@ -58,6 +57,11 @@ export function OtherMenus({
             </li>
           ))}
         </ul>
+        {monitoringPaused ? (
+          <p className="text-base leading-relaxed text-slate-800" data-monitor-paused="">
+            月次モニタリングの新規申込は停止中です。決済ページへはつなぎません。保存してある記録は消しません。巡回もしません。
+          </p>
+        ) : null}
         <div>
           <p className="text-base font-bold text-slate-900">関連して見られるページ</p>
           <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">

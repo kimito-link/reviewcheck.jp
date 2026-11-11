@@ -1,11 +1,10 @@
 import type { DiagnosisResult } from "@reviewcheck/core";
 import { FINDING_CARD_TEXTS, staleRuleVersionNote } from "@reviewcheck/core";
 import { buildAreaComparison } from "@reviewcheck/core/areaMap";
-import { CTAS, RESULT_ESTIMATE_SENTENCE, withRefCode } from "@reviewcheck/config";
+import { RESULT_ESTIMATE_SENTENCE } from "@reviewcheck/config";
 import { ScoreMeter, ScoreBadge, StatCompare } from "@reviewcheck/ui";
 import { Disclaimer } from "./Disclaimer";
 import { ShareReport } from "./ShareReport";
-import { ReviewInsights } from "./ReviewInsights";
 import { FindingCard } from "./FindingCard";
 import {
   buildCountSummary,
@@ -17,6 +16,7 @@ import {
 } from "@/lib/resultCopy";
 import type { CohortPublic } from "@/lib/cohort/public";
 import { AreaCompare } from "./result/AreaCompare";
+import { GoogleMapsCredit } from "./result/GoogleMapsCredit";
 import { CohortCompareNote } from "./result/CohortCompareNote";
 import { DiagnosisPerks } from "./result/DiagnosisPerks";
 import { DiagnosisProgressNote } from "./result/DiagnosisProgressNote";
@@ -25,6 +25,7 @@ import { OtherMenus } from "./result/OtherMenus";
 import { ResultActionProvider } from "./result/ResultActionContext";
 import { ResultHook, ResultMethodDetails, UnconfirmedList } from "./result/ResultReading";
 import { ResultNextCta } from "./result/ResultNextCta";
+import { PlacesFactsView } from "./result/PlacesFactsView";
 import { ScoreHistoryNote } from "./result/ScoreHistoryNote";
 import { ScrollToResultScore } from "./result/ScrollToResultScore";
 import { SharerLineConsult } from "./SharerLineConsult";
@@ -67,7 +68,6 @@ export interface ReportShareContext {
 export function ReportView({
   result,
   shareUrl,
-  refCode,
   refLine,
   shareContext,
   cohort = null,
@@ -89,28 +89,41 @@ export function ReportView({
   const { input, comparison, simulation } = result;
   const store = input.store;
   const competitors = input.competitors ?? [];
-  const isMock = store.source === "mock";
+  if (store.source === "places" || store.source === "mock") {
+    return (
+      <PlacesFactsView
+        facts={{
+          kind: "facts",
+          sample: store.source === "mock",
+          diagnosedAt: result.diagnosedAt,
+          placesAttributed: result.placesAttributed === true,
+          ...(result.areaScopeText ? { areaScopeText: result.areaScopeText } : {}),
+          input: {
+            store,
+            competitors: competitors.map((item) => ({
+              ...(item.name ? { name: item.name } : {}),
+              rating: item.rating,
+              reviewCount: item.reviewCount,
+              ...(item.placeId ? { placeId: item.placeId } : {}),
+              ...(typeof item.lat === "number" ? { lat: item.lat } : {}),
+              ...(typeof item.lng === "number" ? { lng: item.lng } : {}),
+            })),
+          },
+        }}
+        shareUrl={shareUrl}
+        refLine={refLine}
+      />
+    );
+  }
   const autoCompetitors =
     competitors.length > 0 && competitors.every((c) => Boolean(c.placeId));
   const confirmedFactors = result.factors.filter((factor) => isConfirmedFactor(factor));
   const gains = result.improvements.filter((item) => isActionableImprovement(item));
   const missed = collectUnconfirmedLines(result);
 
-  const monitoringParams = new URLSearchParams();
-  if (!isMock) {
-    if (store.name) monitoringParams.set("store", store.name);
-    if (store.mapsUrl) monitoringParams.set("url", store.mapsUrl);
-    if (Number.isFinite(result.score)) {
-      monitoringParams.set("score", String(Math.round(result.score)));
-    }
-  }
-  const monitoringExtra = monitoringParams.toString();
-  const monitoringBase = withRefCode(CTAS.monitoring.href, refCode);
-  const monitoringHref = monitoringExtra
-    ? `${monitoringBase}&${monitoringExtra}`
-    : monitoringBase;
+  const monitoringHref = "";
 
-  const storeQuery = !isMock ? store.mapsUrl || store.name || "" : "";
+  const storeQuery = store.mapsUrl || store.name || "";
   const suggestHref = storeQuery
     ? `/suggest-check/?store=${encodeURIComponent(storeQuery)}`
     : "/suggest-check/";
@@ -119,8 +132,8 @@ export function ReportView({
   const countLine = buildCountSummary(store, comparison);
   const fetchedAtRecorded = shareContext ? shareContext.fetchedAtRecorded : true;
   const metaLine = fetchedAtRecorded
-    ? `採点ルール v${result.ruleVersion} ／ 取得：${formatDiagnosedAtJst(result.diagnosedAt)}（日本時間） ／ 出典：Googleマップ`
-    : `採点ルール v${result.ruleVersion} ／ 取得：記録なし ／ 出典：Googleマップ`;
+    ? `採点ルール v${result.ruleVersion} ／ 取得：${formatDiagnosedAtJst(result.diagnosedAt)}（日本時間）`
+    : `採点ルール v${result.ruleVersion} ／ 取得：記録なし`;
   const ruleNote = shareContext
     ? staleRuleVersionNote(shareContext.loadedRuleVersion)
     : null;
@@ -143,18 +156,25 @@ export function ReportView({
 
   return (
     <ResultActionProvider>
-      <div className="space-y-8 pb-28">
+      <div
+        className="space-y-8"
+        style={{
+          paddingBottom:
+            "var(--sticky-consult-offset, calc(7.5rem + env(safe-area-inset-bottom)))",
+        }}
+      >
         <section
           id="result-score"
           data-result-section="result"
+          data-sticky-protect=""
           className="scroll-mt-20 space-y-6"
         >
           <ScrollToResultScore />
-          {isMock ? (
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-base text-blue-950">
-              <strong className="font-bold">これはサンプル（デモ）です。</strong>
-              結果の見え方を体験いただくための架空の店舗・数値です。あなたのお店を診断するには、上の入力欄に店舗名またはGoogleマップURLを入れて診断してください。
-            </div>
+
+          {store.source === "manual" ? (
+            <p className="rounded-xl border border-slate-300 bg-slate-50 p-4 text-base leading-relaxed text-slate-900">
+              これは、入力された数字の計算です。Googleの公開情報ではありません。出典の表示はありません。
+            </p>
           ) : null}
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -167,14 +187,7 @@ export function ReportView({
                 <div className="mt-3">
                   <ScoreBadge band={result.band} />
                 </div>
-                <ScoreHistoryNote
-                  shopName={store.name || ""}
-                  score={result.score}
-                  ruleVersion={result.ruleVersion}
-                  diagnosedAt={result.diagnosedAt}
-                  enabled={fetchedAtRecorded}
-                  className="text-center lg:text-left"
-                />
+                <ScoreHistoryNote />
               </div>
 
               <div data-result-section="estimate" className="min-w-0 flex-1">
@@ -184,6 +197,7 @@ export function ReportView({
                 <p className="mt-2 text-center text-base font-bold text-slate-900 lg:text-left">
                   {store.name || "店舗"}
                 </p>
+                {result.placesAttributed ? <GoogleMapsCredit /> : null}
                 {store.category || store.address ? (
                   <p className="mt-0.5 text-center text-base text-slate-800 lg:text-left">
                     {[store.category, store.address].filter(Boolean).join("｜")}
@@ -209,7 +223,18 @@ export function ReportView({
             </div>
           </div>
 
-          {area ? <AreaCompare area={area} /> : null}
+          {area ? (
+            <AreaCompare
+              area={area}
+              attributeToGoogle={result.placesAttributed === true}
+              scopeText={result.areaScopeText}
+              lead={
+                store.source === "manual"
+                  ? "並べている数字は、入力された値です。Googleの検索結果でも、エリア全体の順位でもありません。"
+                  : undefined
+              }
+            />
+          ) : null}
 
           <section data-result-section="findings" className="space-y-4">
             <h2 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
@@ -217,9 +242,6 @@ export function ReportView({
             </h2>
             <p className="text-base leading-relaxed text-slate-800">{result.summary}</p>
             <FindingCard result={result} />
-            {result.reviewAnalysis ? (
-              <ReviewInsights analysis={result.reviewAnalysis} />
-            ) : null}
           </section>
 
           <section id="score-breakdown" data-result-section="causes" className="space-y-4">
@@ -490,14 +512,25 @@ export function ReportView({
           <p>{RESULT_ESTIMATE_SENTENCE}</p>
           <p>{metaLine}</p>
           <p>{FINDING_CARD_TEXTS.roleDeclaration}</p>
-          <p>
-            星評価・口コミ数・返信・新しさ・プロフィールなど、公開情報を項目ごとに採点しています。
-          </p>
-          <p>
-            Googleの評価は丸め処理・反映タイミングがあるため、目標までの件数は目安です。
-          </p>
+          {store.source === "manual" ? (
+            <p>
+              この点数と順位は、入力された星と口コミ数から計算しています。Googleが返した順位でも、公開情報の写しでもありません。
+            </p>
+          ) : (
+            <p>
+              星評価・口コミ数・返信・新しさ・プロフィールなど、公開情報を項目ごとに採点しています。Googleの評価は丸め処理・反映タイミングがあるため、目標までの件数は目安です。
+            </p>
+          )}
           {autoCompetitors ? (
-            <p>周辺の同業種から口コミ数の多い順に自動抽出した目安です。</p>
+            <p>
+              周辺の店は、1回の検索が返した中から口コミ数の多い順に最大10件を出しています。エリア全体の順位ではありません。半径は設計上の目安です。
+            </p>
+          ) : null}
+          {result.areaScopeText ? <p>{result.areaScopeText}</p> : null}
+          {result.placesAttributed ? (
+            <p>
+              点数は、その場で受け取った星・口コミ数・公開プロフィールから計算しています。この計算を続けてよいかは、書面の確認が終わるまで未確定です。
+            </p>
           ) : null}
           {area ? (
             <p>
@@ -510,7 +543,7 @@ export function ReportView({
           <Disclaimer />
         </div>
 
-        <OtherMenus monitoringHref={monitoringHref} suggestHref={suggestHref} />
+        <OtherMenus monitoringPaused suggestHref={suggestHref} />
         <ResultNextCta {...ctaProps} placement="sticky" />
       </div>
     </ResultActionProvider>
