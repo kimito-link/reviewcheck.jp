@@ -20,6 +20,7 @@ export const INTERNAL_LINKS: NavLink[] = [
   { label: "口コミ改善", href: "/review-improvement/" },
   { label: "MEO対策", href: "/meo/" },
   { label: "口コミ返信サポート", href: "/review-reply/" },
+  { label: "口コミ返信の例文", href: "/review-reply/examples/" },
   { label: "悪い口コミ対策", href: "/bad-review-measures/" },
   { label: "競合口コミ比較", href: "/competitor-review-comparison/" },
   { label: "総合改善パッケージ・料金", href: "/plans/" },
