@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "node ../../scripts/vercel-ignore-build.mjs apps/web/ packages/ package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json",
   "redirects": [
     {
       "source": "/:path*",
